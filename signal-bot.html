@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Սիգնալ Բոտ v2 — Trading Signals</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--line:#30363d;--tx:#e6edf3;--mut:#8b949e;--g:#2ea043;--r:#f85149;--y:#d29922;--b:#58a6ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 -apple-system,Segoe UI,Roboto,"Noto Sans Armenian",sans-serif}
+header{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0}#clock{color:var(--mut);font-size:13px;margin-left:auto}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;background:var(--mut)}
+#kill{background:#3d1214;border:1px solid #7d2a2e;color:#ff9a95;border-radius:7px;padding:5px 10px;font-weight:700;font-size:13px;cursor:pointer}
+#kill.on{background:var(--r);color:#fff}
+nav{display:flex;overflow-x:auto;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+nav button{flex:none;background:none;border:0;color:var(--mut);padding:11px 13px;font-size:14px;border-bottom:2px solid transparent;cursor:pointer}
+nav button.on{color:var(--tx);border-color:var(--b)}
+main{max-width:1000px;margin:auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:end}.row>*{flex:1 1 120px}
+label{font-size:12px;color:var(--mut);display:block;margin-bottom:3px}
+input,select{width:100%;background:#0d1117;border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:9px;font-size:15px}
+button.btn{background:var(--b);color:#fff;border:0;border-radius:7px;padding:10px 14px;font-size:15px;cursor:pointer;font-weight:600}
+button.sec{background:#21262d;border:1px solid var(--line);color:var(--tx)}button.sm{padding:5px 9px;font-size:13px}
+button:disabled{opacity:.5}
+.sig{font-size:28px;font-weight:800;letter-spacing:.5px}.L{color:var(--g)}.S{color:var(--r)}.W{color:var(--y)}.M{color:var(--mut)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.kv{background:#0d1117;border:1px solid var(--line);border-radius:8px;padding:8px}.kv b{display:block;font-size:16px;word-break:break-word}.kv span{font-size:12px;color:var(--mut)}
+ul.rs{margin:6px 0;padding-left:0;list-style:none}ul.rs li{padding:4px 0;border-bottom:1px dashed #21262d;font-size:14px}
+.pt{display:inline-block;min-width:38px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 5px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--mut);font-weight:500;font-size:12px}
+canvas{width:100%;height:340px;display:block;background:#0d1117;border-radius:8px}
+.bar{height:8px;background:#21262d;border-radius:4px;overflow:hidden}.bar i{display:block;height:100%}
+.dbar{position:relative;height:10px;background:#21262d;border-radius:5px}.dbar i{position:absolute;top:0;height:100%;border-radius:5px}.dbar:after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:#6e7681}
+.cat{display:grid;grid-template-columns:110px 1fr 52px;gap:8px;align-items:center;margin:7px 0;font-size:14px}
+.note{font-size:13px;color:var(--mut)}.warn{background:#3d2e00;border:1px solid #6e5400;color:#f0c64a;border-radius:8px;padding:10px;font-size:14px;margin:8px 0}
+.bad{background:#3d1214;border-color:#7d2a2e;color:#ff9a95}.ok{background:#0f2d18;border-color:#1f6f35;color:#7ee2a0}.info{background:#0c2340;border-color:#1f4f8a;color:#9ecbff}
+.hide{display:none}h2{font-size:16px;margin:0 0 10px}h3{font-size:14px;margin:14px 0 6px;color:var(--mut)}
+.chk label{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--tx);margin:6px 0}.chk input{width:auto}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;background:#21262d;border:1px solid var(--line);margin:2px}
+details summary{cursor:pointer;font-weight:600;padding:6px 0}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:13px}
+</style>
+</head>
+<body>
+<header><h1>📈 Սիգնալ Բոտ</h1><span class="tag"><span class="dot" id="hDot"></span> <span id="hTxt">offline</span></span><button id="kill">🛑 STOP</button><span id="clock"></span></header>
+<nav id="nav">
+  <button data-t="signal" class="on">Սիգնալ</button>
+  <button data-t="flow">Live Flow</button>
+  <button data-t="scan">Սկաներ</button>
+  <button data-t="pos">Դիրքեր</button>
+  <button data-t="arb">Արբիտրաժ</button>
+  <button data-t="bt">Backtest / Adaptive</button>
+  <button data-t="journal">Օրագիր</button>
+  <button data-t="settings">Կարգավորումներ</button>
+  <button data-t="how">Ինչպես</button>
+</nav>
+<main>
+<div id="killBanner"></div>
+
+<!-- ================= SIGNAL ================= -->
+<section id="t-signal">
+  <div class="card">
+    <div class="row">
+      <div><label>Ակտիվ</label><select id="sym"></select></div>
+      <div><label>Թայմֆրեյմ</label><select id="tf"><option value="15m">15 րոպե</option><option value="1h" selected>1 ժամ</option><option value="4h">4 ժամ</option><option value="1d">1 օր</option></select></div>
+      <div style="flex:0 0 auto"><button class="btn" id="go">Վերլուծել</button></div>
+    </div>
+    <div id="status" class="note" style="margin-top:8px">Սեղմիր «Վերլուծել»։ Վերլուծությունից հետո որոշումը թարմանում է ամեն 3 վայրկյանը մեկ՝ կենդանի order flow-ով։</div>
+  </div>
+  <div id="out" class="hide">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div><div class="note" id="o-sym"></div><div class="sig" id="o-sig"></div><div class="note" id="o-live"></div></div>
+        <div style="text-align:right"><div class="note">Գին</div><b id="o-price" style="font-size:20px"></b></div>
+      </div>
+      <div id="o-block"></div>
+      <div class="grid" style="margin-top:10px" id="o-levels"></div>
+    </div>
+    <div class="card"><h2>Trade Opportunity Scoring</h2><div id="o-cats"></div><div class="note" style="margin-top:6px">Գոտին աջ՝ BUY կողմ, ձախ՝ SELL կողմ։ Risk-ը և Execution Cost-ը կարող են արգելել գործարքը։</div></div>
+    <div class="card"><h2>🛡 Risk Control (անկախ պաշտպանություն)</h2><div id="o-guard"></div></div>
+    <div class="card"><canvas id="chart"></canvas><div class="note" style="margin-top:6px">Կանաչ՝ EMA20 · Կապույտ՝ EMA50 · Նարնջագույն՝ EMA200 · Մոխրագույն՝ Bollinger Bands · Կետագծեր՝ S/R · Գոտիներ՝ Demand/Supply</div></div>
+    <div class="card" id="o-pos"></div>
+    <div class="card" id="o-exec"></div>
+    <div class="card" id="o-exit"></div>
+    <div class="card">
+      <h2>Ինչու — բոլոր փաստարկները</h2>
+      <div class="row" style="align-items:start">
+        <div><h3 class="L">BUY կողմ (<span id="o-ls"></span>)</h3><ul class="rs" id="o-L"></ul></div>
+        <div><h3 class="S">SELL կողմ (<span id="o-ss"></span>)</h3><ul class="rs" id="o-S"></ul></div>
+      </div>
+      <div id="o-info"></div>
+    </div>
+    <div class="card"><h2>Վոլատիլություն և իմպուլս</h2><div class="grid" id="o-vola"></div></div>
+    <div class="card"><h2>Շուկայի վիճակ</h2><div class="grid" id="o-market"></div></div>
+    <div class="card"><h2>Դերիվատիվներ և դիրքավորում</h2><div class="grid" id="o-deriv"></div><div class="note" id="o-derivNote" style="margin-top:6px"></div></div>
+  </div>
+</section>
+
+<!-- ================= LIVE FLOW ================= -->
+<section id="t-flow" class="hide">
+  <div class="card"><div class="row"><div><label>Ակտիվ (կենդանի հոսք)</label><select id="flowSym"></select></div><div style="flex:0 0 auto"><button class="btn" id="flowGo">Միացնել</button></div></div>
+  <p class="note">Binance WebSocket՝ aggTrade + depth20@100ms։ Եթե WebSocket-ը 3 անգամ չի միանում, բոտն անցնում է REST polling-ի (3վ)։</p></div>
+  <div class="card"><h2>⚡ Կապ և ուշացում</h2><div class="grid" id="fHealth"></div></div>
+  <div class="card"><h2>Ագրեսիվ գնորդներ vs վաճառողներ (60վ)</h2><div id="fAgg"></div><h3>Cumulative Volume Delta (live)</h3><canvas id="cvdC" style="height:140px"></canvas></div>
+  <div class="card"><h2>Order Book</h2><div id="fBook"></div></div>
+  <div class="card"><h2>🐋 Խոշոր market պատվերներ</h2><div id="fLarge" class="note">Սպասում եմ տվյալների…</div></div>
+  <div class="card"><h2>🚨 Անոմալիաներ (live)</h2><div id="fAnom"></div></div>
+  <div class="card"><h2>Վոլատիլություն 1m (արագ գործարքների համար)</h2><div id="fVola"></div></div>
+</section>
+
+<!-- ================= SCANNER ================= -->
+<section id="t-scan" class="hide">
+  <div class="card">
+    <div class="row">
+      <div><label>Թայմֆրեյմ</label><select id="scanTf"><option value="15m">15 րոպե</option><option value="1h" selected>1 ժամ</option><option value="4h">4 ժամ</option></select></div>
+      <div><label>Ավտո-թարմացում</label><select id="auto"><option value="0">Անջատված</option><option value="5">5 րոպեն մեկ</option><option value="15">15 րոպեն մեկ</option><option value="60">Ժամը մեկ</option></select></div>
+      <div style="flex:0 0 auto"><button class="btn" id="scanGo">Սկանավորել</button></div>
+    </div>
+    <div class="note" id="scanStatus" style="margin-top:8px">Ստուգում է բոլոր ակտիվները։ Նոր BUY/SELL-ի դեպքում ձայն։ Յուրաքանչյուր սիգնալ գրանցվում է մեկ անգամ (կրկնօրինակների պաշտպանություն)։</div>
+  </div>
+  <div class="card" style="overflow-x:auto"><table><thead><tr><th>Ակտիվ</th><th>Որոշում</th><th>Ուժ</th><th>Risk</th><th>Ռեժիմ</th><th>R:R</th><th></th></tr></thead><tbody id="scanBody"></tbody></table></div>
+</section>
+
+<!-- ================= POSITIONS ================= -->
+<section id="t-pos" class="hide">
+  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Բաց դիրքեր — Dynamic Exit Management</h2><button class="btn sec sm" id="posRefresh">Թարմացնել</button></div>
+  <p class="note">Բոտը պատվեր չի ուղարկում բորսա։ Դու ես բացում գործարքը, իսկ բոտը ամեն րոպե հաշվում է Break-Even, Trailing Stop, Time Exit և Emergency Exit։ Դիրք ավելացնում ես «Սիգնալ» էջից՝ «📌 Բացեցի» կոճակով։</p>
+  <div class="grid" id="posSummary"></div></div>
+  <div id="posList"></div>
+</section>
+
+<!-- ================= ARBITRAGE ================= -->
+<section id="t-arb" class="hide">
+  <div class="card"><div class="row"><div><p class="note" style="margin:0">Համեմատում է Binance, Bybit, OKX և Gate.io բորսաները, եռանկյուն արբիտրաժը Binance-ում և funding-ի տարբերությունները։ Բոլոր թվերը միջնորդավճարից հետո են։</p></div><div style="flex:0 0 auto"><button class="btn" id="arbGo">Ստուգել</button></div></div></div>
+  <div id="arbOut"></div>
+</section>
+
+<!-- ================= BACKTEST / ADAPTIVE ================= -->
+<section id="t-bt" class="hide">
+  <div class="card">
+    <h2>Backtest + Walk-Forward + Out-of-Sample</h2>
+    <div class="row">
+      <div><label>Ակտիվ</label><select id="btSym"></select></div>
+      <div><label>Թայմֆրեյմ</label><select id="btTf"><option value="15m">15 րոպե</option><option value="1h" selected>1 ժամ</option><option value="4h">4 ժամ</option></select></div>
+      <div style="flex:0 0 auto"><button class="btn" id="btGo">Գործարկել</button></div>
+    </div>
+    <p class="note">Մուտքը հաջորդ մոմի բացմամբ + slippage, 50% TP1-ում, հետո Break-Even + Trailing Stop, Time Exit 48 մոմ։ Նույն մոմում SL+TP → վնաս։ Միջնորդավճարը ներառված է։</p>
+  </div>
+  <div id="btOut"></div>
+  <div class="card"><h2>📡 Model Performance Monitoring (forward test)</h2><div id="fwdOut"></div></div>
+</section>
+
+<!-- ================= JOURNAL ================= -->
+<section id="t-journal" class="hide">
+  <div class="card" id="todayCard"></div>
+  <div class="card">
+    <h2>Ավելացնել գործարք ձեռքով</h2>
+    <div class="row">
+      <div><label>Ակտիվ</label><input id="jSym" placeholder="BTCUSDT"></div>
+      <div><label>Ուղղություն</label><select id="jDir"><option>LONG</option><option>SHORT</option></select></div>
+      <div><label>Արդյունք (R)</label><input id="jR" type="number" step="0.1" placeholder="-1 կամ 2.5"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div><label>Պլանով էր՞</label><select id="jPlan"><option value="1">Այո, սիգնալով</option><option value="0">Ոչ (էմոցիա/FOMO)</option></select></div>
+      <div><label>Նշում</label><input id="jNote" placeholder="ինչ զգացի, ինչ սովորեցի"></div>
+      <div style="flex:0 0 auto"><button class="btn" id="jAdd">Պահել</button></div>
+    </div>
+  </div>
+  <div class="card"><h2>Արդյունքների վերլուծություն</h2><div class="grid" id="jStats"></div></div>
+  <div class="card" style="overflow-x:auto"><table><thead><tr><th>Ամսաթիվ</th><th>Ակտիվ</th><th></th><th>R</th><th>Պլան</th><th>Նշում</th><th></th></tr></thead><tbody id="jBody"></tbody></table></div>
+</section>
+
+<!-- ================= SETTINGS ================= -->
+<section id="t-settings" class="hide">
+  <div class="card">
+    <h2>Կապիտալ և ռիսկ</h2>
+    <div class="row">
+      <div><label>Կապիտալ ($)</label><input id="sBal" type="number"></div>
+      <div><label>Ռիսկ մեկ գործարքին (%)</label><input id="sRisk" type="number" step="0.1"></div>
+      <div><label>Լծակ (leverage)</label><input id="sLev" type="number"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🛡 Real-Time Risk Control</h2>
+    <div class="row">
+      <div><label>Daily Loss Limit (R)</label><input id="sDayLoss" type="number" step="0.5"></div>
+      <div><label>Օրական առավելագույն գործարքներ</label><input id="sDayMax" type="number"></div>
+      <div><label>Max Consecutive Losses</label><input id="sMaxConsec" type="number"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div><label>Cooldown վնասից հետո (րոպե)</label><input id="sCooldown" type="number"></div>
+      <div><label>Maximum Open Positions</label><input id="sMaxOpen" type="number"></div>
+      <div><label>Maximum Exposure (% կապիտալից)</label><input id="sMaxExp" type="number"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div><label>Stale data սահման (վայրկյան)</label><input id="sStale" type="number"></div>
+      <div><label>Max latency (մվ)</label><input id="sMaxLat" type="number"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Կատարում և միջնորդավճարներ</h2>
+    <div class="row">
+      <div><label>Maker fee (%)</label><input id="sMaker" type="number" step="0.01"></div>
+      <div><label>Taker fee (%)</label><input id="sTaker" type="number" step="0.01"></div>
+      <div><label>Max slippage (bps)</label><input id="sSlip" type="number" step="1"></div>
+      <div><label>Արբիտրաժի fee մեկ գործարք (%)</label><input id="sArbFee" type="number" step="0.01"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Ռազմավարություն</h2>
+    <div class="row">
+      <div><label>Սիգնալի նվազագույն score</label><input id="sMin" type="number" step="0.5"></div>
+      <div><label>Ակտիվներ (ստորակետով)</label><input id="sSyms"></div>
+    </div>
+    <div class="chk" style="margin-top:8px"><label><input type="checkbox" id="sAllowTrend"> Թույլատրել Trend/Transition ռեժիմը</label><label><input type="checkbox" id="sAllowRange"> Թույլատրել Range ռեժիմը</label></div>
+    <p class="note">Բոտը ինքը երբեք չի փոխում այս կանոնները։ Եթե Backtest/Adaptive-ը ցույց է տալիս, որ ռեժիմը վնասաբեր է, որոշումը քոնն է՝ նոր թեստից հետո։</p>
+  </div>
+  <div class="card">
+    <h2>Տնտեսական օրացույց (ձեռքով)</h2>
+    <p class="note">Այսօրվա CPI/NFP/FOMC/ECB ժամերը (Երևանի ժամով) վերցրու <a href="https://www.forexfactory.com/calendar" style="color:var(--b)">ForexFactory</a>-ից։ ±30 րոպե սիգնալ չի տրվի։</p>
+    <div class="row"><div><label>Իրադարձություն</label><input id="evName" placeholder="US CPI"></div><div><label>Ժամ</label><input id="evTime" type="time"></div><div style="flex:0 0 auto"><button class="btn sec" id="evAdd">Ավելացնել</button></div></div>
+    <div id="evList" style="margin-top:8px"></div>
+  </div>
+  <div class="card"><button class="btn" id="sSave">Պահել կարգավորումները</button> <span id="sSaved" class="note"></span></div>
+</section>
+
+<!-- ================= HOW ================= -->
+<section id="t-how" class="hide">
+  <div class="card">
+    <h2>Ճարտարապետություն</h2>
+    <p class="note mono">Binance REST + WebSocket → Event Bus → Engine (analyze) → Opportunity Scoring → 🛡 Risk Control (veto) → BUY / SELL / NO TRADE → Execution Plan → Position Manager → Journal → Adaptive Monitoring</p>
+    <details><summary>Market Momentum Detection</summary><p class="note">ROC(10) և դրա արագացումը (ROC − ROC 3 մոմ առաջ), MACD histogram, Breakout/Breakdown 20 մոմի գագաթ/հատակ + ծավալ ≥1.5σ, Momentum Reversal (ուժեղ շարժում → acceleration շրջվում է + RSI), Volume Spike (log-ծավալի z-score), Buying/Selling Pressure (Binance-ի taker buy ծավալից delta 20 մոմում)։ Չափազանց երկար իմպուլսը տույժ է ստանում (chasing)։</p></details>
+    <details><summary>Real-Time Order Flow</summary><p class="note">aggTrade-ից՝ ագրեսիվ գնորդներ/վաճառողներ (market order-ի կողմը), 60վ imbalance, live CVD, խոշոր պատվերներ (≥20× մեդիան notional), Absorption (մի կողմի ագրեսիվ հոսք > 60%, ծավալը միջինից 1.5× բարձր, բայց գինը չի շարժվում)։ depth20-ից՝ Bid/Ask pressure և Order Book imbalance։</p></details>
+    <details><summary>Volatility Analysis</summary><p class="note">ATR 14, ATR 5/50 հարաբերակցություն (>1.3 expansion, <0.75 compression), Bollinger Bands, %B, լայնության percentile, squeeze release, Sudden Price Movement (մոմ > 3 ATR, live՝ 10վ-ում > 1.5 ATR(1m))։ Live էջը ասում է՝ շուկան հարմար է արագ գործարքների համար, թե ոչ։</p></details>
+    <details><summary>Arbitrage Detection</summary><p class="note">Cross-exchange՝ ամենաէժան ask և ամենաթանկ bid 4 բորսայում, net = gross − 2× fee։ Triangular՝ USDT→A→X→USDT և հակառակը BTC/ETH/BNB-ով, 3× taker fee, առավելագույն չափը top-of-book-ով։ Funding arbitrage՝ long spot + short perp (կամ հակառակը), տարեկան եկամտաբերություն, 4 leg-ի ծախս և break-even funding-ների քանակ։ Փոխանցման ծախսերն ու ժամանակը ներառված չեն։</p></details>
+    <details><summary>Market Anomaly Detection</summary><p class="note">Abnormal Volume (>4σ), Abnormal Price Move (եկամտաբերության >4σ), Flash Crash/Pump (>4 ATR և արագ վերադարձ), Sudden Liquidity Drop (order book-ի իրացվելիությունը < 50% միջինից), Spoofing-like Pattern (խոշոր «պատեր», որոնք անհետանում են <10վ-ում առանց կատարվելու, ≥3 անգամ 60վ-ում), Unusual Order Book Activity։ «high» մակարդակը արգելափակում է գործարքները։</p></details>
+    <details><summary>Smart Order Execution</summary><p class="note">Market order-ի սիմուլյացիա order book-ի վրա (100 մակարդակ)՝ միջին գին, slippage bps, Partial Fill ռիսկ։ Maker vs Taker ծախս և խնայողությունը R-ով։ Առաջարկ՝ LIMIT (pullback), MARKET (իմպուլս), SPLIT (մեծ պատվեր), REDUCE, NO TRADE։ Order Cancellation կանոն և Dynamic Order Placement (limit՝ entry − 0.1 ATR)։</p></details>
+    <details><summary>Dynamic Exit Management</summary><p class="note">ATR + կառուցվածքային SL, Partial TP 50% TP1-ում (1.5R), Break-Even, Chandelier Trailing Stop (2.5 ATR), Dynamic TP (ուժեղ իմպուլսի դեպքում TP2 մինչև 3.5R, թուլացող իմպուլսի դեպքում՝ վաղ փակում), Time-Based Exit (48 մոմ), Emergency Exit (անոմալիա կամ ուժեղ հակառակ սիգնալ)։</p></details>
+    <details><summary>Trade Opportunity Scoring</summary><p class="note">Ամեն փաստարկ պատկանում է կատեգորիայի՝ Technical, Momentum, Volume, Order Flow, Volatility։ Risk Score (0–100) և Execution Cost (R) առանձին են. ≥70 risk կամ >0.4R ծախս → NO TRADE։ Վերջնական որոշում՝ BUY / SELL / NO TRADE։</p></details>
+    <details><summary>Real-Time Risk Control</summary><p class="note">Անկախ շերտ, որը ստուգվում է ՎԵՐՋԻՆԸ և կարող է արգելել ցանկացած սիգնալ՝ Daily Loss Limit, Max Open Positions, Max Consecutive Losses, Cooldown վնասից հետո, Max Exposure, Emergency Stop (🛑 կոճակը վերևում), API Failure Protection (REST սխալներ, stale stream, latency), կրկնակի դիրքի պաշտպանություն, նորություններ։</p></details>
+    <details><summary>Adaptive Strategy Engine</summary><p class="note">4 հաջորդական fold (Walk-Forward), պարամետրի ընտրություն առաջին 70%-ում և ստուգում վերջին 30%-ում (Out-of-Sample), արդյունքներ ըստ ռեժիմի, Concept Drift (վերջին գործարքներ vs պատմություն)։ Forward test՝ ամեն իրական սիգնալ գրանցվում և ավտոմատ հաշվարկվում է, համեմատվում backtest-ի EV-ի հետ։ Բոտը ինքը կանոնները չի փոխում։</p></details>
+    <details><summary>Low-Latency Infrastructure</summary><p class="note">WebSocket streaming, event-driven մշակում (յուրաքանչյուր trade/depth իրադարձություն թարմացնում է վիճակը, իսկ որոշումը վերահաշվարկվում է ամեն 3վ), latency monitoring (Binance event time vs տեղական ժամ՝ server offset-ով ճշգրտված), reconnect exponential backoff-ով (1→2→4… 30վ), REST fallback, սիգնալների և դիրքերի կրկնօրինակների պաշտպանություն։ Asynchronous Python-ը բրաուզերում հնարավոր չէ — այստեղ նույն դերը կատարում է async/await JavaScript-ը։ 24/7 սերվերային տարբերակի համար հաջորդ քայլը Python asyncio + websockets է։</p></details>
+  </div>
+  <div class="card" id="hosting">
+    <h2>📱 Ինչպես աշխատեցնել հեռախոսով (GitHub Pages, անվճար)</h2>
+    <p class="note">Claude հավելվածի և iPhone-ի Files-ի նախադիտումները արգելում են ինտերնետ հարցումները, ուստի բոտին պետք է իսկական հասցե։</p>
+    <ol class="note">
+      <li>Safari-ով բաց github.com և գրանցվիր (եթե հաշիվ չունես)։</li>
+      <li>«+» → <b>New repository</b> → անուն՝ <span class="mono">signal-bot</span> → <b>Public</b> → Create։</li>
+      <li><b>uploading an existing file</b> → ընտրիր <span class="mono">signal-bot.html</span>-ը Files-ից → Commit changes։</li>
+      <li>Settings → <b>Pages</b> → Branch՝ <span class="mono">main</span> / root → Save։</li>
+      <li>1–2 րոպեից բաց՝ <span class="mono">https://ՔՈ-ԱՆՈՒՆԸ.github.io/signal-bot/signal-bot.html</span></li>
+      <li>Safari → Share → <b>Add to Home Screen</b>՝ հավելվածի պես պատկերակ կունենաս։</li>
+    </ol>
+    <p class="note">Համակարգչում ավելի պարզ է՝ ֆայլը կրկնակի սեղմիր, և այն կբացվի Chrome-ում։ Նոր տարբերակ ստանալու դեպքում պարզապես նորից վերբեռնիր ֆայլը նույն repo-ում։</p>
+  </div>
+  <div class="card warn">⚠️ Սա ուսումնական գործիք է, ոչ թե ֆինանսական խորհուրդ։ Ոչ մի բոտ չի երաշխավորում շահույթ։ Սկզբում Forward Testing առնվազն 30–50 սիգնալ, և ռիսկի դիր միայն այն, ինչը կարող ես կորցնել։</div>
+</section>
+</main>
+
+<script>
+// ===================== ENGINE v2 (pure functions, no DOM, no network) =====================
+const ENG = (() => {
+  const N = (v) => v === null || v === undefined || Number.isNaN(v);
+  const CATS = ['tech', 'mom', 'volu', 'flow', 'vola'];
+  const CAT_NAMES = { tech: 'Technical', mom: 'Momentum', volu: 'Volume', flow: 'Order Flow', vola: 'Volatility' };
+
+  // ---------- basic indicators ----------
+  function sma(a, p) {
+    const o = new Array(a.length).fill(null); let s = 0;
+    for (let i = 0; i < a.length; i++) { s += a[i]; if (i >= p) s -= a[i - p]; if (i >= p - 1) o[i] = s / p; }
+    return o;
+  }
+  function ema(a, p) {
+    const o = new Array(a.length).fill(null), k = 2 / (p + 1); let prev = null, s = 0, cnt = 0;
+    for (let i = 0; i < a.length; i++) {
+      if (N(a[i])) continue;
+      if (prev === null) { s += a[i]; cnt++; if (cnt === p) { prev = s / p; o[i] = prev; } continue; }
+      prev = a[i] * k + prev * (1 - k); o[i] = prev;
+    }
+    return o;
+  }
+  function rsi(c, p = 14) {
+    const o = new Array(c.length).fill(null); let g = 0, l = 0;
+    for (let i = 1; i < c.length; i++) {
+      const d = c[i] - c[i - 1], up = Math.max(d, 0), dn = Math.max(-d, 0);
+      if (i <= p) { g += up; l += dn; if (i === p) { g /= p; l /= p; o[i] = l === 0 ? 100 : 100 - 100 / (1 + g / l); } continue; }
+      g = (g * (p - 1) + up) / p; l = (l * (p - 1) + dn) / p;
+      o[i] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+    }
+    return o;
+  }
+  function macd(c) {
+    const e12 = ema(c, 12), e26 = ema(c, 26);
+    const line = c.map((_, i) => (N(e12[i]) || N(e26[i])) ? null : e12[i] - e26[i]);
+    const sig = ema(line, 9);
+    return { line, sig, hist: line.map((v, i) => (N(v) || N(sig[i])) ? null : v - sig[i]) };
+  }
+  function atr(h, l, c, p = 14) {
+    const o = new Array(c.length).fill(null); let a = 0;
+    for (let i = 1; i < c.length; i++) {
+      const tr = Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1]));
+      if (i <= p) { a += tr; if (i === p) { a /= p; o[i] = a; } continue; }
+      a = (a * (p - 1) + tr) / p; o[i] = a;
+    }
+    return o;
+  }
+  function adx(h, l, c, p = 14) {
+    const n = c.length, o = new Array(n).fill(null);
+    let tr14 = 0, p14 = 0, m14 = 0, dxs = [], adxv = null;
+    for (let i = 1; i < n; i++) {
+      const up = h[i] - h[i - 1], dn = l[i - 1] - l[i];
+      const pdm = up > dn && up > 0 ? up : 0, mdm = dn > up && dn > 0 ? dn : 0;
+      const tr = Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1]));
+      if (i <= p) { tr14 += tr; p14 += pdm; m14 += mdm; if (i < p) continue; }
+      else { tr14 = tr14 - tr14 / p + tr; p14 = p14 - p14 / p + pdm; m14 = m14 - m14 / p + mdm; }
+      const pdi = tr14 ? 100 * p14 / tr14 : 0, mdi = tr14 ? 100 * m14 / tr14 : 0;
+      const dx = (pdi + mdi) ? 100 * Math.abs(pdi - mdi) / (pdi + mdi) : 0;
+      if (adxv === null) { dxs.push(dx); if (dxs.length === p) { adxv = dxs.reduce((a, b) => a + b, 0) / p; o[i] = adxv; } }
+      else { adxv = (adxv * (p - 1) + dx) / p; o[i] = adxv; }
+    }
+    return o;
+  }
+  function bollinger(c, p = 20, k = 2) {
+    const mid = sma(c, p), up = new Array(c.length).fill(null), lo = new Array(c.length).fill(null), w = new Array(c.length).fill(null);
+    for (let i = p - 1; i < c.length; i++) {
+      let s = 0; for (let j = i - p + 1; j <= i; j++) s += (c[j] - mid[i]) ** 2;
+      const sd = Math.sqrt(s / p); up[i] = mid[i] + k * sd; lo[i] = mid[i] - k * sd; w[i] = (2 * k * sd) / mid[i];
+    }
+    return { mid, up, lo, w };
+  }
+  function zAt(arr, i, look) {
+    if (N(arr[i]) || i < look) return null; let s = 0, s2 = 0, n = 0;
+    for (let j = i - look; j < i; j++) { if (N(arr[j])) continue; s += arr[j]; s2 += arr[j] * arr[j]; n++; }
+    if (n < 10) return null; const m = s / n, sd = Math.sqrt(Math.max(1e-18, s2 / n - m * m));
+    return (arr[i] - m) / sd;
+  }
+  function pctRank(arr, i, look) {
+    const v = arr[i]; if (N(v)) return null; let below = 0, tot = 0;
+    for (let j = Math.max(0, i - look); j < i; j++) { if (N(arr[j])) continue; tot++; if (arr[j] < v) below++; }
+    return tot ? (below / tot) * 100 : null;
+  }
+  function pivots(h, l, L = 3, R = 3) {
+    const highs = [], lows = [];
+    for (let i = L; i < h.length - R; i++) {
+      let isH = true, isL = true;
+      for (let j = i - L; j <= i + R; j++) { if (j === i) continue; if (h[j] >= h[i]) isH = false; if (l[j] <= l[i]) isL = false; }
+      if (isH) highs.push({ i, p: h[i], c: i + R });
+      if (isL) lows.push({ i, p: l[i], c: i + R });
+    }
+    return { highs, lows };
+  }
+  const confirmedBefore = (list, t) => { const o = []; for (const x of list) { if (x.c <= t) o.push(x); else break; } return o; };
+
+  // ---------- precompute everything once per dataset ----------
+  function precompute(k) {
+    const o = k.map(x => x.o), h = k.map(x => x.h), l = k.map(x => x.l), c = k.map(x => x.c), v = k.map(x => x.v);
+    const n = c.length;
+    // Delta: real taker-buy volume from Binance klines when present, otherwise close-location estimate
+    const delta = k.map((x, i) => x.tb != null ? 2 * x.tb - x.v : x.v * (((x.c - x.l) - (x.h - x.c)) / ((x.h - x.l) || 1e-12)));
+    const cvd = []; let acc = 0; for (const d of delta) { acc += d; cvd.push(acc); }
+    const roc = c.map((x, i) => i >= 10 ? (x - c[i - 10]) / c[i - 10] * 100 : null);
+    const rocAcc = roc.map((x, i) => (i >= 13 && !N(x) && !N(roc[i - 3])) ? x - roc[i - 3] : null);
+    const logv = v.map(x => Math.log(x + 1));
+    const ret = c.map((x, i) => i ? (x - c[i - 1]) / c[i - 1] : 0);
+    const hh20 = [], ll20 = [], pr20 = [];
+    for (let i = 0; i < n; i++) {
+      if (i < 20) { hh20.push(null); ll20.push(null); pr20.push(null); continue; }
+      let H = -Infinity, L = Infinity, ds = 0, vs = 0;
+      for (let j = i - 20; j < i; j++) { H = Math.max(H, h[j]); L = Math.min(L, l[j]); }
+      for (let j = i - 19; j <= i; j++) { ds += delta[j]; vs += v[j]; }
+      hh20.push(H); ll20.push(L); pr20.push(vs ? ds / vs : 0);
+    }
+    const bb = bollinger(c);
+    const P = {
+      k, o, h, l, c, v, delta, cvd, roc, rocAcc, logv, ret, hh20, ll20, pr20, bb,
+      e20: ema(c, 20), e50: ema(c, 50), e200: ema(c, 200), rsi: rsi(c), macd: macd(c),
+      atr: atr(h, l, c), atrF: atr(h, l, c, 5), atrS: atr(h, l, c, 50), adx: adx(h, l, c),
+      bbw: bb.w, vsma: sma(v, 20), piv: pivots(h, l)
+    };
+    P.volZ = logv.map((_, i) => zAt(logv, i, 50));
+    P.retZ = ret.map((_, i) => zAt(ret, i, 100));
+    return P;
+  }
+
+  function htfTrendAt(H, time) {
+    if (!H) return 0;
+    let idx = -1;
+    for (let i = H.k.length - 1; i >= 0; i--) if (H.k[i].ct <= time) { idx = i; break; }
+    if (idx < 0 || N(H.e50[idx])) return 0;
+    const c = H.c[idx], e50 = H.e50[idx], e200 = H.e200[idx];
+    if (!N(e200)) { if (c > e50 && e50 > e200) return 1; if (c < e50 && e50 < e200) return -1; return 0; }
+    return c > e50 ? 1 : -1;
+  }
+
+  function structureAt(P, t) {
+    const H = confirmedBefore(P.piv.highs, t), L = confirmedBefore(P.piv.lows, t);
+    const trendOf = (Hs, Ls) => {
+      if (Hs.length < 2 || Ls.length < 2) return 0;
+      const hh = Hs[Hs.length - 1].p > Hs[Hs.length - 2].p, hl = Ls[Ls.length - 1].p > Ls[Ls.length - 2].p;
+      return hh && hl ? 1 : (!hh && !hl ? -1 : 0);
+    };
+    const trend = trendOf(H, L);
+    let event = null;
+    for (let k = Math.max(1, t - 7); k <= t; k++) {
+      const Hk = confirmedBefore(P.piv.highs, k - 1), Lk = confirmedBefore(P.piv.lows, k - 1), trK = trendOf(Hk, Lk);
+      const lh = Hk[Hk.length - 1], ll = Lk[Lk.length - 1];
+      if (lh && P.c[k] > lh.p && P.c[k - 1] <= lh.p) event = { dir: 1, type: trK === -1 ? 'CHoCH' : 'BOS', at: k, level: lh.p };
+      if (ll && P.c[k] < ll.p && P.c[k - 1] >= ll.p) event = { dir: -1, type: trK === 1 ? 'CHoCH' : 'BOS', at: k, level: ll.p };
+    }
+    return { trend, event, lastH: H[H.length - 1] || null, lastL: L[L.length - 1] || null, H, L };
+  }
+
+  function levelsAt(P, t, atrV) {
+    const pts = [];
+    for (const x of confirmedBefore(P.piv.highs, t)) if (x.i > t - 200) pts.push(x.p);
+    for (const x of confirmedBefore(P.piv.lows, t)) if (x.i > t - 200) pts.push(x.p);
+    pts.sort((a, b) => a - b);
+    const cl = [];
+    for (const p of pts) {
+      const last = cl[cl.length - 1];
+      if (last && p - last.max <= atrV * 0.5) { last.sum += p; last.n++; last.max = p; } else cl.push({ sum: p, n: 1, max: p });
+    }
+    return cl.map(c => ({ price: c.sum / c.n, touches: c.n })).filter(c => c.touches >= 2);
+  }
+
+  function zonesAt(P, t, atrV) {
+    const dem = [], sup = [];
+    for (let j = Math.max(1, t - 150); j <= t - 3; j++) {
+      const a = P.atr[j] || atrV;
+      if (P.c[j + 3] - P.h[j] > 2 * a) dem.push({ lo: P.l[j], hi: Math.max(P.o[j], P.c[j]), i: j });
+      if (P.l[j] - P.c[j + 3] > 2 * a) sup.push({ lo: Math.min(P.o[j], P.c[j]), hi: P.h[j], i: j });
+    }
+    const valid = (z, isDem) => { for (let k = z.i + 4; k <= t - 1; k++) { if (isDem && P.c[k] < z.lo) return false; if (!isDem && P.c[k] > z.hi) return false; } return true; };
+    return { demand: dem.filter(z => valid(z, true)).slice(-3), supply: sup.filter(z => valid(z, false)).slice(-3) };
+  }
+
+  function volumeProfile(P, t, look = 200, bins = 40) {
+    const s = Math.max(0, t - look + 1);
+    let lo = Infinity, hi = -Infinity;
+    for (let i = s; i <= t; i++) { lo = Math.min(lo, P.l[i]); hi = Math.max(hi, P.h[i]); }
+    const step = (hi - lo) / bins || 1, vol = new Array(bins).fill(0);
+    for (let i = s; i <= t; i++) {
+      const a = Math.max(0, Math.floor((P.l[i] - lo) / step)), b = Math.min(bins - 1, Math.floor((P.h[i] - lo) / step));
+      for (let x = a; x <= b; x++) vol[x] += P.v[i] / (b - a + 1);
+    }
+    let poc = 0; vol.forEach((v, i) => { if (v > vol[poc]) poc = i; });
+    const total = vol.reduce((a, b) => a + b, 0); let acc = vol[poc], up = poc, dn = poc;
+    while (acc < total * 0.7 && (up < bins - 1 || dn > 0)) {
+      const nu = up < bins - 1 ? vol[up + 1] : -1, nd = dn > 0 ? vol[dn - 1] : -1;
+      if (nu >= nd) { up++; acc += vol[up]; } else { dn--; acc += vol[dn]; }
+    }
+    return { poc: lo + (poc + 0.5) * step, vah: lo + (up + 1) * step, val: lo + dn * step };
+  }
+
+  function candle(P, t) {
+    const o = P.o[t], h = P.h[t], l = P.l[t], c = P.c[t], po = P.o[t - 1], pc = P.c[t - 1];
+    const body = Math.abs(c - o), rng = h - l || 1e-12, lw = Math.min(o, c) - l, uw = h - Math.max(o, c);
+    if (c > o && pc < po && c >= po && o <= pc && body > Math.abs(pc - po)) return { dir: 1, name: 'Bullish Engulfing' };
+    if (c < o && pc > po && c <= po && o >= pc && body > Math.abs(pc - po)) return { dir: -1, name: 'Bearish Engulfing' };
+    if (lw > 2 * body && lw > 0.55 * rng) return { dir: 1, name: 'Hammer / Pin Bar' };
+    if (uw > 2 * body && uw > 0.55 * rng) return { dir: -1, name: 'Shooting Star / Pin Bar' };
+    if (body < 0.1 * rng) return { dir: 0, name: 'Doji' };
+    return null;
+  }
+
+  function divergence(P, st, t) {
+    const L = st.L.filter(x => x.i > t - 40), H = st.H.filter(x => x.i > t - 40);
+    if (L.length >= 2) { const a = L[L.length - 2], b = L[L.length - 1]; if (b.p < a.p && P.rsi[b.i] > P.rsi[a.i] + 2) return 1; }
+    if (H.length >= 2) { const a = H[H.length - 2], b = H[H.length - 1]; if (b.p > a.p && P.rsi[b.i] < P.rsi[a.i] - 2) return -1; }
+    return 0;
+  }
+  // CVD divergence over last 20 bars: price new extreme but CVD not
+  function cvdDivergence(P, t) {
+    if (t < 41) return 0;
+    let pH1 = -Infinity, pH2 = -Infinity, cH1 = -Infinity, cH2 = -Infinity, pL1 = Infinity, pL2 = Infinity, cL1 = Infinity, cL2 = Infinity;
+    for (let j = t - 40; j < t - 20; j++) { pH1 = Math.max(pH1, P.h[j]); cH1 = Math.max(cH1, P.cvd[j]); pL1 = Math.min(pL1, P.l[j]); cL1 = Math.min(cL1, P.cvd[j]); }
+    for (let j = t - 20; j <= t; j++) { pH2 = Math.max(pH2, P.h[j]); cH2 = Math.max(cH2, P.cvd[j]); pL2 = Math.min(pL2, P.l[j]); cL2 = Math.min(cL2, P.cvd[j]); }
+    if (pH2 > pH1 && cH2 < cH1) return -1;
+    if (pL2 < pL1 && cL2 > cL1) return 1;
+    return 0;
+  }
+
+  // ---------- Market Anomaly Detection (bar-based) ----------
+  function anomaliesAt(P, t) {
+    const out = [], a = P.atr[t - 1] || P.atr[t];
+    const vz = P.volZ[t], rz = P.retZ[t];
+    if (vz != null && vz > 4) out.push({ sev: vz > 5 ? 'high' : 'warn', type: 'Abnormal Volume', txt: `Ծավալը ${vz.toFixed(1)}σ միջինից — անսովոր` });
+    if (rz != null && Math.abs(rz) > 4) out.push({ sev: Math.abs(rz) > 5.5 ? 'high' : 'warn', type: 'Abnormal Price Move', txt: `Գնի շարժը ${Math.abs(rz).toFixed(1)}σ — անսովոր` });
+    for (let k = Math.max(1, t - 2); k <= t; k++) {
+      const ak = P.atr[k - 1]; if (!ak) continue;
+      if (P.c[k - 1] - P.l[k] > 4 * ak && (P.c[k] - P.l[k]) > 0.5 * (P.c[k - 1] - P.l[k])) out.push({ sev: 'high', type: 'Flash Crash', txt: 'Flash Crash — կտրուկ անկում և արագ վերադարձ (լիկվիդացիաների կասկադ)' });
+      if (P.h[k] - P.c[k - 1] > 4 * ak && (P.h[k] - P.c[k]) > 0.5 * (P.h[k] - P.c[k - 1])) out.push({ sev: 'high', type: 'Flash Pump', txt: 'Flash Pump — կտրուկ թռիչք և արագ վերադարձ' });
+    }
+    if (a && P.h[t] - P.l[t] > 3 * a) out.push({ sev: 'warn', type: 'Sudden Price Movement', txt: `Վերջին մոմը ${((P.h[t] - P.l[t]) / a).toFixed(1)} ATR է` });
+    return out;
+  }
+
+  // ---------- Volatility analysis ----------
+  function volatilityAt(P, t) {
+    const a = P.atr[t], c = P.c[t], bbp = pctRank(P.bbw, t, 150);
+    const ratio = P.atrF[t] && P.atrS[t] ? P.atrF[t] / P.atrS[t] : 1;
+    const state = ratio > 1.3 ? 'expansion' : (ratio < 0.75 ? 'compression' : 'stable');
+    const regime = bbp == null ? 'normal' : bbp > 80 ? 'high' : bbp < 20 ? 'low' : 'normal';
+    const pos = (P.bb.up[t] && P.bb.lo[t]) ? (c - P.bb.lo[t]) / ((P.bb.up[t] - P.bb.lo[t]) || 1e-12) : null; // %B
+    let squeezeRelease = false;
+    if (t > 5) { const prevBbp = pctRank(P.bbw, t - 3, 150); squeezeRelease = prevBbp != null && prevBbp < 20 && ratio > 1.15; }
+    return { atr: a, atrPct: a / c * 100, ratio, state, regime, bbp, pctB: pos, squeezeRelease, bbUp: P.bb.up[t], bbLo: P.bb.lo[t] };
+  }
+
+  /*
+   * analyze(P, t, ctx)
+   * ctx: { htf, deriv, book{imb,spreadPct}, flow{imb,absorption,largeNet,cvdTrend}, cost{takerPct,spreadPct,slipPct},
+   *        minScore, allowTrend, allowRange, liveAnoms[] }
+   */
+  function analyze(P, t, ctx = {}) {
+    const c = P.c[t], a = P.atr[t];
+    if (t < 210 || N(a) || N(P.e200[t]) || N(P.adx[t]) || N(P.macd.hist[t - 1]) || N(P.rocAcc[t])) return { dir: 0, rawDir: 0, ready: false, decision: 'NO TRADE' };
+    const L = [], S = [], info = [], catL = {}, catS = {};
+    CATS.forEach(k => { catL[k] = 0; catS[k] = 0; });
+    const add = (side, cat, p, txt) => { if (side > 0) { catL[cat] += p; L.push([p, txt, cat]); } else { catS[cat] += p; S.push([p, txt, cat]); } };
+
+    const adxv = P.adx[t], vola = volatilityAt(P, t);
+    let regime = adxv >= 25 ? 'trend' : (adxv < 20 ? 'range' : 'transition');
+    const st = structureAt(P, t), htf = htfTrendAt(ctx.htf, P.k[t].ct);
+    const lv = levelsAt(P, t, a), zn = zonesAt(P, t, a), vp = volumeProfile(P, t), cd = candle(P, t), dv = divergence(P, st, t), cdv = cvdDivergence(P, t);
+    const r = P.rsi[t], rPrev = P.rsi[t - 1], mh = P.macd.hist[t], mhp = P.macd.hist[t - 1];
+    const roc = P.roc[t], racc = P.rocAcc[t], vz = P.volZ[t] || 0, pr = P.pr20[t] || 0;
+    const sup = lv.filter(x => x.price < c).sort((x, y) => y.price - x.price)[0] || null;
+    const res = lv.filter(x => x.price > c).sort((x, y) => x.price - y.price)[0] || null;
+    const inDem = zn.demand.find(z => c >= z.lo - 0.3 * a && P.l[t] <= z.hi + 0.3 * a);
+    const inSup = zn.supply.find(z => c <= z.hi + 0.3 * a && P.h[t] >= z.lo - 0.3 * a);
+    const nearSup = sup && (c - sup.price) < 0.6 * a, nearRes = res && (res.price - c) < 0.6 * a;
+    let fib = null;
+    if (st.lastH && st.lastL) {
+      const hi = st.lastH.p, lo = st.lastL.p, rng = hi - lo;
+      if (rng > 0) fib = { hi, lo, ret: st.lastL.i < st.lastH.i ? (hi - c) / rng : (c - lo) / rng, upSwing: st.lastL.i < st.lastH.i };
+    }
+    const inGolden = fib && fib.ret >= 0.382 && fib.ret <= 0.786;
+
+    // ================= TECHNICAL =================
+    if (regime !== 'range') {
+      if (c > P.e50[t] && P.e50[t] > P.e200[t]) add(1, 'tech', 2, 'EMA 50 > EMA 200, գինը EMA 50-ից վեր — աճող թրենդ');
+      if (c < P.e50[t] && P.e50[t] < P.e200[t]) add(-1, 'tech', 2, 'EMA 50 < EMA 200, գինը EMA 50-ից ցածր — նվազող թրենդ');
+      if (htf === 1) { add(1, 'tech', 2, 'Բարձր թայմֆրեյմի թրենդը աճող է'); add(-1, 'tech', -3, 'Դեմ ես գնում բարձր TF-ի աճող թրենդին'); }
+      if (htf === -1) { add(-1, 'tech', 2, 'Բարձր թայմֆրեյմի թրենդը նվազող է'); add(1, 'tech', -3, 'Դեմ ես գնում բարձր TF-ի նվազող թրենդին'); }
+      if (st.trend === 1) add(1, 'tech', 1.5, 'Market Structure՝ HH + HL');
+      if (st.trend === -1) add(-1, 'tech', 1.5, 'Market Structure՝ LH + LL');
+      const nearEma = Math.abs(c - P.e20[t]) < a || Math.abs(c - P.e50[t]) < a;
+      if (nearEma && P.e50[t] > P.e200[t]) add(1, 'tech', 1.5, 'Pullback դեպի EMA 20/50');
+      if (nearEma && P.e50[t] < P.e200[t]) add(-1, 'tech', 1.5, 'Pullback դեպի EMA 20/50');
+      if (inGolden && fib.upSwing) add(1, 'tech', 1, `Fibonacci ${(fib.ret * 100).toFixed(0)}% (0.382–0.786)`);
+      if (inGolden && !fib.upSwing) add(-1, 'tech', 1, `Fibonacci ${(fib.ret * 100).toFixed(0)}% (0.382–0.786)`);
+      if (r > 40 && r < 62 && r > rPrev) add(1, 'tech', 1, `RSI ${r.toFixed(0)} — վերականգնված, աճում է`);
+      if (r < 60 && r > 38 && r < rPrev) add(-1, 'tech', 1, `RSI ${r.toFixed(0)} — վերականգնված, նվազում է`);
+      if (r > 75) add(1, 'tech', -1.5, `RSI ${r.toFixed(0)} — գերգնված (FOMO ռիսկ)`);
+      if (r < 25) add(-1, 'tech', -1.5, `RSI ${r.toFixed(0)} — գերվաճառված, ուշ է վաճառելու համար`);
+      if (inDem) add(1, 'tech', 1.5, 'Գինը Demand գոտում է');
+      if (inSup) add(-1, 'tech', 1.5, 'Գինը Supply գոտում է');
+    } else {
+      if (nearSup || inDem || c < vp.val) add(1, 'tech', 2, 'Range-ի ներքևի եզր (support / demand / VAL)');
+      if (nearRes || inSup || c > vp.vah) add(-1, 'tech', 2, 'Range-ի վերևի եզր (resistance / supply / VAH)');
+      if (r < 35) add(1, 'tech', 1.5, `RSI ${r.toFixed(0)} — գերվաճառված range-ում`);
+      if (r > 65) add(-1, 'tech', 1.5, `RSI ${r.toFixed(0)} — գերգնված range-ում`);
+      if (nearRes) add(1, 'tech', -2, 'Մոտ է դիմադրությանը');
+      if (nearSup) add(-1, 'tech', -2, 'Մոտ է աջակցությանը');
+      if (htf === 1) add(-1, 'tech', -1, 'Բարձր TF-ը աճող է'); if (htf === -1) add(1, 'tech', -1, 'Բարձր TF-ը նվազող է');
+    }
+    if (st.event) add(st.event.dir, 'tech', st.event.type === 'BOS' ? 1.5 : 1, `${st.event.type} ${st.event.dir > 0 ? 'վերև' : 'ներքև'} (${fmt(st.event.level)})`);
+    if (cd && cd.dir !== 0) add(cd.dir, 'tech', regime === 'range' ? 1.5 : 1, `Մոմ՝ ${cd.name}`);
+    if (cd && cd.dir === 0) info.push(`Մոմ՝ ${cd.name} (անվճռականություն)`);
+    if (dv) add(dv, 'tech', 1.5, `${dv > 0 ? 'Bullish' : 'Bearish'} RSI divergence`);
+
+    // ================= MOMENTUM =================
+    const kRoc = (a / c * 100) * Math.sqrt(10) * 0.8;
+    if (mh > 0 && mh > mhp) add(1, 'mom', 1, 'MACD histogram դրական և աճում է');
+    if (mh < 0 && mh < mhp) add(-1, 'mom', 1, 'MACD histogram բացասական և նվազում է');
+    if (roc > 0 && racc > 0) add(1, 'mom', 1, `ROC(10) +${roc.toFixed(2)}% և արագանում է (acceleration)`);
+    if (roc < 0 && racc < 0) add(-1, 'mom', 1, `ROC(10) ${roc.toFixed(2)}% և արագանում է ներքև`);
+    const breakoutUp = P.hh20[t] != null && c > P.hh20[t], breakoutDn = P.ll20[t] != null && c < P.ll20[t];
+    if (breakoutUp && vz > 1.5) add(1, 'mom', 2, 'Breakout՝ 20 մոմի գագաթը կոտրվեց բարձր ծավալով');
+    if (breakoutDn && vz > 1.5) add(-1, 'mom', 2, 'Breakdown՝ 20 մոմի հատակը կոտրվեց բարձր ծավալով');
+    if ((breakoutUp || breakoutDn) && vz <= 0.5) info.push('Breakout առանց ծավալի — հնարավոր կեղծ կոտրում (fakeout)');
+    const pRoc = P.roc[t - 3];
+    if (pRoc != null && pRoc < -kRoc && racc > 0 && r < 40) add(1, 'mom', 1, 'Momentum Reversal՝ ուժեղ անկումից հետո իմպուլսը շրջվում է');
+    if (pRoc != null && pRoc > kRoc && racc < 0 && r > 60) add(-1, 'mom', 1, 'Momentum Reversal՝ ուժեղ աճից հետո իմպուլսը շրջվում է');
+    if (roc > 2.5 * kRoc) add(1, 'mom', -1, 'Իմպուլսը չափազանց երկար է — ուշ մուտք (chasing)');
+    if (roc < -2.5 * kRoc) add(-1, 'mom', -1, 'Իմպուլսը չափազանց երկար է — ուշ մուտք');
+
+    // ================= VOLUME =================
+    if (vz > 2 && c > P.o[t]) add(1, 'volu', 1, `Volume Spike ${vz.toFixed(1)}σ կանաչ մոմով`);
+    if (vz > 2 && c < P.o[t]) add(-1, 'volu', 1, `Volume Spike ${vz.toFixed(1)}σ կարմիր մոմով`);
+    if (pr > 0.06) add(1, 'volu', 1, `Buying Pressure՝ taker buy delta +${(pr * 100).toFixed(0)}% (20 մոմ)`);
+    if (pr < -0.06) add(-1, 'volu', 1, `Selling Pressure՝ taker sell delta ${(pr * 100).toFixed(0)}% (20 մոմ)`);
+    if (cdv === 1) add(1, 'volu', 1, 'CVD divergence՝ գինը նոր հատակ, CVD-ն՝ ոչ (վաճառքները թուլանում են)');
+    if (cdv === -1) add(-1, 'volu', 1, 'CVD divergence՝ գինը նոր գագաթ, CVD-ն՝ ոչ (գնումները թուլանում են)');
+    if (c > vp.poc) add(1, 'volu', 0.5, 'Գինը Volume Profile POC-ից վեր'); else add(-1, 'volu', 0.5, 'Գինը POC-ից ցածր');
+
+    // ================= VOLATILITY =================
+    if (vola.squeezeRelease && breakoutUp) add(1, 'vola', 1, 'Volatility Expansion squeeze-ից հետո՝ վերև');
+    if (vola.squeezeRelease && breakoutDn) add(-1, 'vola', 1, 'Volatility Expansion squeeze-ից հետո՝ ներքև');
+    if (vola.regime === 'high') { add(1, 'vola', -0.5, 'Բարձր տատանողականություն — աղմուկ'); add(-1, 'vola', -0.5, 'Բարձր տատանողականություն — աղմուկ'); }
+    if (vola.state === 'compression' && !st.event) info.push('Volatility Compression — սպասիր կոտրմանը');
+    if (vola.pctB != null && vola.pctB > 1.05 && regime === 'range') add(-1, 'vola', 1, 'Գինը Bollinger-ի վերին գծից դուրս range-ում');
+    if (vola.pctB != null && vola.pctB < -0.05 && regime === 'range') add(1, 'vola', 1, 'Գինը Bollinger-ի ստորին գծից դուրս range-ում');
+
+    // ================= ORDER FLOW / POSITIONING =================
+    const d = ctx.deriv;
+    if (d) {
+      if (d.funding != null) {
+        if (d.funding > 0.0005) { add(1, 'flow', -1.5, `Funding ${(d.funding * 100).toFixed(3)}% — Long Squeeze ռիսկ`); add(-1, 'flow', 0.5, 'Բարձր funding — long-երը ծանրաբեռնված են'); }
+        if (d.funding < -0.0003) { add(-1, 'flow', -1.5, `Funding ${(d.funding * 100).toFixed(3)}% — Short Squeeze ռիսկ`); add(1, 'flow', 0.5, 'Բացասական funding — short-երը ծանրաբեռնված են'); }
+      }
+      if (d.lsRatio != null) { if (d.lsRatio > 2.2) add(1, 'flow', -1, `Long/Short ${d.lsRatio.toFixed(2)} — ամբոխը long է`); if (d.lsRatio < 0.7) add(-1, 'flow', -1, `Long/Short ${d.lsRatio.toFixed(2)} — ամբոխը short է`); }
+      if (d.oiChange != null && d.priceChange != null) {
+        const oiU = d.oiChange > 0.02, oiD = d.oiChange < -0.02, pU = d.priceChange > 0.005, pD = d.priceChange < -0.005;
+        if (pU && oiU) add(1, 'flow', 1, 'Գին↑ + OI↑ — նոր long-եր');
+        if (pU && oiD) add(1, 'flow', -0.5, 'Գին↑ + OI↓ — short-երի փակում (թույլ)');
+        if (pD && oiU) add(-1, 'flow', 1, 'Գին↓ + OI↑ — նոր short-եր');
+        if (pD && oiD) add(-1, 'flow', -0.5, 'Գին↓ + OI↓ — long-երի լիկվիդացիա (թույլ)');
+      }
+    }
+    const b = ctx.book;
+    if (b && b.imb != null) { if (b.imb > 1.6) add(1, 'flow', 0.5, `Order Book՝ bid-երը ${b.imb.toFixed(1)}x`); if (b.imb < 1 / 1.6) add(-1, 'flow', 0.5, `Order Book՝ ask-երը ${(1 / b.imb).toFixed(1)}x`); }
+    const f = ctx.flow;
+    if (f) {
+      if (f.imb > 0.25) add(1, 'flow', 1, `Ագրեսիվ գնորդներ՝ market buy imbalance +${(f.imb * 100).toFixed(0)}% (60վ)`);
+      if (f.imb < -0.25) add(-1, 'flow', 1, `Ագրեսիվ վաճառողներ՝ market sell imbalance ${(f.imb * 100).toFixed(0)}% (60վ)`);
+      if (f.absorption === 1) add(1, 'flow', 1, 'Absorption՝ վաճառքները կլանվում են bid-ում, գինը չի ընկնում');
+      if (f.absorption === -1) add(-1, 'flow', 1, 'Absorption՝ գնումները կլանվում են ask-ում, գինը չի աճում');
+      if (f.largeNet > 0.5) add(1, 'flow', 0.5, 'Խոշոր market գնումներ (whales)');
+      if (f.largeNet < -0.5) add(-1, 'flow', 0.5, 'Խոշոր market վաճառքներ (whales)');
+    }
+
+    // ================= REGIME ADAPTATION (user-approved switches) =================
+    const regimeOff = (regime === 'range' && ctx.allowRange === false) || (regime !== 'range' && ctx.allowTrend === false);
+
+    const sum = (o) => CATS.reduce((s, k) => s + o[k], 0);
+    let ls = sum(catL), ss = sum(catS);
+    const minScore = ctx.minScore || 6.5;
+    const pick = () => (ls >= minScore && ls - ss >= 3) ? 1 : (ss >= minScore && ss - ls >= 3) ? -1 : 0;
+    let dir = pick();
+
+    // ---------- Levels (ATR + structure) & dynamic TP ----------
+    let entry = c, sl = null, tp1 = null, tp2 = null, rr = null, dynTP = false;
+    const calcLevels = (dd) => {
+      if (dd === 1) {
+        let s = st.lastL && st.lastL.p < c ? st.lastL.p - 0.25 * a : c - 1.5 * a;
+        if (entry - s < 0.8 * a) s = entry - 1.2 * a; if (entry - s > 3 * a) s = entry - 2 * a;
+        sl = s; const R = entry - sl; tp1 = entry + 1.5 * R;
+        const tgt = lv.filter(x => x.price > entry + 1.5 * R).sort((x, y) => x.price - y.price)[0];
+        tp2 = tgt ? Math.min(tgt.price - 0.1 * a, entry + 4 * R) : entry + 2.5 * R; if (tp2 < tp1) tp2 = entry + 2.5 * R;
+        if (catL.mom >= 2 && racc > 0 && adxv > P.adx[t - 3]) { const ext = entry + 3.5 * R; if (ext > tp2) { tp2 = ext; dynTP = true; } }
+        rr = (tp2 - entry) / R;
+      } else {
+        let s = st.lastH && st.lastH.p > c ? st.lastH.p + 0.25 * a : c + 1.5 * a;
+        if (s - entry < 0.8 * a) s = entry + 1.2 * a; if (s - entry > 3 * a) s = entry + 2 * a;
+        sl = s; const R = sl - entry; tp1 = entry - 1.5 * R;
+        const tgt = lv.filter(x => x.price < entry - 1.5 * R).sort((x, y) => y.price - x.price)[0];
+        tp2 = tgt ? Math.max(tgt.price + 0.1 * a, entry - 4 * R) : entry - 2.5 * R; if (tp2 > tp1) tp2 = entry - 2.5 * R;
+        if (catS.mom >= 2 && racc < 0 && adxv > P.adx[t - 3]) { const ext = entry - 3.5 * R; if (ext < tp2) { tp2 = ext; dynTP = true; } }
+        rr = (entry - tp2) / R;
+      }
+    };
+    if (dir) calcLevels(dir);
+
+    // ---------- Execution Cost Score (in R) ----------
+    let costR = null, costPct = null;
+    if (dir && ctx.cost) {
+      costPct = 2 * (ctx.cost.takerPct || 0) + (ctx.cost.spreadPct || 0) + (ctx.cost.slipPct || 0);
+      costR = (costPct / 100 * entry) / Math.abs(entry - sl);
+      if (costR > 0.2) { if (dir === 1) { ls -= 1; L.push([-1, `Կատարման ծախս ${costR.toFixed(2)}R — թանկ`, 'cost']); } else { ss -= 1; S.push([-1, `Կատարման ծախս ${costR.toFixed(2)}R — թանկ`, 'cost']); } }
+      const nd = pick(); if (nd !== dir) { dir = nd; if (dir) calcLevels(dir); }
+    }
+
+    // ---------- Risk Score (0 = safe, 100 = dangerous) ----------
+    const anoms = anomaliesAt(P, t).concat(ctx.liveAnoms || []);
+    const riskItems = [];
+    let risk = 0; const rk = (p, txt) => { risk += p; riskItems.push([p, txt]); };
+    if (vola.regime === 'high') rk(20, 'Բարձր տատանողականություն');
+    if (regime === 'transition') rk(10, 'Անցումային ռեժիմ (ADX 20–25)');
+    if (dir && ((dir === 1 && htf === -1) || (dir === -1 && htf === 1))) rk(20, 'Դեմ բարձր TF թրենդին');
+    if (dir && rr < 2) rk(10, `R:R 1:${rr.toFixed(2)}`);
+    if (b && b.spreadPct > 0.08) rk(15, 'Լայն spread');
+    for (const x of anoms) rk(x.sev === 'high' ? 50 : 15, x.type);
+    risk = Math.min(100, risk);
+
+    // ---------- Gates ----------
+    const block = [];
+    if (ctx.eventBlock) block.push('Կարևոր նորություն մոտ է (±30 րոպե)');
+    if (b && b.spreadPct != null && b.spreadPct > 0.15) block.push(`Spread-ը ${b.spreadPct.toFixed(2)}% — վատ իրացվելիություն`);
+    if (dir && rr < 1.5) block.push(`R:R = 1:${rr.toFixed(2)} — չափազանց ցածր`);
+    if (dir && costR != null && costR > 0.4) block.push(`Կատարման ծախսը ${costR.toFixed(2)}R — ուտում է edge-ը`);
+    if (risk >= 70) block.push(`Risk Score ${risk}/100 — չափազանց վտանգավոր`);
+    for (const x of anoms) if (x.sev === 'high') block.push(`Անոմալիա՝ ${x.type}`);
+    if (dir && regimeOff) block.push(`«${regime === 'range' ? 'Range' : 'Trend'}» ռեժիմն անջատված է կարգավորումներում`);
+
+    const final = block.length ? 0 : dir;
+    const top = Math.max(ls, ss);
+    const cats = {}; CATS.forEach(k => cats[k] = { L: catL[k], S: catS[k], net: catL[k] - catS[k], name: CAT_NAMES[k] });
+    return {
+      ready: true, dir: final, rawDir: dir, decision: final === 1 ? 'BUY' : final === -1 ? 'SELL' : 'NO TRADE',
+      longScore: ls, shortScore: ss, strength: Math.max(0, Math.min(100, Math.round((top / 16) * 100))),
+      cats, risk, riskItems, costR, costPct, anoms,
+      L, S, info, block, regime, vola, vol: vola.regime, adx: adxv, rsi: r, atr: a, htf, st, levels: lv, zones: zn, vp, fib, candle: cd, div: dv,
+      roc, racc, volZ: vz, pressure: pr, breakoutUp, breakoutDn,
+      entry, sl, tp1, tp2, rr, dynTP, sup, res, price: c, sizeMult: vola.regime === 'high' ? 0.5 : 1, t, time: P.k[t].ct
+    };
+  }
+
+  // ---------- Dynamic Exit Management for an open position ----------
+  // pos: {dir, entry, sl0, sl, tp1, tp2, openTime, partial, maxBars}
+  function managePosition(pos, P, opts = {}) {
+    const n = P.c.length, t = n - 1, price = opts.price ?? P.c[t], a = P.atr[t];
+    let i0 = P.k.findIndex(k => k.ct >= pos.openTime); if (i0 < 0) i0 = t;
+    const bars = t - i0 + 1;
+    let ext = pos.dir === 1 ? -Infinity : Infinity;
+    for (let j = i0; j <= t; j++) ext = pos.dir === 1 ? Math.max(ext, P.h[j]) : Math.min(ext, P.l[j]);
+    if (opts.price != null) ext = pos.dir === 1 ? Math.max(ext, price) : Math.min(ext, price);
+    const R = Math.abs(pos.entry - pos.sl0), actions = [];
+    const curR = pos.dir * (price - pos.entry) / R;
+    let sl = pos.sl, status = 'hold';
+    const hitTP1 = pos.dir === 1 ? ext >= pos.tp1 : ext <= pos.tp1;
+    if (!pos.partial && hitTP1) actions.push({ lvl: 'ok', txt: `TP1 հասավ — փակիր 50% (Partial Take Profit) և Stop-ը տեղափոխիր Break-Even՝ ${fmt(pos.entry)}`, act: 'partial' });
+    if (pos.partial || hitTP1) {
+      const be = pos.entry, trail = pos.dir === 1 ? ext - 2.5 * a : ext + 2.5 * a;
+      const nsl = pos.dir === 1 ? Math.max(sl, be, trail) : Math.min(sl, be, trail);
+      if (nsl !== sl) { actions.push({ lvl: 'info', txt: `Trailing Stop (Chandelier 2.5 ATR)՝ նոր Stop ${fmt(nsl)}` }); sl = nsl; }
+    } else if (curR >= 1) {
+      actions.push({ lvl: 'info', txt: 'Գինը +1R է — կարող ես Stop-ը մոտեցնել −0.5R-ի' });
+    }
+    const hitSL = pos.dir === 1 ? price <= sl : price >= sl;
+    const hitTP2 = pos.dir === 1 ? price >= pos.tp2 : price <= pos.tp2;
+    if (hitSL) { status = 'exit'; actions.unshift({ lvl: 'bad', txt: `Գինը Stop-ում է (${fmt(sl)}) — փակիր դիրքը` }); }
+    if (hitTP2) { status = 'exit'; actions.unshift({ lvl: 'ok', txt: `TP2 հասավ (${fmt(pos.tp2)}) — փակիր մնացածը` }); }
+    const maxBars = pos.maxBars || 48;
+    if (bars >= maxBars && status === 'hold') { status = 'exit'; actions.push({ lvl: 'warn', txt: `Time-Based Exit՝ ${bars} մոմ անցավ, գործարքը չի աշխատել — փակիր` }); }
+    // Dynamic TP: momentum fading after partial
+    if ((pos.partial || hitTP1) && pos.dir * P.rocAcc[t] < 0 && pos.dir * (P.c[t] - P.o[t]) < 0 && P.volZ[t] > 1)
+      actions.push({ lvl: 'warn', txt: 'Dynamic TP՝ իմպուլսը թուլանում է հակառակ ծավալով — դիտարկիր փակել մնացածը' });
+    // Emergency exit
+    const an = anomaliesAt(P, t).concat(opts.liveAnoms || []).filter(x => x.sev === 'high');
+    if (an.length) { status = 'emergency'; actions.unshift({ lvl: 'bad', txt: `🚨 EMERGENCY EXIT՝ ${an.map(x => x.type).join(', ')}` }); }
+    if (opts.opposite && opts.opposite.dir === -pos.dir) { actions.unshift({ lvl: 'bad', txt: `🚨 Ուժեղ հակառակ սիգնալ (${opts.opposite.decision}) — Emergency Exit` }); status = 'emergency'; }
+    return { sl, curR, bars, ext, actions, status, price };
+  }
+
+  // ---------- Backtest with the SAME analyze() ----------
+  function backtest(P, ctx, opt = {}) {
+    const fee = opt.fee ?? 0.001, slip = opt.slip ?? 0.0002, maxHold = opt.maxHold ?? 48, trades = [];
+    const tS = Math.max(211, opt.tStart ?? 211), tE = Math.min(P.c.length - 2, opt.tEnd ?? P.c.length - 2);
+    let t = tS;
+    while (t < tE) {
+      const s = analyze(P, t, { htf: ctx.htf, minScore: ctx.minScore, allowRange: ctx.allowRange, allowTrend: ctx.allowTrend, cost: ctx.cost });
+      if (!s.ready || s.dir === 0) { t++; continue; }
+      const d = s.dir, e = P.o[t + 1] * (1 + d * slip);
+      if ((d === 1 && e <= s.sl) || (d === -1 && e >= s.sl)) { t++; continue; }
+      const R = Math.abs(e - s.sl); let res = null, half = false, j = t + 1, slNow = s.sl, ext = e;
+      const r1 = Math.abs(s.tp1 - e) / R;
+      for (; j < P.c.length && j <= t + maxHold; j++) {
+        const hi = P.h[j], lo = P.l[j];
+        if (d === 1 ? lo <= slNow : hi >= slNow) { res = half ? 0.5 * r1 + 0.5 * d * (slNow - e) / R : -1 - slip * e / R; break; }
+        if (!half && (d === 1 ? hi >= s.tp1 : lo <= s.tp1)) { half = true; slNow = e; }
+        if (half && (d === 1 ? hi >= s.tp2 : lo <= s.tp2)) { res = 0.5 * r1 + 0.5 * Math.abs(s.tp2 - e) / R; break; }
+        if (half) { ext = d === 1 ? Math.max(ext, hi) : Math.min(ext, lo); const tr = d === 1 ? ext - 2.5 * P.atr[j] : ext + 2.5 * P.atr[j]; slNow = d === 1 ? Math.max(slNow, tr) : Math.min(slNow, tr); }
+      }
+      if (res === null) { j = Math.min(j, P.c.length - 1); const open = d * (P.c[j] - e) / R; res = half ? 0.5 * r1 + 0.5 * open : open; }
+      res -= (e * fee * 2) / R;
+      trades.push({ t: t + 1, exit: j, dir: d, r: res, time: P.k[t + 1].t, regime: s.regime });
+      t = j + 1;
+    }
+    return { trades, stats: stats(trades.map(x => x.r)) };
+  }
+
+  function stats(rs) {
+    const n = rs.length; if (!n) return { n: 0, win: 0, pf: 0, exp: 0, total: 0, maxDD: 0 };
+    const w = rs.filter(r => r > 0), l = rs.filter(r => r <= 0);
+    const gp = w.reduce((a, b) => a + b, 0), gl = -l.reduce((a, b) => a + b, 0);
+    let eq = 0, peak = 0, dd = 0; for (const r of rs) { eq += r; peak = Math.max(peak, eq); dd = Math.max(dd, peak - eq); }
+    return { n, win: w.length / n, pf: gl ? gp / gl : Infinity, exp: eq / n, total: eq, maxDD: dd };
+  }
+
+  // ---------- Adaptive Strategy Engine: walk-forward, OOS, regimes, drift ----------
+  function walkForward(P, ctx, opt = {}) {
+    const n = P.c.length, userMin = ctx.minScore || 6.5;
+    const full = backtest(P, ctx, opt);
+    // sequential folds
+    const folds = [], k = 4, span = Math.floor((n - 211) / k);
+    for (let f = 0; f < k; f++) {
+      const b = backtest(P, ctx, { ...opt, tStart: 211 + f * span, tEnd: 211 + (f + 1) * span });
+      folds.push({ from: P.k[211 + f * span].t, ...b.stats });
+    }
+    // IS/OOS: choose minScore on first 70%, test unchanged on last 30%
+    const cut = Math.floor(211 + (n - 211) * 0.7), grid = [5.5, 6, 6.5, 7, 7.5, 8];
+    const isRes = grid.map(m => ({ m, s: backtest(P, { ...ctx, minScore: m }, { ...opt, tEnd: cut }).stats }));
+    const eligible = isRes.filter(x => x.s.n >= 8);
+    const best = (eligible.length ? eligible : isRes).reduce((a, b) => b.s.exp > a.s.exp ? b : a);
+    const oosBest = backtest(P, { ...ctx, minScore: best.m }, { ...opt, tStart: cut }).stats;
+    const oosUser = backtest(P, ctx, { ...opt, tStart: cut }).stats;
+    const isUser = backtest(P, ctx, { ...opt, tEnd: cut }).stats;
+    // regime performance
+    const regimes = {};
+    for (const r of ['trend', 'transition', 'range']) regimes[r] = stats(full.trades.filter(x => x.regime === r).map(x => x.r));
+    // concept drift: recent window vs history
+    const rs = full.trades.map(x => x.r), w = Math.min(10, Math.floor(rs.length / 3));
+    let drift = null;
+    if (w >= 5) {
+      const recent = stats(rs.slice(-w)), past = stats(rs.slice(0, -w));
+      drift = { recent, past, flag: (past.exp > 0 && recent.exp < 0) || (past.win - recent.win > 0.2) };
+    }
+    return { full, folds, isRes, best, oosBest, oosUser, isUser, cutTime: P.k[cut].t, regimes, drift };
+  }
+
+  function riskOfRuin(rs, riskPct, sims = 2000, len = 200) {
+    if (rs.length < 5) return null; let ruin = 0, ddSum = 0;
+    for (let s = 0; s < sims; s++) {
+      let eq = 1, peak = 1, dd = 0;
+      for (let i = 0; i < len; i++) { eq *= 1 + rs[(Math.random() * rs.length) | 0] * riskPct; peak = Math.max(peak, eq); dd = Math.max(dd, 1 - eq / peak); if (eq <= 0.5) { ruin++; break; } }
+      ddSum += dd;
+    }
+    return { ruin: ruin / sims, avgDD: ddSum / sims };
+  }
+
+  // ---------- Smart Order Execution ----------
+  // book: {bids:[[p,q]], asks:[[p,q]]}; fees in %
+  function executionPlan(sig, qty, book, o) {
+    if (!book || !book.bids || !book.bids.length || !sig.rawDir) return null;
+    const side = sig.rawDir === 1 ? book.asks : book.bids, opp = sig.rawDir === 1 ? book.bids : book.asks;
+    const best = +side[0][0], bestOpp = +opp[0][0], mid = (best + bestOpp) / 2;
+    let left = qty, cost = 0, levels = 0;
+    for (const [p, q] of side) { if (left <= 0) break; const take = Math.min(left, +q); cost += take * +p; left -= take; levels++; }
+    const filled = qty - left, avg = filled ? cost / filled : best, fillPct = qty ? filled / qty : 0;
+    const slipBps = Math.abs(avg - mid) / mid * 1e4;
+    const topDepth = side.slice(0, 5).reduce((a, x) => a + +x[1], 0);
+    const R = Math.abs(sig.entry - sig.sl);
+    const takerCost = (o.taker / 100) * avg * qty + Math.abs(avg - mid) * qty;
+    const makerCost = (o.maker / 100) * bestOpp * qty;
+    const momentum = sig.breakoutUp || sig.breakoutDn || (sig.cats && Math.abs(sig.cats.mom.net) >= 2);
+    let rec, why, chunks = 1;
+    if (fillPct < 1) { rec = 'REDUCE'; why = `Order book-ի ${book.asks.length} մակարդակում բավարար իրացվելիություն չկա (կլցվի ${(fillPct * 100).toFixed(0)}%) — Partial Fill ռիսկ։ Փոքրացրու չափը։`; }
+    else if (slipBps > 2 * o.maxSlipBps) { rec = 'NO TRADE'; why = `Սպասվող slippage ${slipBps.toFixed(1)} bps > 2× սահման (${o.maxSlipBps})։`; }
+    else if (slipBps > o.maxSlipBps || qty > topDepth * 0.3) { chunks = Math.min(10, Math.ceil(qty / (topDepth * 0.2 || qty))); rec = 'SPLIT'; why = `Մեծ պատվեր top-5 խորության համեմատ — բաժանիր ${chunks} մասի (5–15վ ընդմիջումով) slippage-ը վերահսկելու համար։`; }
+    else if (momentum) { rec = 'MARKET'; why = 'Իմպուլս/breakout — կարևոր է կատարման արագությունը, limit-ը կարող է չլցվել։ Market կամ IOC limit ask-ում։'; }
+    else { rec = 'LIMIT'; why = 'Pullback մուտք — դիր Limit (maker), խնայում ես միջնորդավճարը և spread-ը։'; }
+    const limitPrice = sig.rawDir === 1 ? Math.min(bestOpp, sig.entry - 0.1 * sig.atr) : Math.max(bestOpp, sig.entry + 0.1 * sig.atr);
+    return {
+      best, bestOpp, mid, avg, slipBps, fillPct, levels, takerCost, makerCost, saving: takerCost - makerCost, savingR: (takerCost - makerCost) / (R * qty),
+      rec, why, chunks, limitPrice,
+      cancelRule: `Չեղարկիր limit-ը, եթե չի լցվել 3 մոմում կամ գինը մուտքից հեռացել է ${fmt(0.5 * sig.atr)}-ով (0.5 ATR) — մի վազիր գնի հետևից։`
+    };
+  }
+
+  // ---------- Arbitrage math ----------
+  function triangular(book, feePct, bases = ['BTC', 'ETH', 'BNB']) {
+    // book: map symbol -> {b, a, bq, aq}
+    const f = 1 - feePct / 100, out = [];
+    const coins = new Set(Object.keys(book).filter(s => s.endsWith('USDT')).map(s => s.slice(0, -4)));
+    for (const A of bases) {
+      const AU = book[A + 'USDT']; if (!AU) continue;
+      for (const X of coins) {
+        if (X === A) continue; const XA = book[X + A], XU = book[X + 'USDT']; if (!XA || !XU || !XA.a || !XA.b) continue;
+        const p1 = (1 / AU.a) * f / XA.a * f * XU.b * f;          // USDT→A→X→USDT
+        const p2 = (1 / XU.a) * f * XA.b * f * AU.b * f;          // USDT→X→A→USDT
+        const cap1 = Math.min(AU.aq * AU.a, XA.aq * XA.a * AU.a, XU.bq * XU.b);
+        const cap2 = Math.min(XU.aq * XU.a, XA.bq * XA.b * AU.b, AU.bq * AU.b);
+        out.push({ path: `USDT→${A}→${X}→USDT`, net: (p1 - 1) * 100, gross: ((p1 / f ** 3) - 1) * 100, cap: cap1 });
+        out.push({ path: `USDT→${X}→${A}→USDT`, net: (p2 - 1) * 100, gross: ((p2 / f ** 3) - 1) * 100, cap: cap2 });
+      }
+    }
+    return out.sort((a, b) => b.net - a.net);
+  }
+
+  function fmt(x) {
+    if (x == null || !isFinite(x)) return '—';
+    const ax = Math.abs(x); const d = ax >= 1000 ? 2 : ax >= 1 ? 4 : ax >= 0.01 ? 5 : 8;
+    return x.toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: Math.min(2, d) });
+  }
+
+  return { precompute, analyze, backtest, walkForward, stats, riskOfRuin, managePosition, executionPlan, triangular, anomaliesAt, volatilityAt, fmt, atr, CATS, CAT_NAMES };
+})();
+
+
+</script>
+<script>
+// =====================================================================
+//  DATA LAYER — REST with timeout (no AbortSignal: works in sandboxed viewers), XHR fallback, health tracking
+// =====================================================================
+const SPOT = ['https://api.binance.com', 'https://data-api.binance.vision'];
+const FUT = 'https://fapi.binance.com';
+const HTF = { '15m': '1h', '1h': '4h', '4h': '1d', '1d': '1w' };
+const TF_MS = { '1m': 6e4, '15m': 9e5, '1h': 36e5, '4h': 144e5, '1d': 864e5, '1w': 6048e5 };
+const $ = (id) => document.getElementById(id);
+const fmt = ENG.fmt;
+const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const kv = (label, val, cls = '') => `<div class="kv"><span>${label}</span><b class="${cls}">${val}</b></div>`;
+const pc = (x, d = 1) => x == null || !isFinite(x) ? '—' : (x * 100).toFixed(d) + '%';
+
+const HEALTH = { restRtt: null, restErrs: 0, lastRestErr: null, lastRestOk: 0, ws: 'off', wsLag: null, wsLastMsg: 0, reconnects: 0, offset: 0, blocked: false };
+
+function xhrJSON(url) {
+  return new Promise((res, rej) => {
+    try {
+      const x = new XMLHttpRequest(); x.open('GET', url); x.timeout = 12000;
+      x.onload = () => { if (x.status >= 200 && x.status < 300) { try { res(JSON.parse(x.responseText)); } catch (e) { rej(e); } } else rej(new Error('HTTP ' + x.status)); };
+      x.onerror = () => rej(new Error('Ցանցային հարցումն արգելված է')); x.ontimeout = () => rej(new Error('Timeout'));
+      x.send();
+    } catch (e) { rej(e); }
+  });
+}
+async function fetchJSON(url) {
+  try { const r = await fetch(url, { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
+  catch (e) { if (/^HTTP/.test(e.message)) throw e; return await xhrJSON(url); }
+}
+async function getJSON(url, timeout = 12000) {
+  const t0 = performance.now();
+  try {
+    const data = await Promise.race([fetchJSON(url), new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout')), timeout))]);
+    const dt = performance.now() - t0;
+    HEALTH.restRtt = HEALTH.restRtt == null ? dt : 0.8 * HEALTH.restRtt + 0.2 * dt; HEALTH.restErrs = 0; HEALTH.lastRestOk = Date.now(); HEALTH.blocked = false;
+    return data;
+  } catch (e) { HEALTH.restErrs++; HEALTH.lastRestErr = e.message; throw e; }
+}
+async function spot(path) { let err; for (const base of SPOT) { try { return await getJSON(base + path); } catch (e) { err = e; } } throw err; }
+async function klines(sym, tf, limit = 1000) {
+  const raw = await spot(`/api/v3/klines?symbol=${sym}&interval=${tf}&limit=${limit}`);
+  const now = Date.now() + HEALTH.offset;
+  return raw.filter(x => x[6] < now).map(x => ({ t: x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5], ct: x[6], tb: +x[9] }));
+}
+async function bookData(sym) {
+  try {
+    const d = await spot(`/api/v3/depth?symbol=${sym}&limit=100`);
+    return bookStats(d.bids, d.asks);
+  } catch (e) { return null; }
+}
+function bookStats(bids, asks) {
+  bids = bids.map(x => [+x[0], +x[1]]); asks = asks.map(x => [+x[0], +x[1]]);
+  const bid = bids[0][0], ask = asks[0][0], mid = (bid + ask) / 2;
+  const near = (arr) => arr.filter(x => Math.abs(x[0] - mid) / mid < 0.005).reduce((a, x) => a + x[1] * x[0], 0);
+  const bv = near(bids), av = near(asks);
+  return { bids, asks, bid, ask, mid, spreadPct: (ask - bid) / mid * 100, imb: av ? bv / av : null, bv, av };
+}
+async function derivData(sym) {
+  const out = { funding: null, mark: null, index: null, lsRatio: null, oiChange: null, priceChange: null, oi: null, ok: false };
+  try { const p = await getJSON(`${FUT}/fapi/v1/premiumIndex?symbol=${sym}`); out.funding = +p.lastFundingRate; out.mark = +p.markPrice; out.index = +p.indexPrice; out.ok = true; } catch (e) {}
+  if (!out.ok) return out;
+  try { const ls = await getJSON(`${FUT}/futures/data/globalLongShortAccountRatio?symbol=${sym}&period=1h&limit=1`); if (ls[0]) out.lsRatio = +ls[0].longShortRatio; } catch (e) {}
+  try {
+    const oi = await getJSON(`${FUT}/futures/data/openInterestHist?symbol=${sym}&period=1h&limit=25`);
+    if (oi.length > 2) { const a = +oi[0].sumOpenInterest, b = +oi[oi.length - 1].sumOpenInterest; out.oiChange = (b - a) / a; out.oi = +oi[oi.length - 1].sumOpenInterestValue; }
+  } catch (e) {}
+  return out;
+}
+async function syncTime() { try { const t0 = Date.now(); const r = await spot('/api/v3/time'); HEALTH.offset = r.serverTime - (t0 + Date.now()) / 2; } catch (e) {} }
+
+// =====================================================================
+//  SETTINGS / STORAGE
+// =====================================================================
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('sb2_' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('sb2_' + k, JSON.stringify(v)); } catch (e) {} }
+};
+const DEF = { bal: 1000, risk: 1, lev: 5, dayLoss: 3, dayMax: 4, maxConsec: 3, cooldown: 60, maxOpen: 3, maxExp: 300, stale: 15, maxLat: 3000,
+  maker: 0.02, taker: 0.05, slip: 10, arbFee: 0.1, min: 6.5, allowTrend: true, allowRange: true, kill: false,
+  syms: 'BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT,DOGEUSDT,ADAUSDT,LINKUSDT,AVAXUSDT' };
+let S = Object.assign({}, DEF, store.get('settings', {}));
+let EVENTS = store.get('events', []), JOURNAL = store.get('journal', []), POSITIONS = store.get('positions', []), SIGLOG = store.get('siglog', []), BTREF = store.get('btref', {});
+const symList = () => S.syms.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+const FIELDS = { sBal: 'bal', sRisk: 'risk', sLev: 'lev', sDayLoss: 'dayLoss', sDayMax: 'dayMax', sMaxConsec: 'maxConsec', sCooldown: 'cooldown', sMaxOpen: 'maxOpen', sMaxExp: 'maxExp', sStale: 'stale', sMaxLat: 'maxLat', sMaker: 'maker', sTaker: 'taker', sSlip: 'slip', sArbFee: 'arbFee', sMin: 'min' };
+function loadSettingsUI() {
+  for (const [id, k] of Object.entries(FIELDS)) $(id).value = S[k];
+  $('sSyms').value = S.syms; $('sAllowTrend').checked = S.allowTrend; $('sAllowRange').checked = S.allowRange;
+  const opts = symList().map(s => `<option>${s}</option>`).join('');
+  for (const id of ['sym', 'btSym', 'flowSym']) { const v = $(id).value; $(id).innerHTML = opts; if (v && symList().includes(v)) $(id).value = v; }
+  renderEvents(); renderKill();
+}
+$('sSave').onclick = () => {
+  for (const [id, k] of Object.entries(FIELDS)) { const v = parseFloat($(id).value); if (!isNaN(v)) S[k] = v; }
+  S.lev = Math.max(1, S.lev); S.syms = $('sSyms').value; S.allowTrend = $('sAllowTrend').checked; S.allowRange = $('sAllowRange').checked;
+  store.set('settings', S); loadSettingsUI(); $('sSaved').textContent = '✓ Պահված է'; setTimeout(() => $('sSaved').textContent = '', 2000);
+};
+function renderKill() {
+  $('kill').classList.toggle('on', !!S.kill); $('kill').textContent = S.kill ? '🛑 STOP ON' : '🛑 STOP';
+  $('killBanner').innerHTML = S.kill ? '<div class="warn bad">🛑 EMERGENCY STOP միացված է — բոլոր սիգնալները արգելափակված են։ Անջատելու համար սեղմիր նորից։</div>' : '';
+}
+$('kill').onclick = () => { S.kill = !S.kill; store.set('settings', S); renderKill(); };
+
+// ----- economic calendar -----
+function todayKey() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+function renderEvents() {
+  EVENTS = EVENTS.filter(e => e.day === todayKey());
+  $('evList').innerHTML = EVENTS.length ? EVENTS.map((e, i) => `<span class="tag">🗓 ${e.time} — ${esc(e.name)} <a href="#" data-i="${i}" style="color:var(--r)">✕</a></span>`).join('') : '<span class="note">Այսօր նշված իրադարձություն չկա։</span>';
+  $('evList').querySelectorAll('a').forEach(a => a.onclick = (ev) => { ev.preventDefault(); EVENTS.splice(+a.dataset.i, 1); store.set('events', EVENTS); renderEvents(); });
+}
+$('evAdd').onclick = () => { if (!$('evTime').value) return; EVENTS.push({ name: $('evName').value || 'News', time: $('evTime').value, day: todayKey() }); store.set('events', EVENTS); $('evName').value = ''; renderEvents(); };
+function eventBlock() {
+  const now = new Date();
+  for (const e of EVENTS) { if (e.day !== todayKey()) continue; const [h, m] = e.time.split(':').map(Number); const t = new Date(); t.setHours(h, m, 0, 0); if (Math.abs(now - t) <= 30 * 60000) return e; }
+  return null;
+}
+
+// =====================================================================
+//  REAL-TIME ORDER FLOW — WebSocket (event-driven) with reconnect + REST polling fallback
+// =====================================================================
+const LIVE = { sym: null, ws: null, poll: null, wsFails: 0, trades: [], cvd: 0, cvdSeries: [], depth: null, liqAvg: null, liqN: 0, liqNow: 0,
+  walls: new Map(), spoof: [], large: [], largeThr: 25000, price: null, priceHist: [], atr1m: null, flow: null, anoms: [], lastAggId: 0, book: null, wallsNow: [] };
+const BUS = { h: {}, on(e, f) { (this.h[e] = this.h[e] || []).push(f); }, emit(e, d) { (this.h[e] || []).forEach(f => { try { f(d); } catch (x) { console.log(x); } }); } };
+
+function stopLive() {
+  const ws = LIVE.ws; LIVE.ws = null; if (ws) { try { ws.close(); } catch (e) {} }
+  clearInterval(LIVE.poll); LIVE.poll = null; HEALTH.ws = 'off';
+}
+function startLive(sym) {
+  if (LIVE.sym === sym && (LIVE.ws || LIVE.poll)) return;
+  stopLive();
+  Object.assign(LIVE, { sym, wsFails: 0, trades: [], cvd: 0, cvdSeries: [], depth: null, liqAvg: null, liqN: 0, walls: new Map(), spoof: [], large: [], price: null, priceHist: [], flow: null, anoms: [], lastAggId: 0, book: null, wallsNow: [] });
+  klines(sym, '1m', 120).then(k => { const a = ENG.atr(k.map(x => x.h), k.map(x => x.l), k.map(x => x.c)); LIVE.atr1m = a[a.length - 1]; LIVE.atr1mPct = LIVE.atr1m / k[k.length - 1].c * 100; }).catch(() => {});
+  connectWS();
+}
+function connectWS() {
+  const s = LIVE.sym.toLowerCase(); let ws;
+  HEALTH.ws = 'connecting';
+  try { ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${s}@aggTrade/${s}@depth20@100ms`); }
+  catch (e) { return wsFail(); }
+  LIVE.ws = ws;
+  ws.onopen = () => { if (LIVE.ws !== ws) return; HEALTH.ws = 'live'; LIVE.wsFails = 0; };
+  ws.onmessage = (ev) => {
+    if (LIVE.ws !== ws) return; HEALTH.wsLastMsg = Date.now();
+    let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+    const d = m.data || m;
+    if (d.e === 'aggTrade') BUS.emit('trade', { p: +d.p, q: +d.q, buy: !d.m, T: d.T, E: d.E });
+    else if (d.bids) BUS.emit('depth', { bids: d.bids, asks: d.asks });
+  };
+  ws.onclose = () => { if (LIVE.ws !== ws) return; LIVE.ws = null; HEALTH.ws = 'reconnecting'; wsFail(); };
+  ws.onerror = () => { try { ws.close(); } catch (e) {} };
+}
+function wsFail() {
+  LIVE.wsFails++; HEALTH.reconnects++;
+  if (LIVE.wsFails >= 3) { startPolling(); return; }
+  const delay = Math.min(30000, 1000 * 2 ** LIVE.wsFails);
+  setTimeout(() => { if (LIVE.sym && !LIVE.ws && !LIVE.poll) connectWS(); }, delay);
+}
+function startPolling() {
+  if (LIVE.poll) return; HEALTH.ws = 'REST polling';
+  const sym = LIVE.sym;
+  const tick = async () => {
+    if (LIVE.sym !== sym) return;
+    try {
+      const tr = await spot(`/api/v3/aggTrades?symbol=${sym}&limit=300`);
+      for (const t of tr) if (t.a > LIVE.lastAggId) { LIVE.lastAggId = t.a; BUS.emit('trade', { p: +t.p, q: +t.q, buy: !t.m, T: t.T, E: null }); }
+      const d = await spot(`/api/v3/depth?symbol=${sym}&limit=20`); BUS.emit('depth', d); HEALTH.wsLastMsg = Date.now();
+    } catch (e) {}
+  };
+  tick(); LIVE.poll = setInterval(tick, 3000);
+}
+// ---- event handlers ----
+BUS.on('trade', (x) => {
+  const n = x.p * x.q; LIVE.price = x.p;
+  if (x.E) { const lag = (Date.now() + HEALTH.offset) - x.E; HEALTH.wsLag = HEALTH.wsLag == null ? lag : 0.9 * HEALTH.wsLag + 0.1 * lag; }
+  LIVE.trades.push({ t: x.T, p: x.p, q: x.q, buy: x.buy, n });
+  LIVE.cvd += x.buy ? x.q : -x.q;
+  if (n >= LIVE.largeThr) { LIVE.large.unshift({ t: x.T, p: x.p, q: x.q, buy: x.buy, n }); if (LIVE.large.length > 40) LIVE.large.pop(); }
+});
+BUS.on('depth', (d) => {
+  const bids = d.bids.map(x => [+x[0], +x[1]]), asks = d.asks.map(x => [+x[0], +x[1]]); if (!bids.length || !asks.length) return;
+  const now = Date.now(); LIVE.depth = { bids, asks, t: now }; LIVE.book = bookStats(bids, asks);
+  const liq = bids.reduce((a, x) => a + x[0] * x[1], 0) + asks.reduce((a, x) => a + x[0] * x[1], 0);
+  LIVE.liqNow = liq; LIVE.liqAvg = LIVE.liqAvg == null ? liq : 0.98 * LIVE.liqAvg + 0.02 * liq; LIVE.liqN++;
+  // walls & spoofing-like detection
+  const qs = bids.concat(asks).map(x => x[1]).sort((a, b) => a - b), med = qs[Math.floor(qs.length / 2)] || 0;
+  const present = new Set(), wallsNow = [];
+  for (const [side, arr] of [['bid', bids], ['ask', asks]]) for (const [p, q] of arr) {
+    if (q > 6 * med && p * q > 20000) { const key = side + p; present.add(key); wallsNow.push({ side, p, q, x: q / med }); if (!LIVE.walls.has(key)) LIVE.walls.set(key, { side, p, q, first: now }); }
+  }
+  const minBid = bids[bids.length - 1][0], maxAsk = asks[asks.length - 1][0];
+  for (const [key, w] of LIVE.walls) {
+    if (present.has(key)) continue;
+    const visible = w.side === 'bid' ? w.p >= minBid : w.p <= maxAsk;
+    const untouched = LIVE.price == null || (w.side === 'bid' ? LIVE.price > w.p : LIVE.price < w.p);
+    if (visible && untouched && now - w.first < 10000) LIVE.spoof.push({ t: now, side: w.side, p: w.p, n: w.p * w.q });
+    LIVE.walls.delete(key);
+  }
+  LIVE.wallsNow = wallsNow.sort((a, b) => b.x - a.x).slice(0, 6);
+});
+// ---- 1-second processing loop (real-time metrics + live anomalies) ----
+function processLive() {
+  if (!LIVE.sym) return;
+  const now = Date.now();
+  LIVE.trades = LIVE.trades.filter(t => now - t.t < 300000 + Math.abs(HEALTH.offset));
+  LIVE.spoof = LIVE.spoof.filter(s => now - s.t < 60000);
+  const tnow = now + HEALTH.offset, w60 = LIVE.trades.filter(t => tnow - t.t <= 60000);
+  let B = 0, Sv = 0; for (const t of w60) t.buy ? B += t.n : Sv += t.n;
+  const tot5 = LIVE.trades.reduce((a, t) => a + t.n, 0), span = LIVE.trades.length ? (tnow - LIVE.trades[0].t) / 60000 : 0;
+  const avgMin = span > 2 ? tot5 / span : null;
+  const ns = LIVE.trades.map(t => t.n).sort((a, b) => a - b); if (ns.length > 50) LIVE.largeThr = Math.max(25000, 20 * ns[Math.floor(ns.length / 2)]);
+  const p60 = w60.length ? w60[0].p : LIVE.price, dp = LIVE.price != null && p60 != null ? LIVE.price - p60 : 0;
+  const a1 = LIVE.atr1m || (LIVE.price || 0) * 0.001;
+  let absorption = 0;
+  if (avgMin && B + Sv > 1.5 * avgMin) {
+    if (Sv / (B + Sv) > 0.6 && dp > -0.3 * a1) absorption = 1;
+    if (B / (B + Sv) > 0.6 && dp < 0.3 * a1) absorption = -1;
+  }
+  const L5 = LIVE.large.filter(x => tnow - x.t < 300000); let lb = 0, lsell = 0; for (const x of L5) x.buy ? lb += x.n : lsell += x.n;
+  LIVE.flow = { imb: B + Sv ? (B - Sv) / (B + Sv) : 0, B, S: Sv, absorption, largeNet: lb + lsell ? (lb - lsell) / (lb + lsell) : 0, avgMin, vol60: B + Sv };
+  LIVE.cvdSeries.push({ t: now, v: LIVE.cvd, p: LIVE.price }); if (LIVE.cvdSeries.length > 300) LIVE.cvdSeries.shift();
+  if (LIVE.price != null) { LIVE.priceHist.push({ t: now, p: LIVE.price }); LIVE.priceHist = LIVE.priceHist.filter(x => now - x.t < 65000); }
+  // live anomalies
+  const an = [];
+  if (LIVE.liqN > 50 && LIVE.liqNow < 0.5 * LIVE.liqAvg) an.push({ sev: 'high', type: 'Sudden Liquidity Drop', txt: `Order book-ի իրացվելիությունը ${pc(LIVE.liqNow / LIVE.liqAvg, 0)} է միջինից` });
+  if (LIVE.spoof.length >= 3) an.push({ sev: LIVE.spoof.length >= 6 ? 'high' : 'warn', type: 'Spoofing-like Pattern', txt: `${LIVE.spoof.length} խոշոր պատ անհետացավ <10վ-ում առանց կատարվելու (60վ)` });
+  const p10 = LIVE.priceHist.find(x => now - x.t <= 10000), p60h = LIVE.priceHist[0];
+  if (p10 && LIVE.atr1m && Math.abs(LIVE.price - p10.p) > 1.5 * LIVE.atr1m) an.push({ sev: 'warn', type: 'Sudden Price Movement', txt: `10վ-ում ${(Math.abs(LIVE.price - p10.p) / LIVE.atr1m).toFixed(1)} ATR(1m)` });
+  if (p60h && LIVE.atr1m && Math.abs(LIVE.price - p60h.p) > 4 * LIVE.atr1m) an.push({ sev: 'high', type: LIVE.price < p60h.p ? 'Flash Crash (live)' : 'Flash Pump (live)', txt: `60վ-ում ${(Math.abs(LIVE.price - p60h.p) / LIVE.atr1m).toFixed(1)} ATR(1m)` });
+  if (avgMin && B + Sv > 6 * avgMin) an.push({ sev: 'warn', type: 'Abnormal Volume (live)', txt: `60վ ծավալը ${((B + Sv) / avgMin).toFixed(1)}× միջինից` });
+  if (LIVE.wallsNow.some(w => w.x > 15)) an.push({ sev: 'info', type: 'Unusual Order Book Activity', txt: `Խոշոր պատ՝ ${LIVE.wallsNow[0].side} ${fmt(LIVE.wallsNow[0].p)} (${LIVE.wallsNow[0].x.toFixed(0)}× մեդիան)` });
+  LIVE.anoms = an;
+  BUS.emit('tick');
+}
+setInterval(processLive, 1000);
+
+// =====================================================================
+//  REAL-TIME RISK CONTROL — independent veto layer
+// =====================================================================
+function todayStats() {
+  const k = todayKey(); const t = JOURNAL.filter(j => j.day === k);
+  let consec = 0; for (let i = JOURNAL.length - 1; i >= 0 && JOURNAL[i].r < 0; i--) consec++;
+  return { n: t.length, r: t.reduce((a, b) => a + b.r, 0), consec };
+}
+const openPositions = () => POSITIONS.filter(p => p.status !== 'closed');
+function riskGuard(sig, sym, notional, dataTime, tf) {
+  const v = [], now = Date.now(), t = todayStats();
+  if (S.kill) v.push('🛑 Emergency Stop միացված է');
+  if (t.r <= -S.dayLoss) v.push(`Daily Loss Limit՝ այսօր ${t.r.toFixed(1)}R (սահման −${S.dayLoss}R)`);
+  if (t.n >= S.dayMax) v.push(`Overtrading՝ այսօր ${t.n} գործարք (սահման ${S.dayMax})`);
+  if (t.consec >= S.maxConsec) v.push(`Max Consecutive Losses՝ ${t.consec} անընդմեջ`);
+  const lastLoss = [...JOURNAL].reverse().find(j => j.r < 0);
+  if (lastLoss && now - lastLoss.ts < S.cooldown * 60000) v.push(`Cooldown՝ վնասից հետո դեռ ${Math.ceil((S.cooldown * 60000 - (now - lastLoss.ts)) / 60000)} րոպե`);
+  const op = openPositions();
+  if (op.length >= S.maxOpen) v.push(`Max Open Positions՝ ${op.length}/${S.maxOpen}`);
+  const exp = op.reduce((a, p) => a + p.qty * p.entry, 0);
+  if (notional && exp + notional > S.bal * S.maxExp / 100) v.push(`Max Exposure՝ ${((exp + notional) / S.bal * 100).toFixed(0)}% > ${S.maxExp}%`);
+  if (sig && sig.rawDir && op.some(p => p.sym === sym && p.dir === sig.rawDir)) v.push('Duplicate՝ այս ակտիվով նույն ուղղությամբ դիրք արդեն բաց է');
+  if (HEALTH.restErrs >= 3) v.push(`API Failure՝ REST-ը չի պատասխանում (${esc(HEALTH.lastRestErr || '')})`);
+  if (sym && LIVE.sym === sym && (HEALTH.ws === 'live' || HEALTH.ws === 'REST polling') && HEALTH.wsLastMsg && now - HEALTH.wsLastMsg > S.stale * 1000) v.push(`Stale data՝ հոսքը լուռ է ${((now - HEALTH.wsLastMsg) / 1000).toFixed(0)}վ`);
+  if (sym && HEALTH.wsLag != null && LIVE.sym === sym && HEALTH.wsLag > S.maxLat) v.push(`Latency ${HEALTH.wsLag.toFixed(0)} մվ > ${S.maxLat}`);
+  if (dataTime && tf && now + HEALTH.offset - dataTime > 2 * TF_MS[tf] + 60000) v.push('Մոմերի տվյալները հնացած են — թարմացրու');
+  const ev = eventBlock(); if (ev) v.push(`Նորություն՝ ${esc(ev.name)} ${ev.time} (±30 րոպե)`);
+  return v;
+}
+function finalDecision(sig, vetoes) { return sig.dir && !vetoes.length ? sig.decision : 'NO TRADE'; }
+
+// =====================================================================
+//  SIGNAL LOG — forward testing + duplicate protection + drift monitoring
+// =====================================================================
+function logSignal(sym, tf, sig) {
+  const id = `${sym}|${tf}|${sig.time}|${sig.dir}`;
+  if (SIGLOG.some(x => x.id === id)) return false; // duplicate protection
+  SIGLOG.push({ id, sym, tf, dir: sig.dir, entry: sig.entry, sl: sig.sl, tp1: sig.tp1, tp2: sig.tp2, time: sig.time, status: 'open' });
+  if (SIGLOG.length > 400) SIGLOG.splice(0, SIGLOG.length - 400);
+  store.set('siglog', SIGLOG); return true;
+}
+function resolveLogs(sym, tf, P) {
+  let changed = false;
+  for (const x of SIGLOG) {
+    if (x.status !== 'open' || x.sym !== sym || x.tf !== tf) continue;
+    const i0 = P.k.findIndex(k => k.t > x.time); if (i0 < 0) continue;
+    const d = x.dir, R = Math.abs(x.entry - x.sl), r1 = Math.abs(x.tp1 - x.entry) / R; let half = false, sl = x.sl, res = null, j = i0;
+    for (; j < P.c.length && j < i0 + 48; j++) {
+      if (d === 1 ? P.l[j] <= sl : P.h[j] >= sl) { res = half ? 0.5 * r1 : -1; break; }
+      if (!half && (d === 1 ? P.h[j] >= x.tp1 : P.l[j] <= x.tp1)) { half = true; sl = x.entry; }
+      if (half && (d === 1 ? P.h[j] >= x.tp2 : P.l[j] <= x.tp2)) { res = 0.5 * r1 + 0.5 * Math.abs(x.tp2 - x.entry) / R; break; }
+    }
+    if (res === null && j >= i0 + 48 && j < P.c.length) { const o = d * (P.c[j] - x.entry) / R; res = half ? 0.5 * r1 + 0.5 * o : o; }
+    if (res !== null) { x.r = res - (x.entry * S.taker / 100 * 2) / R; x.status = 'closed'; changed = true; }
+  }
+  if (changed) store.set('siglog', SIGLOG);
+}
+
+// =====================================================================
+//  SIGNAL TAB
+// =====================================================================
+let CUR = null; // {sym, tf, P, H, deriv, book, sig, vetoes, qty}
+function buildCtx(sym, deriv, book) {
+  const live = LIVE.sym === sym && LIVE.flow && LIVE.trades.length > 20;
+  const bk = live && LIVE.book ? LIVE.book : book;
+  return {
+    htf: CUR && CUR.sym === sym ? CUR.H : null, deriv: deriv && deriv.ok ? deriv : null, book: bk, flow: live ? LIVE.flow : null,
+    liveAnoms: live ? LIVE.anoms.filter(a => a.sev !== 'info') : [], eventBlock: false, minScore: S.min, allowTrend: S.allowTrend, allowRange: S.allowRange,
+    cost: { takerPct: S.taker, spreadPct: bk ? bk.spreadPct : 0.02, slipPct: S.slip / 100 }
+  };
+}
+async function runAnalysis(sym, tf, extras = true) {
+  const [k, kh] = await Promise.all([klines(sym, tf, 1000), klines(sym, HTF[tf], 500)]);
+  const P = ENG.precompute(k), H = ENG.precompute(kh);
+  let deriv = null, book = null;
+  if (extras) {
+    [deriv, book] = await Promise.all([derivData(sym), bookData(sym)]);
+    if (deriv) { const c = P.c, n = c.length, back = { '15m': 96, '1h': 24, '4h': 6, '1d': 1 }[tf] || 24; deriv.priceChange = (c[n - 1] - c[Math.max(0, n - 1 - back)]) / c[Math.max(0, n - 1 - back)]; }
+  }
+  resolveLogs(sym, tf, P);
+  return { P, H, deriv, book };
+}
+function evaluate(sym, tf, P, H, deriv, book) {
+  const ctx = buildCtx(sym, deriv, book); ctx.htf = H;
+  const sig = ENG.analyze(P, P.c.length - 1, ctx);
+  const qty = sig.rawDir ? (S.bal * S.risk / 100 * sig.sizeMult) / Math.abs(sig.entry - sig.sl) : 0;
+  const vetoes = riskGuard(sig, sym, qty * sig.entry, P.k[P.k.length - 1].ct, tf);
+  sig.final = finalDecision(sig, vetoes);
+  return { sig, vetoes, qty, ctx };
+}
+
+$('go').onclick = async () => {
+  const sym = $('sym').value, tf = $('tf').value;
+  $('go').disabled = true; $('status').textContent = 'Բեռնում եմ տվյալները Binance-ից…';
+  try {
+    startLive(sym); $('flowSym').value = sym;
+    const { P, H, deriv, book } = await runAnalysis(sym, tf);
+    CUR = { sym, tf, P, H, deriv, book };
+    Object.assign(CUR, evaluate(sym, tf, P, H, deriv, book));
+    renderFull();
+    if (CUR.sig.final !== 'NO TRADE') logSignal(sym, tf, CUR.sig);
+    $('status').textContent = 'Թարմացված՝ ' + new Date().toLocaleTimeString() + ' · Միայն փակված մոմեր · Որոշումը թարմանում է live';
+  } catch (e) { $('status').innerHTML = errorHelp(e); }
+  $('go').disabled = false;
+};
+function errorHelp(e) {
+  return `<div class="warn bad">Սխալ՝ ${esc(e.message)}</div><div class="note">Եթե ֆայլը բացել ես Claude հավելվածի կամ iPhone-ի Files-ի նախադիտման մեջ, այնտեղ ինտերնետ հարցումները արգելված են։ Բաց այն սովորական բրաուզերում (Safari/Chrome)՝ ինտերնետ հասցեով։ Քայլերը՝ «Ինչպես» էջի վերջում (GitHub Pages)։</div>`;
+}
+// live re-evaluation every 3s (event-driven decision refresh)
+setInterval(() => {
+  if (!CUR || $('t-signal').classList.contains('hide')) return;
+  const prev = CUR.sig.final;
+  Object.assign(CUR, evaluate(CUR.sym, CUR.tf, CUR.P, CUR.H, CUR.deriv, CUR.book));
+  if (CUR.sig.final !== 'NO TRADE' && prev !== CUR.sig.final) { logSignal(CUR.sym, CUR.tf, CUR.sig); beep(); }
+  renderLight(prev !== CUR.sig.final || (CUR.sig.rawDir && !$('chk')));
+}, 3000);
+
+function decisionStyle(d, sig) {
+  if (!sig.ready) return ['ՏՎՅԱԼՆԵՐԸ ՔԻՉ ԵՆ', 'M'];
+  if (d === 'BUY') return ['▲ BUY', 'L']; if (d === 'SELL') return ['▼ SELL', 'S'];
+  if (sig.rawDir) return ['⏸ NO TRADE (արգելված)', 'W'];
+  return ['— NO TRADE', 'M'];
+}
+function renderFull() { $('out').classList.remove('hide'); renderLight(true); renderStatic(); }
+function renderLight(withPos) {
+  const { sym, tf, P, sig, vetoes } = CUR;
+  const [lbl, cls] = decisionStyle(sig.final, sig);
+  $('o-sym').textContent = `${sym} · ${tf} · փակված մոմ ${new Date(P.k[P.k.length - 1].ct).toLocaleString()}`;
+  $('o-sig').textContent = lbl; $('o-sig').className = 'sig ' + cls;
+  const live = LIVE.sym === sym && LIVE.flow && LIVE.trades.length > 20;
+  $('o-live').innerHTML = live ? `🟢 Live order flow միացված է · imbalance ${pc(LIVE.flow.imb, 0)}` : '⚪ Live order flow չկա (միայն մոմեր)';
+  $('o-price').textContent = fmt(live && LIVE.price ? LIVE.price : sig.price);
+  $('o-block').innerHTML = (sig.block || []).map(x => `<div class="warn">⛔ ${esc(x)}</div>`).join('');
+  const show = sig.rawDir !== 0;
+  $('o-levels').innerHTML = show ? [
+    kv('Մուտք (Entry)', fmt(sig.entry)), kv('Stop Loss (ATR+կառուցվածք)', fmt(sig.sl), 'S'), kv('TP1 · 50%', fmt(sig.tp1), 'L'), kv('TP2' + (sig.dynTP ? ' (dynamic ↑)' : ''), fmt(sig.tp2), 'L'),
+    kv('R:R', '1 : ' + sig.rr.toFixed(2)), kv('Stop %', (Math.abs(sig.entry - sig.sl) / sig.entry * 100).toFixed(2) + '%')
+  ].join('') : `<div class="note" style="grid-column:1/-1">Պայմանները չեն համընկնում։ Patience-ը նույնպես դիրք է։ ${sig.sup ? 'Աջակցություն՝ ' + fmt(sig.sup.price) + '.' : ''} ${sig.res ? 'Դիմադրություն՝ ' + fmt(sig.res.price) + '.' : ''}</div>`;
+  // categories
+  let h = '';
+  for (const k of ENG.CATS) {
+    const c = sig.cats ? sig.cats[k] : { net: 0, name: ENG.CAT_NAMES[k] }, w = Math.min(50, Math.abs(c.net) / 5 * 50);
+    h += `<div class="cat"><span>${c.name}</span><div class="dbar"><i style="${c.net >= 0 ? 'left:50%' : 'right:50%'};width:${w}%;background:${c.net >= 0 ? 'var(--g)' : 'var(--r)'}"></i></div><b class="${c.net > 0 ? 'L' : c.net < 0 ? 'S' : 'M'}">${c.net > 0 ? '+' : ''}${c.net.toFixed(1)}</b></div>`;
+  }
+  const rc = sig.risk >= 70 ? 'var(--r)' : sig.risk >= 40 ? 'var(--y)' : 'var(--g)';
+  h += `<div class="cat"><span>Risk Score</span><div class="bar"><i style="width:${sig.risk || 0}%;background:${rc}"></i></div><b>${sig.risk ?? '—'}</b></div>`;
+  h += `<div class="cat"><span>Execution Cost</span><div class="bar"><i style="width:${Math.min(100, (sig.costR || 0) / 0.4 * 100)}%;background:${(sig.costR || 0) > 0.2 ? 'var(--y)' : 'var(--g)'}"></i></div><b>${sig.costR != null ? sig.costR.toFixed(2) + 'R' : '—'}</b></div>`;
+  h += `<div class="note">Ընդհանուր՝ BUY ${(sig.longScore || 0).toFixed(1)} · SELL ${(sig.shortScore || 0).toFixed(1)} · շեմ ${S.min}${sig.riskItems && sig.riskItems.length ? ' · Risk՝ ' + sig.riskItems.map(x => esc(x[1])).join(', ') : ''}</div>`;
+  $('o-cats').innerHTML = h;
+  $('o-guard').innerHTML = (vetoes.length ? vetoes.map(v => `<div class="warn bad">⛔ ${esc(v)}</div>`).join('') : '<div class="warn ok">✅ Բոլոր պաշտպանական ստուգումները անցել են</div>') + guardTips();
+  const li = (arr) => arr.length ? [...arr].sort((a, b) => b[0] - a[0]).map(([p, t, c]) => `<li><span class="pt ${p >= 0 ? 'L' : 'S'}">${p > 0 ? '+' : ''}${p}</span>${esc(t)} <span class="tag">${ENG.CAT_NAMES[c] || 'Cost'}</span></li>`).join('') : '<li class="note">—</li>';
+  $('o-L').innerHTML = li(sig.L || []); $('o-S').innerHTML = li(sig.S || []);
+  $('o-ls').textContent = (sig.longScore || 0).toFixed(1); $('o-ss').textContent = (sig.shortScore || 0).toFixed(1);
+  $('o-info').innerHTML = (sig.info || []).map(x => `<span class="tag">ℹ️ ${esc(x)}</span>`).join('') + (sig.anoms || []).map(a => `<div class="warn ${a.sev === 'high' ? 'bad' : ''}">🚨 ${esc(a.type)} — ${esc(a.txt || '')}</div>`).join('');
+  if (withPos) { $('o-pos').innerHTML = show ? positionHTML(sig) : '<h2>Դիրքի չափ</h2><p class="note">Հաշվարկը կհայտնվի սիգնալի դեպքում։</p>'; if (show) wireSignalButtons(); }
+  $('o-exec').innerHTML = show ? execHTML(sig) : '<h2>Smart Order Execution</h2><p class="note">Կատարման պլանը կհայտնվի սիգնալի դեպքում։</p>';
+  $('o-exit').innerHTML = show ? exitHTML(sig) : '<h2>Dynamic Exit Management</h2><p class="note">Ելքի պլանը կհայտնվի սիգնալի դեպքում։</p>';
+}
+function guardTips() {
+  const t = todayStats();
+  return `<div class="grid" style="margin-top:8px">${kv('Այսօր', t.r.toFixed(1) + 'R / ' + t.n + ' գործ.', t.r < 0 ? 'S' : '')}${kv('Բաց դիրքեր', openPositions().length + '/' + S.maxOpen)}${kv('Վնասներ անընդմեջ', t.consec + '/' + S.maxConsec)}${kv('Տվյալներ', HEALTH.ws + (HEALTH.restRtt ? ' · ' + HEALTH.restRtt.toFixed(0) + 'մվ' : ''))}</div>`;
+}
+function renderStatic() {
+  const { P, sig, deriv: d, book: b } = CUR;
+  const reg = { trend: 'Թրենդ', range: 'Կողային (range)', transition: 'Անցումային' }[sig.regime] || '—';
+  const v = sig.vola || {};
+  const st = sig.st ? (sig.st.trend === 1 ? 'HH/HL ↑' : sig.st.trend === -1 ? 'LH/LL ↓' : 'Խառը') : '—';
+  $('o-vola').innerHTML = !sig.ready ? '' : [
+    kv('ATR (14)', fmt(sig.atr)), kv('ATR %', v.atrPct ? v.atrPct.toFixed(2) + '%' : '—'), kv('ATR 5/50', v.ratio ? v.ratio.toFixed(2) : '—'),
+    kv('Վիճակ', { expansion: '📈 Expansion', compression: '🗜 Compression', stable: 'Կայուն' }[v.state] || '—'),
+    kv('Ռեժիմ', { high: 'Բարձր', low: 'Ցածր (squeeze)', normal: 'Նորմալ' }[v.regime] || '—'), kv('Bollinger %B', v.pctB != null ? v.pctB.toFixed(2) : '—'),
+    kv('BB լայնություն pctl', v.bbp != null ? v.bbp.toFixed(0) : '—'), kv('ROC(10)', sig.roc != null ? sig.roc.toFixed(2) + '%' : '—', sig.roc > 0 ? 'L' : 'S'),
+    kv('Acceleration', sig.racc != null ? (sig.racc > 0 ? '+' : '') + sig.racc.toFixed(2) : '—', sig.racc > 0 ? 'L' : 'S'), kv('Volume z', sig.volZ != null ? sig.volZ.toFixed(2) + 'σ' : '—'),
+    kv('Buy/Sell Pressure', sig.pressure != null ? (sig.pressure * 100).toFixed(0) + '%' : '—', sig.pressure > 0 ? 'L' : 'S'), kv('Breakout', sig.breakoutUp ? '↑ Վերև' : sig.breakoutDn ? '↓ Ներքև' : '—')
+  ].join('');
+  $('o-market').innerHTML = !sig.ready ? '' : [
+    kv('Ռեժիմ', reg), kv('ADX', sig.adx.toFixed(1)), kv('Կառուցվածք', st), kv('Վերջին կոտրում', sig.st && sig.st.event ? `${sig.st.event.type} ${sig.st.event.dir > 0 ? '↑' : '↓'}` : '—'),
+    kv('Բարձր TF', sig.htf === 1 ? '↑ Աճող' : sig.htf === -1 ? '↓ Նվազող' : 'Չեզոք', sig.htf === 1 ? 'L' : sig.htf === -1 ? 'S' : ''), kv('RSI', sig.rsi.toFixed(1)),
+    kv('POC', fmt(sig.vp.poc)), kv('Value Area', fmt(sig.vp.val) + ' – ' + fmt(sig.vp.vah)),
+    kv('Fib retrace', sig.fib && sig.fib.ret >= 0 && sig.fib.ret <= 1 ? (sig.fib.ret * 100).toFixed(0) + '%' : 'Swing-ից դուրս'), kv('Մոմ', sig.candle ? sig.candle.name : '—')
+  ].join('');
+  const dd = d || {};
+  $('o-deriv').innerHTML = [
+    kv('Funding Rate', dd.funding != null ? (dd.funding * 100).toFixed(4) + '%' : '—', dd.funding > 0.0005 ? 'S' : dd.funding < -0.0003 ? 'L' : ''),
+    kv('Long/Short', dd.lsRatio != null ? dd.lsRatio.toFixed(2) : '—'), kv('OI 24ժ', dd.oiChange != null ? (dd.oiChange * 100).toFixed(1) + '%' : '—'),
+    kv('Open Interest', dd.oi ? '$' + (dd.oi / 1e6).toFixed(0) + 'M' : '—'), kv('Mark Price', fmt(dd.mark)), kv('Index Price', fmt(dd.index)),
+    kv('Spread', b ? b.spreadPct.toFixed(4) + '%' : '—'), kv('Bid/Ask ±0.5%', b && b.imb ? b.imb.toFixed(2) + 'x' : '—')
+  ].join('');
+  $('o-derivNote').textContent = dd.ok ? 'Աղբյուր՝ Binance USDT-M Futures։' : 'Futures տվյալները հասանելի չեն — սիգնալը հաշվված է առանց դրանց։';
+  drawChart(P, sig);
+}
+
+function positionHTML(s) {
+  const riskUsd = S.bal * S.risk / 100 * s.sizeMult, dist = Math.abs(s.entry - s.sl);
+  const qty = riskUsd / dist, notional = qty * s.entry, margin = notional / S.lev, fees = notional * S.taker / 100 * 2;
+  const liq = s.rawDir === 1 ? s.entry * (1 - 1 / S.lev + 0.005) : s.entry * (1 + 1 / S.lev - 0.005);
+  const liqBad = (s.rawDir === 1 && liq >= s.sl) || (s.rawDir === -1 && liq <= s.sl);
+  return `<h2>Դիրքի չափ (Position Sizing)</h2>
+  <div class="grid">${[kv('Ռիսկ $', '$' + riskUsd.toFixed(2) + (s.sizeMult < 1 ? ' (½ vol.)' : '')), kv('Քանակ', fmt(qty)), kv('Դիրքի արժեք', '$' + notional.toFixed(2)),
+    kv('Մարժա (x' + S.lev + ')', '$' + margin.toFixed(2)), kv('Fee (taker×2)', '≈ $' + fees.toFixed(2)), kv('Լիկվիդացիա ≈', fmt(liq), liqBad ? 'S' : '')].join('')}</div>
+  ${liqBad ? '<div class="warn bad">⛔ Լիկվիդացիան մոտ է քան Stop Loss-ը — իջեցրու լծակը։</div>' : ''}
+  ${margin > S.bal ? `<div class="warn bad">⛔ Մարժան կապիտալից մեծ է — պետք է առնվազն x${Math.ceil(notional / S.bal)} կամ փոքր ռիսկ։</div>` : ''}
+  <h3>Մուտքից առաջ (Trading Plan)</h3>
+  <div class="chk" id="chk">
+    <label><input type="checkbox"> Stop Loss-ը դնում եմ ՀԵՆՑ ՀԻՄԱ</label>
+    <label><input type="checkbox"> Չեմ մտնում վնասը «հետ բերելու» համար</label>
+    <label><input type="checkbox"> Գինը դեռ չի փախել մուտքից (FOMO չէ)</label>
+    <label><input type="checkbox"> Ընդունում եմ, որ սա կարող է վնասով փակվել</label>
+  </div>
+  <div id="chkRes"></div>
+  <button class="btn" id="openPos" disabled style="margin-top:8px">📌 Բացեցի այս գործարքը</button> <span id="openMsg" class="note"></span>`;
+}
+function wireSignalButtons() {
+  const boxes = [...document.querySelectorAll('#chk input')];
+  const upd = () => { const ok = boxes.every(b => b.checked); $('openPos').disabled = !ok || CUR.sig.final === 'NO TRADE'; $('chkRes').innerHTML = ok ? '<div class="warn ok">✅ Պատրաստ ես։ Մի փոխիր SL-ը գործարքի ընթացքում։</div>' : ''; };
+  boxes.forEach(b => b.onchange = upd);
+  $('openPos').onclick = () => addPosition();
+}
+function addPosition() {
+  const s = CUR.sig; if (CUR.sig.final === 'NO TRADE') { $('openMsg').textContent = 'Risk Control-ը արգելել է։'; return; }
+  const dup = POSITIONS.find(p => p.status !== 'closed' && p.sym === CUR.sym && p.dir === s.rawDir) || POSITIONS.find(p => p.sigId === `${CUR.sym}|${CUR.tf}|${s.time}`);
+  if (dup) { $('openMsg').textContent = '⛔ Duplicate՝ այս դիրքն արդեն ավելացված է։'; return; }
+  const qty = (S.bal * S.risk / 100 * s.sizeMult) / Math.abs(s.entry - s.sl);
+  const entry = LIVE.sym === CUR.sym && LIVE.price ? LIVE.price : s.entry;
+  POSITIONS.push({ id: Date.now(), sigId: `${CUR.sym}|${CUR.tf}|${s.time}`, sym: CUR.sym, tf: CUR.tf, dir: s.rawDir, entry, sl0: s.sl, sl: s.sl, tp1: s.tp1, tp2: s.tp2, qty, openTime: Date.now(), partial: false, maxBars: 48, status: 'open' });
+  store.set('positions', POSITIONS); $('openMsg').textContent = '✓ Ավելացված է «Դիրքեր» էջում'; $('openPos').disabled = true;
+}
+function execHTML(s) {
+  const qty = (S.bal * S.risk / 100 * s.sizeMult) / Math.abs(s.entry - s.sl);
+  const book = (LIVE.sym === CUR.sym && LIVE.depth && CUR.book) ? CUR.book : CUR.book; // 100-level REST book for depth walk
+  const e = ENG.executionPlan(s, qty, book, { maker: S.maker, taker: S.taker, maxSlipBps: S.slip });
+  if (!e) return '<h2>Smart Order Execution</h2><p class="note">Order book հասանելի չէ։</p>';
+  const recCls = { LIMIT: 'ok', MARKET: 'info', SPLIT: '', REDUCE: '', 'NO TRADE': 'bad' }[e.rec];
+  const lat = HEALTH.wsLag != null ? HEALTH.wsLag : HEALTH.restRtt;
+  return `<h2>Smart Order Execution</h2>
+  <div class="warn ${recCls}"><b>${e.rec}</b> — ${esc(e.why)}</div>
+  <div class="grid">${[kv('Market՝ միջին գին', fmt(e.avg)), kv('Slippage', e.slipBps.toFixed(1) + ' bps', e.slipBps > S.slip ? 'S' : ''), kv('Լցվում է', pc(e.fillPct, 0), e.fillPct < 1 ? 'S' : ''),
+    kv('Մակարդակներ', e.levels), kv('Taker ծախս', '$' + e.takerCost.toFixed(2)), kv('Maker ծախս', '$' + e.makerCost.toFixed(2)),
+    kv('Limit-ի խնայողություն', e.savingR.toFixed(3) + 'R'), kv('Limit գին', fmt(e.limitPrice)), kv('Ուշացում', lat != null ? lat.toFixed(0) + ' մվ' : '—', lat > 1000 ? 'S' : '')].join('')}</div>
+  ${e.rec === 'SPLIT' ? `<p class="note">Բաժանիր ${e.chunks} մասի՝ յուրաքանչյուրը ≈ ${fmt(qty / e.chunks)}։</p>` : ''}
+  <p class="note">🕒 Order Cancellation՝ ${esc(e.cancelRule)}<br>⚡ Execution Speed՝ ${lat > 1000 ? 'ուշացումը մեծ է — խուսափիր market-ով գնի հետևից վազելուց' : 'ուշացումը նորմալ է'}։ Բոտը պատվեր չի ուղարկում — դու ես կատարում բորսայում։</p>`;
+}
+function exitHTML(s) {
+  const R = Math.abs(s.entry - s.sl), d = s.rawDir;
+  return `<h2>Dynamic Exit Management</h2>
+  <ul class="rs">
+    <li>🛑 <b>ATR-Based Stop</b>՝ ${fmt(s.sl)} (վերջին swing ± 0.25 ATR, 0.8–3 ATR սահմաններում)</li>
+    <li>🎯 <b>Partial TP</b>՝ փակիր 50% ${fmt(s.tp1)}-ում (+1.5R)</li>
+    <li>⚖️ <b>Break-Even</b>՝ TP1-ից հետո Stop → ${fmt(s.entry)}</li>
+    <li>📈 <b>Trailing Stop</b>՝ ամենալավ գնից ${d === 1 ? '−' : '+'}2.5 ATR (${fmt(2.5 * s.atr)})</li>
+    <li>🚀 <b>Dynamic TP</b>՝ ${fmt(s.tp2)}${s.dynTP ? ' — երկարացված ուժեղ իմպուլսի պատճառով' : ''}; թուլացող իմպուլսի դեպքում բոտը կառաջարկի վաղ փակում</li>
+    <li>⏱ <b>Time Exit</b>՝ եթե 48 մոմ (${CUR.tf}) հետո TP չկա — փակիր</li>
+    <li>🚨 <b>Emergency Exit</b>՝ Flash Crash, Liquidity Drop, Spoofing «high» կամ ուժեղ հակառակ սիգնալ</li>
+  </ul><p class="note">«📌 Բացեցի» սեղմելուց հետո «Դիրքեր» էջը ավտոմատ կհետևի այս կանոններին։ 1R = ${fmt(R)}։</p>`;
+}
+
+// =====================================================================
+//  CHART
+// =====================================================================
+function drawChart(P, s) {
+  const cv = $('chart'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, Hh = cv.clientHeight; if (!W) return;
+  cv.width = W * dpr; cv.height = Hh * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0, 0, W, Hh);
+  const n = P.c.length, cnt = Math.min(W < 500 ? 70 : 120, n), st = n - cnt, padR = 62;
+  let lo = Infinity, hi = -Infinity;
+  for (let i = st; i < n; i++) { lo = Math.min(lo, P.l[i]); hi = Math.max(hi, P.h[i]); }
+  if (s.rawDir) { lo = Math.min(lo, s.sl, s.tp2); hi = Math.max(hi, s.sl, s.tp2); }
+  const pad = (hi - lo) * 0.05; lo -= pad; hi += pad;
+  const y = v => Hh - 10 - (v - lo) / (hi - lo) * (Hh - 20), cw = (W - padR) / cnt, x = i => (i - st) * cw + cw / 2;
+  g.font = '11px sans-serif';
+  if (s.zones) {
+    for (const z of s.zones.demand) { g.fillStyle = 'rgba(46,160,67,.15)'; const x0 = x(Math.max(z.i, st)); g.fillRect(x0, y(z.hi), W - padR - x0, y(z.lo) - y(z.hi)); }
+    for (const z of s.zones.supply) { g.fillStyle = 'rgba(248,81,73,.15)'; const x0 = x(Math.max(z.i, st)); g.fillRect(x0, y(z.hi), W - padR - x0, y(z.lo) - y(z.hi)); }
+  }
+  g.setLineDash([3, 4]); g.strokeStyle = '#6e7681';
+  for (const L of s.levels || []) { if (L.price < lo || L.price > hi) continue; g.beginPath(); g.moveTo(0, y(L.price)); g.lineTo(W - padR, y(L.price)); g.stroke(); }
+  g.setLineDash([]);
+  const line = (arr, col, wd = 1.3) => { g.strokeStyle = col; g.lineWidth = wd; g.beginPath(); let m = false; for (let i = st; i < n; i++) { if (arr[i] == null) continue; m ? g.lineTo(x(i), y(arr[i])) : g.moveTo(x(i), y(arr[i])); m = true; } g.stroke(); g.lineWidth = 1; };
+  line(P.bb.up, 'rgba(139,148,158,.5)', 1); line(P.bb.lo, 'rgba(139,148,158,.5)', 1);
+  for (let i = st; i < n; i++) {
+    const up = P.c[i] >= P.o[i]; g.strokeStyle = g.fillStyle = up ? '#2ea043' : '#f85149';
+    g.beginPath(); g.moveTo(x(i), y(P.h[i])); g.lineTo(x(i), y(P.l[i])); g.stroke();
+    g.fillRect(x(i) - cw * 0.35, y(Math.max(P.o[i], P.c[i])), cw * 0.7, Math.max(1, Math.abs(y(P.o[i]) - y(P.c[i]))));
+  }
+  line(P.e20, '#3fb950'); line(P.e50, '#58a6ff'); line(P.e200, '#f0883e');
+  const hl = (v, col, t) => { g.strokeStyle = col; g.fillStyle = col; g.beginPath(); g.moveTo(x(n - 15), y(v)); g.lineTo(W - padR, y(v)); g.stroke(); g.fillText(t, W - padR + 3, y(v) + 4); };
+  if (s.rawDir) { hl(s.entry, '#e6edf3', 'ENTRY'); hl(s.sl, '#f85149', 'SL'); hl(s.tp1, '#2ea043', 'TP1'); hl(s.tp2, '#2ea043', 'TP2'); }
+  g.fillStyle = '#8b949e'; g.fillText(fmt(hi), W - padR + 3, 12); g.fillText(fmt(lo), W - padR + 3, Hh - 4);
+}
+
+// =====================================================================
+//  LIVE FLOW TAB
+// =====================================================================
+$('flowGo').onclick = () => startLive($('flowSym').value);
+BUS.on('tick', () => {
+  renderHeader();
+  if ($('t-flow').classList.contains('hide')) return;
+  const f = LIVE.flow, now = Date.now();
+  $('fHealth').innerHTML = [kv('Ակտիվ', LIVE.sym || '—'), kv('Ռեժիմ', HEALTH.ws, HEALTH.ws === 'live' ? 'L' : HEALTH.ws === 'off' ? 'M' : 'W'),
+    kv('WS latency', HEALTH.wsLag != null ? HEALTH.wsLag.toFixed(0) + ' մվ' : '—', HEALTH.wsLag > S.maxLat ? 'S' : ''), kv('REST RTT', HEALTH.restRtt ? HEALTH.restRtt.toFixed(0) + ' մվ' : '—'),
+    kv('Վերջին հաղորդ.', HEALTH.wsLastMsg ? ((now - HEALTH.wsLastMsg) / 1000).toFixed(1) + 'վ առաջ' : '—'), kv('Reconnects', HEALTH.reconnects), kv('Server offset', HEALTH.offset.toFixed(0) + ' մվ'),
+    kv('Trades (5ր)', LIVE.trades.length)].join('');
+  if (!f) { $('fAgg').innerHTML = '<p class="note">Սեղմիր «Միացնել»։</p>'; return; }
+  const bp = f.B + f.S ? f.B / (f.B + f.S) * 100 : 50;
+  $('fAgg').innerHTML = `<div style="display:flex;justify-content:space-between;font-size:13px"><span class="L">Գնորդներ $${(f.B / 1e3).toFixed(0)}k</span><span class="S">Վաճառողներ $${(f.S / 1e3).toFixed(0)}k</span></div>
+    <div class="bar" style="height:14px;margin:6px 0"><i style="width:${bp}%;background:var(--g)"></i></div>
+    <div class="grid">${kv('Market Imbalance', (f.imb > 0 ? '+' : '') + pc(f.imb, 0), f.imb > 0.25 ? 'L' : f.imb < -0.25 ? 'S' : '')}${kv('Live CVD', fmt(LIVE.cvd), LIVE.cvd > 0 ? 'L' : 'S')}
+    ${kv('Absorption', f.absorption === 1 ? 'Bid absorption (bullish)' : f.absorption === -1 ? 'Ask absorption (bearish)' : '—', f.absorption > 0 ? 'L' : f.absorption < 0 ? 'S' : '')}${kv('Whales 5ր', (f.largeNet > 0 ? '+' : '') + pc(f.largeNet, 0), f.largeNet > 0 ? 'L' : f.largeNet < 0 ? 'S' : '')}
+    ${kv('Ծավալ 60վ / միջին', f.avgMin ? (f.vol60 / f.avgMin).toFixed(2) + '×' : 'տաքացում…')}${kv('Ով է ագրեսիվ', f.imb > 0.15 ? '🟢 Գնորդները' : f.imb < -0.15 ? '🔴 Վաճառողները' : '⚖️ Հավասար', f.imb > 0.15 ? 'L' : f.imb < -0.15 ? 'S' : '')}</div>`;
+  drawCVD();
+  const b = LIVE.book;
+  if (b) {
+    const bt = b.bids.slice(0, 10).reduce((a, x) => a + x[0] * x[1], 0), at = b.asks.slice(0, 10).reduce((a, x) => a + x[0] * x[1], 0), pbid = bt / (bt + at) * 100;
+    $('fBook').innerHTML = `<div style="display:flex;justify-content:space-between;font-size:13px"><span class="L">Bid pressure $${(bt / 1e3).toFixed(0)}k</span><span class="S">Ask pressure $${(at / 1e3).toFixed(0)}k</span></div>
+      <div class="bar" style="height:14px;margin:6px 0"><i style="width:${pbid}%;background:var(--g)"></i></div>
+      <div class="grid">${kv('Best Bid', fmt(b.bid))}${kv('Best Ask', fmt(b.ask))}${kv('Spread', b.spreadPct.toFixed(4) + '%', b.spreadPct > 0.05 ? 'S' : '')}${kv('OB Imbalance', (bt / at).toFixed(2) + '×')}
+      ${kv('Իրացվելիություն', '$' + (LIVE.liqNow / 1e3).toFixed(0) + 'k')}${kv('vs միջին', LIVE.liqAvg ? pc(LIVE.liqNow / LIVE.liqAvg, 0) : '—', LIVE.liqAvg && LIVE.liqNow < 0.6 * LIVE.liqAvg ? 'S' : '')}</div>
+      <h3>Խոշոր «պատեր» (Unusual Order Book)</h3>${LIVE.wallsNow.length ? LIVE.wallsNow.map(w => `<span class="tag ${w.side === 'bid' ? 'L' : 'S'}">${w.side} ${fmt(w.p)} · ${w.x.toFixed(0)}× մեդիան</span>`).join('') : '<span class="note">Չկան</span>'}
+      <div class="note" style="margin-top:6px">Անհետացած պատեր 60վ-ում (spoofing-like)՝ ${LIVE.spoof.length}</div>`;
+  }
+  $('fLarge').innerHTML = LIVE.large.length ? `<div class="note">Շեմ՝ $${(LIVE.largeThr / 1e3).toFixed(0)}k (20× մեդիան)</div><table>${LIVE.large.slice(0, 12).map(x => `<tr><td>${new Date(x.t).toLocaleTimeString()}</td><td class="${x.buy ? 'L' : 'S'}">${x.buy ? 'MARKET BUY' : 'MARKET SELL'}</td><td>${fmt(x.p)}</td><td>$${(x.n / 1e3).toFixed(0)}k</td></tr>`).join('')}</table>` : '<span class="note">Դեռ չկան</span>';
+  $('fAnom').innerHTML = LIVE.anoms.length ? LIVE.anoms.map(a => `<div class="warn ${a.sev === 'high' ? 'bad' : a.sev === 'info' ? 'info' : ''}">${a.sev === 'high' ? '⛔ ԱՐԳԵԼՎԱԾ' : a.sev === 'info' ? 'ℹ️' : '⚠️'} ${esc(a.type)} — ${esc(a.txt)}</div>`).join('') : '<div class="warn ok">✅ Անոմալիաներ չկան</div>';
+  // volatility & scalp suitability
+  const ap = LIVE.atr1mPct, spreadOk = b && b.spreadPct < 0.05, high = LIVE.anoms.some(a => a.sev === 'high');
+  const p10 = LIVE.priceHist.find(x => now - x.t <= 10000);
+  const fit = ap != null && spreadOk && !high && ap > 0.03 && ap < 0.6 && (!LIVE.liqAvg || LIVE.liqNow > 0.6 * LIVE.liqAvg);
+  const why = []; if (ap != null && ap <= 0.03) why.push('շուկան չափազանց հանգիստ է (ATR-ը չի ծածկում ծախսերը)'); if (ap >= 0.6) why.push('չափազանց տատանողական'); if (b && !spreadOk) why.push('spread-ը լայն է'); if (high) why.push('կա անոմալիա'); if (LIVE.liqAvg && LIVE.liqNow <= 0.6 * LIVE.liqAvg) why.push('իրացվելիությունը ցածր է');
+  $('fVola').innerHTML = `<div class="grid">${kv('ATR(1m)', fmt(LIVE.atr1m))}${kv('ATR(1m) %', ap != null ? ap.toFixed(3) + '%' : '—')}${kv('Շարժ 10վ', p10 && LIVE.atr1m ? ((LIVE.price - p10.p) / LIVE.atr1m).toFixed(2) + ' ATR' : '—')}${kv('Ծախս / ATR', b && ap ? ((2 * S.taker + b.spreadPct) / ap).toFixed(2) + '×' : '—')}</div>
+    <div class="warn ${fit ? 'ok' : 'bad'}">${fit ? '✅ Շուկան հարմար է արագ գործարքների համար' : '⛔ Հիմա հարմար չէ արագ գործարքների համար' + (why.length ? '՝ ' + why.join(', ') : '')}</div>`;
+});
+function drawCVD() {
+  const cv = $('cvdC'); const W = cv.clientWidth, H = cv.clientHeight; if (!W || LIVE.cvdSeries.length < 2) return;
+  const dpr = devicePixelRatio || 1; cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const s = LIVE.cvdSeries, vs = s.map(x => x.v), ps = s.map(x => x.p).filter(x => x != null);
+  const draw = (arr, col) => { const lo = Math.min(...arr), hi = Math.max(...arr, lo + 1e-9); g.strokeStyle = col; g.lineWidth = 1.6; g.beginPath(); arr.forEach((v, i) => { const X = i / (arr.length - 1) * W, Y = H - 6 - (v - lo) / (hi - lo) * (H - 12); i ? g.lineTo(X, Y) : g.moveTo(X, Y); }); g.stroke(); };
+  if (ps.length > 1) draw(ps, 'rgba(139,148,158,.6)'); draw(vs, vs[vs.length - 1] >= vs[0] ? '#2ea043' : '#f85149');
+  g.fillStyle = '#8b949e'; g.font = '11px sans-serif'; g.fillText('CVD (գունավոր) vs Գին (մոխրագույն)', 6, 12);
+}
+function renderHeader() {
+  const st = HEALTH.ws, ok = st === 'live' || st === 'REST polling', err = HEALTH.restErrs >= 3;
+  $('hDot').style.background = err ? 'var(--r)' : ok ? 'var(--g)' : HEALTH.lastRestOk ? 'var(--y)' : 'var(--mut)';
+  $('hTxt').textContent = err ? 'API error' : ok ? (st === 'live' ? 'live' : 'polling') + (HEALTH.wsLag != null ? ' ' + HEALTH.wsLag.toFixed(0) + 'ms' : '') : HEALTH.lastRestOk ? 'REST' : 'offline';
+}
+
+// =====================================================================
+//  SCANNER
+// =====================================================================
+let lastScan = store.get('lastSignals', {}), autoTimer = null;
+async function scan() {
+  const tf = $('scanTf').value, syms = symList(); $('scanGo').disabled = true;
+  const rows = []; let i = 0; const newOnes = [];
+  for (const sym of syms) {
+    $('scanStatus').textContent = `Սկանավորում… ${++i}/${syms.length} (${sym})`;
+    try {
+      const { P, H, deriv, book } = await runAnalysis(sym, tf, true);
+      const ctx = { htf: H, deriv: deriv && deriv.ok ? deriv : null, book, minScore: S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: book ? book.spreadPct : 0.02, slipPct: S.slip / 100 } };
+      if (LIVE.sym === sym && LIVE.flow) { ctx.flow = LIVE.flow; ctx.liveAnoms = LIVE.anoms.filter(a => a.sev !== 'info'); }
+      const sig = ENG.analyze(P, P.c.length - 1, ctx);
+      const qty = sig.rawDir ? (S.bal * S.risk / 100 * sig.sizeMult) / Math.abs(sig.entry - sig.sl) : 0;
+      const vetoes = riskGuard(sig, sym, qty * sig.entry, P.k[P.k.length - 1].ct, tf); sig.final = finalDecision(sig, vetoes);
+      rows.push({ sym, sig, vetoes });
+      if (sig.final !== 'NO TRADE' && logSignal(sym, tf, sig)) newOnes.push(sym + ' ' + sig.final);
+    } catch (e) { rows.push({ sym, err: e.message }); }
+  }
+  rows.sort((a, b) => ((b.sig && b.sig.final !== 'NO TRADE' ? 200 : b.sig && b.sig.rawDir ? 100 : 0) + (b.sig ? b.sig.strength : 0)) - ((a.sig && a.sig.final !== 'NO TRADE' ? 200 : a.sig && a.sig.rawDir ? 100 : 0) + (a.sig ? a.sig.strength : 0)));
+  $('scanBody').innerHTML = rows.map(r => {
+    if (r.err) return `<tr><td>${r.sym}</td><td colspan="6" class="note">Սխալ՝ ${esc(r.err)}</td></tr>`;
+    const [l, c] = decisionStyle(r.sig.final, r.sig), reg = { trend: 'Թրենդ', range: 'Range', transition: 'Անցում' }[r.sig.regime] || '—';
+    return `<tr><td><b>${r.sym}</b></td><td class="${c}" title="${esc(r.vetoes.concat(r.sig.block || []).join('; '))}">${l}</td><td>${r.sig.strength || 0}</td><td>${r.sig.risk ?? '—'}</td><td>${reg}</td><td>${r.sig.rawDir ? '1:' + r.sig.rr.toFixed(1) : '—'}</td><td><button class="btn sec sm" data-s="${r.sym}">Բացել</button></td></tr>`;
+  }).join('');
+  $('scanBody').querySelectorAll('button').forEach(b => b.onclick = () => { $('sym').value = b.dataset.s; $('tf').value = tf; tab('signal'); $('go').click(); });
+  const errs = rows.filter(r => r.err).length;
+  $('scanStatus').innerHTML = `Վերջին սկան՝ ${new Date().toLocaleTimeString()} · BUY/SELL՝ ${rows.filter(r => r.sig && r.sig.final !== 'NO TRADE').length} · արգելված՝ ${rows.filter(r => r.sig && r.sig.rawDir && r.sig.final === 'NO TRADE').length}` + (errs === rows.length ? errorHelp(new Error(rows[0].err)) : '');
+  if (newOnes.length) notify(newOnes, tf);
+  $('scanGo').disabled = false;
+  if (openPositions().length) refreshPositions();
+}
+function beep() { try { const ac = new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), gn = ac.createGain(); o.connect(gn); gn.connect(ac.destination); o.frequency.value = 880; gn.gain.value = 0.15; o.start(); o.stop(ac.currentTime + 0.35); } catch (e) {} }
+function notify(list, tf) {
+  document.title = `🔔 (${list.length}) Նոր սիգնալ`; beep();
+  try { if (window.Notification && Notification.permission === 'granted') new Notification('Նոր սիգնալ', { body: list.join(', ') + ' · ' + tf }); } catch (e) {}
+}
+$('scanGo').onclick = () => { try { if (window.Notification && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {} scan(); };
+$('auto').onchange = () => { clearInterval(autoTimer); const m = +$('auto').value; if (m) { scan(); autoTimer = setInterval(scan, m * 60000); } };
+window.addEventListener('focus', () => { if (document.title.startsWith('🔔')) document.title = 'Սիգնալ Բոտ v2 — Trading Signals'; });
+
+// =====================================================================
+//  POSITIONS — Dynamic Exit Management
+// =====================================================================
+const POSSTATE = {};
+async function refreshPositions() {
+  const op = openPositions();
+  for (const p of op) {
+    try {
+      const k = await klines(p.sym, p.tf, 300); const P = ENG.precompute(k);
+      let price = LIVE.sym === p.sym && LIVE.price ? LIVE.price : null;
+      if (price == null) { try { price = +(await spot(`/api/v3/ticker/price?symbol=${p.sym}`)).price; } catch (e) { price = P.c[P.c.length - 1]; } }
+      const opp = ENG.analyze(P, P.c.length - 1, { minScore: S.min + 1 });
+      POSSTATE[p.id] = ENG.managePosition(p, P, { price, liveAnoms: LIVE.sym === p.sym ? LIVE.anoms.filter(a => a.sev === 'high') : [], opposite: opp.dir === -p.dir ? opp : null });
+      if (POSSTATE[p.id].status !== 'hold' && !POSSTATE[p.id].alerted) { POSSTATE[p.id].alerted = true; notify([p.sym + ' ' + (POSSTATE[p.id].status === 'emergency' ? 'EMERGENCY EXIT' : 'EXIT')], p.tf); }
+    } catch (e) { POSSTATE[p.id] = { err: e.message }; }
+  }
+  renderPositions();
+}
+function renderPositions() {
+  const op = openPositions(), exp = op.reduce((a, p) => a + p.qty * p.entry, 0);
+  $('posSummary').innerHTML = [kv('Բաց դիրքեր', op.length + ' / ' + S.maxOpen, op.length >= S.maxOpen ? 'S' : ''), kv('Exposure', '$' + exp.toFixed(0) + ' (' + (exp / S.bal * 100).toFixed(0) + '%)', exp / S.bal * 100 > S.maxExp ? 'S' : ''),
+    kv('Բաց ռիսկ', op.reduce((a, p) => a + Math.max(0, p.dir * (p.entry - p.sl)) * p.qty * (p.partial ? 0.5 : 1), 0).toFixed(2) + '$')].join('');
+  $('posList').innerHTML = op.length ? op.map(p => {
+    const m = POSSTATE[p.id] || {}; const cls = p.dir === 1 ? 'L' : 'S';
+    return `<div class="card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px"><b class="${cls}">${p.dir === 1 ? '▲ LONG' : '▼ SHORT'} ${p.sym} · ${p.tf}</b><span class="note">${new Date(p.openTime).toLocaleString()}</span></div>
+      ${m.err ? `<div class="warn bad">Սխալ՝ ${esc(m.err)}</div>` : ''}
+      <div class="grid" style="margin-top:8px">${kv('Entry', fmt(p.entry))}${kv('Գին', fmt(m.price))}${kv('Արդյունք', m.curR != null ? (m.curR > 0 ? '+' : '') + m.curR.toFixed(2) + 'R' : '—', m.curR > 0 ? 'L' : 'S')}${kv('Stop', fmt(p.sl), 'S')}${kv('Առաջարկվող Stop', fmt(m.sl), m.sl !== p.sl ? 'W' : '')}${kv('TP1 / TP2', fmt(p.tp1) + ' / ' + fmt(p.tp2))}${kv('Մոմեր', (m.bars ?? '—') + ' / ' + p.maxBars)}${kv('Partial', p.partial ? '✓ 50% փակված' : '—')}</div>
+      ${(m.actions || []).map(a => `<div class="warn ${a.lvl === 'bad' ? 'bad' : a.lvl === 'ok' ? 'ok' : a.lvl === 'info' ? 'info' : ''}">${esc(a.txt)}</div>`).join('')}
+      <div class="row" style="margin-top:8px">
+        <button class="btn sec sm" data-a="partial" data-id="${p.id}" ${p.partial ? 'disabled' : ''}>TP1 փակեցի (50%)</button>
+        <button class="btn sec sm" data-a="sl" data-id="${p.id}" ${m.sl == null || m.sl === p.sl ? 'disabled' : ''}>Կիրառել նոր Stop</button>
+        <div><label>Ելքի գին</label><input id="ex${p.id}" type="number" step="any" value="${m.price ?? ''}"></div>
+        <button class="btn sm" data-a="close" data-id="${p.id}">Փակել</button>
+      </div></div>`;
+  }).join('') : '<div class="card note">Բաց դիրքեր չկան։</div>';
+  $('posList').querySelectorAll('button[data-a]').forEach(b => b.onclick = () => posAction(+b.dataset.id, b.dataset.a));
+}
+function posAction(id, a) {
+  const p = POSITIONS.find(x => x.id === id); if (!p) return; const m = POSSTATE[id] || {};
+  if (a === 'partial') { p.partial = true; p.partialPrice = m.price ?? p.tp1; p.sl = p.dir === 1 ? Math.max(p.sl, p.entry) : Math.min(p.sl, p.entry); }
+  if (a === 'sl' && m.sl != null) p.sl = m.sl;
+  if (a === 'close') {
+    const ex = parseFloat($('ex' + id).value); if (isNaN(ex)) return;
+    const R = Math.abs(p.entry - p.sl0), rx = p.dir * (ex - p.entry) / R;
+    let r = p.partial ? 0.5 * p.dir * ((p.partialPrice ?? p.tp1) - p.entry) / R + 0.5 * rx : rx;
+    r -= (p.entry * S.taker / 100 * 2) / R; r = Math.round(r * 100) / 100;
+    p.status = 'closed'; p.exit = ex; p.r = r;
+    JOURNAL.push({ ts: Date.now(), day: todayKey(), sym: p.sym, dir: p.dir === 1 ? 'LONG' : 'SHORT', r, plan: true, note: 'Բոտի սիգնալ · ' + p.tf });
+    store.set('journal', JOURNAL);
+  }
+  store.set('positions', POSITIONS); renderPositions();
+}
+$('posRefresh').onclick = refreshPositions;
+setInterval(() => { if (openPositions().length && !$('t-pos').classList.contains('hide')) refreshPositions(); }, 60000);
+
+// =====================================================================
+//  ARBITRAGE
+// =====================================================================
+async function exTickers() {
+  const res = {};
+  const jobs = {
+    Binance: async () => { const d = await spot('/api/v3/ticker/bookTicker'); const m = {}; for (const x of d) m[x.symbol] = { b: +x.bidPrice, a: +x.askPrice, bq: +x.bidQty, aq: +x.askQty }; return m; },
+    Bybit: async () => { const d = await getJSON('https://api.bybit.com/v5/market/tickers?category=spot'); const m = {}; for (const x of d.result.list) m[x.symbol] = { b: +x.bid1Price, a: +x.ask1Price }; return m; },
+    OKX: async () => { const d = await getJSON('https://www.okx.com/api/v5/market/tickers?instType=SPOT'); const m = {}; for (const x of d.data) m[x.instId.replace('-', '')] = { b: +x.bidPx, a: +x.askPx }; return m; },
+    Gate: async () => { const d = await getJSON('https://api.gateio.ws/api/v4/spot/tickers'); const m = {}; for (const x of d) m[x.currency_pair.replace('_', '')] = { b: +x.highest_bid, a: +x.lowest_ask }; return m; }
+  };
+  await Promise.all(Object.entries(jobs).map(async ([k, f]) => { try { res[k] = await f(); } catch (e) { res[k] = { _err: e.message }; } }));
+  return res;
+}
+$('arbGo').onclick = async () => {
+  $('arbGo').disabled = true; $('arbOut').innerHTML = '<div class="card note">Բեռնում եմ 4 բորսաների գները…</div>';
+  try {
+    const [ex, prem, finfo] = await Promise.all([exTickers(), getJSON(`${FUT}/fapi/v1/premiumIndex`).catch(() => null), getJSON(`${FUT}/fapi/v1/fundingInfo`).catch(() => [])]);
+    const names = Object.keys(ex).filter(k => !ex[k]._err);
+    let h = `<div class="card"><h2>Cross-Exchange / Spot Arbitrage</h2><p class="note">Հասանելի՝ ${names.join(', ') || '—'}${Object.keys(ex).filter(k => ex[k]._err).map(k => ` · ${k}՝ ✗`).join('')}</p><div style="overflow-x:auto"><table><tr><th>Ակտիվ</th><th>Գնել</th><th>Վաճառել</th><th>Gross</th><th>Net</th></tr>`;
+    for (const s of symList()) {
+      const q = names.map(n => ({ n, ...(ex[n][s] || {}) })).filter(x => x.a > 0 && x.b > 0); if (q.length < 2) continue;
+      const buy = q.reduce((a, b) => b.a < a.a ? b : a), sell = q.reduce((a, b) => b.b > a.b ? b : a);
+      const gross = (sell.b - buy.a) / buy.a * 100, net = gross - 2 * S.arbFee;
+      h += `<tr><td><b>${s}</b></td><td>${buy.n} ${fmt(buy.a)}</td><td>${sell.n} ${fmt(sell.b)}</td><td>${gross.toFixed(3)}%</td><td class="${net > 0 ? 'L' : 'S'}">${net.toFixed(3)}%</td></tr>`;
+    }
+    h += `</table></div><p class="note">Transaction Cost Analysis՝ net = gross − 2×${S.arbFee}% fee։ Չեն ներառված՝ withdrawal fee, ցանցի ժամանակ (5–30 րոպե, գինը կփոխվի), slippage։ Իրատեսական է միայն, եթե երկու բորսայում էլ արդեն ունես USDT և մետաղադրամ։</p></div>`;
+    if (ex.Binance && !ex.Binance._err) {
+      const tri = ENG.triangular(ex.Binance, S.taker).slice(0, 8);
+      h += `<div class="card"><h2>Triangular Arbitrage (Binance)</h2><div style="overflow-x:auto"><table><tr><th>Ճանապարհ</th><th>Gross</th><th>Net (3× ${S.taker}%)</th><th>Max չափ</th></tr>${tri.map(t => `<tr><td class="mono">${t.path}</td><td>${t.gross.toFixed(3)}%</td><td class="${t.net > 0 ? 'L' : 'S'}">${t.net.toFixed(3)}%</td><td>$${t.cap.toFixed(0)}</td></tr>`).join('')}</table></div>
+        <p class="note">Եթե net-ը դրական է, միևնույն է՝ HFT բոտերը այն փակում են միլիվայրկյաններում։ Բրաուզերից (${HEALTH.restRtt ? HEALTH.restRtt.toFixed(0) + 'մվ' : '—'} RTT) այն գրեթե անհնար է բռնել — սա ուսումնական մոնիտոր է։</p></div>`;
+    }
+    if (prem) {
+      const iv = {}; for (const f of finfo || []) iv[f.symbol] = +f.fundingIntervalHours || 8;
+      const fr = prem.filter(x => x.symbol.endsWith('USDT') && x.lastFundingRate != null).map(x => ({ s: x.symbol, r: +x.lastFundingRate, h: iv[x.symbol] || 8, mark: +x.markPrice, idx: +x.indexPrice }))
+        .sort((a, b) => Math.abs(b.r) - Math.abs(a.r)).slice(0, 12);
+      const cost = 4 * S.taker;
+      h += `<div class="card"><h2>Funding Rate Arbitrage</h2><div style="overflow-x:auto"><table><tr><th>Perp</th><th>Funding</th><th>Տարեկան</th><th>Basis</th><th>Break-even</th><th>Դիրք</th></tr>${fr.map(x => {
+        const ann = x.r * (24 / x.h) * 365 * 100, be = cost / Math.abs(x.r * 100), basis = (x.mark - x.idx) / x.idx * 100;
+        return `<tr><td><b>${x.s}</b> <span class="note">${x.h}ժ</span></td><td class="${x.r > 0 ? 'L' : 'S'}">${(x.r * 100).toFixed(4)}%</td><td>${ann.toFixed(1)}%</td><td>${basis.toFixed(3)}%</td><td>${be.toFixed(1)} funding</td><td class="note">${x.r > 0 ? 'Long spot + Short perp' : 'Short perp ✗ → Long perp + Short spot (margin)'}</td></tr>`;
+      }).join('')}</table></div><p class="note">Ծախս՝ 4 գործարք × ${S.taker}% = ${cost.toFixed(2)}%։ Break-even՝ քանի funding վճարում է պետք ծախսը ծածկելու համար (եթե funding-ը չփոխվի)։ Ռիսկեր՝ funding-ը կարող է շրջվել, perp կողմի լիկվիդացիա, delisting։ Բարձր funding-ը հաճախ փոքր, ռիսկային մետաղադրամների վրա է։</p></div>`;
+    }
+    $('arbOut').innerHTML = h;
+  } catch (e) { $('arbOut').innerHTML = errorHelp(e); }
+  $('arbGo').disabled = false;
+};
+
+// =====================================================================
+//  BACKTEST / ADAPTIVE
+// =====================================================================
+$('btGo').onclick = async () => {
+  const sym = $('btSym').value, tf = $('btTf').value; $('btGo').disabled = true;
+  $('btOut').innerHTML = '<div class="card note">Բեռնում և հաշվում եմ (walk-forward-ը մի քանի վայրկյան է)…</div>';
+  await new Promise(r => setTimeout(r, 30));
+  try {
+    const [k, kh] = await Promise.all([klines(sym, tf, 1000), klines(sym, HTF[tf], 500)]);
+    const P = ENG.precompute(k), H = ENG.precompute(kh);
+    const ctx = { htf: H, minScore: S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: 0.01, slipPct: S.slip / 100 } };
+    const wf = ENG.walkForward(P, ctx, { fee: S.taker / 100, slip: S.slip / 1e4 });
+    const st = wf.full.stats, rs = wf.full.trades.map(t => t.r), ror = ENG.riskOfRuin(rs, S.risk / 100);
+    BTREF[sym + '|' + tf] = { exp: st.exp, win: st.win, n: st.n, at: Date.now() }; store.set('btref', BTREF);
+    resolveLogs(sym, tf, P);
+    const f2 = (x) => x === Infinity ? '∞' : (x || 0).toFixed(2);
+    let verdict;
+    if (st.n < 30) verdict = `<div class="warn">⚠️ Միայն ${st.n} գործարք — վիճակագրորեն քիչ է (պետք է ≥30)։</div>`;
+    else if (st.exp > 0.1 && wf.oosUser.exp > 0) verdict = `<div class="warn ok">✅ Դրական EV, և Out-of-Sample-ում էլ է դրական։ Հաջորդ քայլը՝ Forward Testing։</div>`;
+    else if (st.exp > 0) verdict = `<div class="warn">⚠️ Ընդհանուր դրական, բայց OOS-ում թույլ — edge-ը անկայուն է։</div>`;
+    else verdict = `<div class="warn bad">⛔ Բացասական EV — այստեղ մի առևտրիր։</div>`;
+    const row = (name, s) => `<tr><td>${name}</td><td>${s.n}</td><td>${s.n ? pc(s.win, 0) : '—'}</td><td>${f2(s.pf)}</td><td class="${s.exp > 0 ? 'L' : 'S'}">${s.exp.toFixed(2)}R</td></tr>`;
+    const regName = { trend: 'Trend', transition: 'Transition', range: 'Range' };
+    const regAdv = Object.entries(wf.regimes).filter(([r, s]) => s.n >= 8 && s.exp < 0).map(([r]) => regName[r]);
+    const days = ((P.k[P.k.length - 1].t - P.k[0].t) / 864e5).toFixed(0);
+    $('btOut').innerHTML = `<div class="card"><h2>${sym} · ${tf} · ~${days} օր</h2>${verdict}
+      <div class="grid">${[kv('Գործարքներ', st.n), kv('Win Rate', st.n ? pc(st.win) : '—'), kv('Profit Factor', f2(st.pf), st.pf > 1 ? 'L' : 'S'), kv('Expected Value', st.exp.toFixed(2) + 'R', st.exp > 0 ? 'L' : 'S'),
+        kv('Ընդհանուր', st.total.toFixed(1) + 'R'), kv('Max Drawdown', st.maxDD.toFixed(1) + 'R', 'S'), kv('Risk of Ruin (−50%)', ror ? pc(ror.ruin) : '—'), kv('Միջին DD @' + S.risk + '%', ror ? pc(ror.avgDD) : '—')].join('')}</div>
+      <h3>Կապիտալի կոր (R)</h3><canvas id="eq" style="height:170px"></canvas></div>
+      <div class="card"><h2>Walk-Forward Validation (4 հաջորդական հատված)</h2><table><tr><th>Սկիզբ</th><th>Գործ.</th><th>Win</th><th>PF</th><th>EV</th></tr>${wf.folds.map(f => row(new Date(f.from).toLocaleDateString(), f)).join('')}</table>
+      <p class="note">Կայուն ռազմավարությունը դրական է հատվածների մեծ մասում, ոչ թե մեկ «հաջողակ» ժամանակահատվածում։</p></div>
+      <div class="card"><h2>Out-of-Sample Testing</h2><p class="note">Score-ը ընտրվել է առաջին 70%-ում (մինչև ${new Date(wf.cutTime).toLocaleDateString()}) և ստուգվել վերջին 30%-ում, որը ընտրության ժամանակ «չի երևացել»։</p>
+      <table><tr><th>Score (In-Sample)</th><th>Գործ.</th><th>Win</th><th>PF</th><th>EV</th></tr>${wf.isRes.map(x => row(x.m + (x.m === wf.best.m ? ' ★' : '') + (x.m === S.min ? ' (քոնը)' : ''), x.s)).join('')}</table>
+      <h3>Արդյունք OOS-ում</h3><table><tr><th></th><th>Գործ.</th><th>Win</th><th>PF</th><th>EV</th></tr>${row('★ Լավագույնը IS-ում (' + wf.best.m + ')', wf.oosBest)}${row('Քո score (' + S.min + ')', wf.oosUser)}</table>
+      <div class="warn ${wf.best.s.exp > 0 && wf.oosBest.exp < 0 ? 'bad' : 'info'}">${wf.best.s.exp > 0 && wf.oosBest.exp < 0 ? '⛔ Overfitting՝ IS-ում լավագույն պարամետրը OOS-ում փլուզվեց։ Մի փոխիր score-ը դրան հարմարեցնելու համար։' : 'ℹ️ Բոտը ինքը score-ը չի փոխում։ Փոխիր կարգավորումներում միայն, եթե OOS-ն էլ է հաստատում, ապա նորից թեստավորիր։'}</div></div>
+      <div class="card"><h2>Market Regime Adaptation</h2><table><tr><th>Ռեժիմ</th><th>Գործ.</th><th>Win</th><th>PF</th><th>EV</th></tr>${Object.entries(wf.regimes).map(([r, s]) => row(regName[r], s)).join('')}</table>
+      ${regAdv.length ? `<div class="warn">⚠️ «${regAdv.join(', ')}» ռեժիմում EV-ն բացասական է։ Կարող ես անջատել այն կարգավորումներում — բայց միայն նոր թեստից հետո, և ոչ թե մեկ ակտիվի հիման վրա։</div>` : '<p class="note">Ոչ մի ռեժիմ հստակ բացասական չէ (≥8 գործարք)։</p>'}</div>
+      <div class="card"><h2>Concept Drift Detection</h2>${wf.drift ? `<table><tr><th></th><th>Գործ.</th><th>Win</th><th>PF</th><th>EV</th></tr>${row('Պատմություն', wf.drift.past)}${row('Վերջին ' + wf.drift.recent.n, wf.drift.recent)}</table>
+        <div class="warn ${wf.drift.flag ? 'bad' : 'ok'}">${wf.drift.flag ? '⛔ Drift՝ ռազմավարությունը վերջերս կորցնում է արդյունավետությունը։ Փոքրացրու ռիսկը կամ դադար տուր։' : '✅ Էական drift չի հայտնաբերվել'}</div>` : '<p class="note">Քիչ գործարքներ drift-ի համար։</p>'}</div>`;
+    drawEquity(rs);
+  } catch (e) { $('btOut').innerHTML = errorHelp(e); }
+  renderForward(); $('btGo').disabled = false;
+};
+function drawEquity(rs) {
+  const cv = $('eq'); if (!cv) return; const dpr = devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight; if (!W) return;
+  cv.width = W * dpr; cv.height = H * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const eq = [0]; rs.forEach(r => eq.push(eq[eq.length - 1] + r));
+  const lo = Math.min(...eq), hi = Math.max(...eq, lo + 1), y = v => H - 8 - (v - lo) / (hi - lo) * (H - 16), x = i => i / Math.max(1, eq.length - 1) * (W - 10) + 5;
+  g.strokeStyle = '#30363d'; g.beginPath(); g.moveTo(0, y(0)); g.lineTo(W, y(0)); g.stroke();
+  g.strokeStyle = eq[eq.length - 1] >= 0 ? '#2ea043' : '#f85149'; g.lineWidth = 2; g.beginPath(); eq.forEach((v, i) => i ? g.lineTo(x(i), y(v)) : g.moveTo(x(i), y(v))); g.stroke();
+}
+function renderForward() {
+  const closed = SIGLOG.filter(x => x.status === 'closed'), open = SIGLOG.filter(x => x.status === 'open');
+  const all = ENG.stats(closed.map(x => x.r));
+  const groups = {}; for (const x of closed) (groups[x.sym + '|' + x.tf] = groups[x.sym + '|' + x.tf] || []).push(x.r);
+  let rows = '';
+  for (const [k, rs] of Object.entries(groups)) {
+    const s = ENG.stats(rs), bt = BTREF[k];
+    const drift = bt && s.n >= 10 && ((bt.exp > 0 && s.exp < 0) || s.exp < bt.exp - 0.5);
+    rows += `<tr><td>${k.replace('|', ' · ')}</td><td>${s.n}</td><td>${pc(s.win, 0)}</td><td class="${s.exp > 0 ? 'L' : 'S'}">${s.exp.toFixed(2)}R</td><td>${bt ? bt.exp.toFixed(2) + 'R' : '—'}</td><td>${drift ? '<span class="S">⛔ Drift</span>' : s.n < 10 ? '<span class="note">քիչ է</span>' : '<span class="L">✓</span>'}</td></tr>`;
+  }
+  $('fwdOut').innerHTML = `<p class="note">Ամեն BUY/SELL որոշում (Սիգնալ և Սկաներ էջերից) ավտոմատ գրանցվում է մեկ անգամ և փակվում է նույն կանոններով, երբ հետագա մոմերը բեռնվում են։ Սա քո իրական Forward Test-ն է։</p>
+    <div class="grid">${kv('Գրանցված', SIGLOG.length)}${kv('Բաց', open.length)}${kv('Փակված', closed.length)}${kv('Win Rate', closed.length ? pc(all.win, 0) : '—')}${kv('Live EV', closed.length ? all.exp.toFixed(2) + 'R' : '—', all.exp > 0 ? 'L' : closed.length ? 'S' : '')}${kv('Max DD', closed.length ? all.maxDD.toFixed(1) + 'R' : '—')}</div>
+    ${rows ? `<div style="overflow-x:auto"><table style="margin-top:10px"><tr><th>Ակտիվ · TF</th><th>Գործ.</th><th>Win</th><th>Live EV</th><th>Backtest EV</th><th>Վիճակ</th></tr>${rows}</table></div>` : ''}`;
+}
+
+// =====================================================================
+//  JOURNAL
+// =====================================================================
+function renderJournal() {
+  const t = todayStats(), v = riskGuard(null, null, 0);
+  $('todayCard').innerHTML = `<h2>Այսօր</h2><div class="grid">${kv('Գործարքներ', t.n + ' / ' + S.dayMax)}${kv('Արդյունք', t.r.toFixed(1) + 'R', t.r >= 0 ? 'L' : 'S')}${kv('Մնացած վնասի սահման', Math.max(0, S.dayLoss + t.r).toFixed(1) + 'R')}${kv('Վնասներ անընդմեջ', t.consec)}</div>
+    ${v.map(x => `<div class="warn bad">⛔ ${esc(x)}</div>`).join('')}${t.consec >= 2 ? '<div class="warn">⚠️ Մի քանի վնաս անընդմեջ նորմալ վիճակագրություն է։ Revenge Trading-ի փոխարեն՝ դադար։</div>' : ''}`;
+  const all = ENG.stats(JOURNAL.map(j => j.r)), plan = ENG.stats(JOURNAL.filter(j => j.plan).map(j => j.r)), emo = ENG.stats(JOURNAL.filter(j => !j.plan).map(j => j.r));
+  $('jStats').innerHTML = [kv('Գործարքներ', all.n), kv('Win Rate', all.n ? pc(all.win, 0) : '—'), kv('Profit Factor', all.n ? (all.pf === Infinity ? '∞' : all.pf.toFixed(2)) : '—'),
+    kv('Expected Value', all.n ? all.exp.toFixed(2) + 'R' : '—'), kv('Max Drawdown', all.n ? all.maxDD.toFixed(1) + 'R' : '—'),
+    kv('Պլանով՝ EV', plan.n ? plan.exp.toFixed(2) + 'R (' + plan.n + ')' : '—', plan.exp > 0 ? 'L' : ''), kv('Էմոցիայով՝ EV', emo.n ? emo.exp.toFixed(2) + 'R (' + emo.n + ')' : '—', emo.n ? 'S' : '')].join('');
+  $('jBody').innerHTML = JOURNAL.slice().reverse().map((j, ri) => { const i = JOURNAL.length - 1 - ri; return `<tr><td>${new Date(j.ts).toLocaleDateString()}</td><td>${esc(j.sym)}</td><td class="${j.dir === 'LONG' ? 'L' : 'S'}">${j.dir}</td><td class="${j.r >= 0 ? 'L' : 'S'}">${j.r}</td><td>${j.plan ? '✓' : '✗'}</td><td class="note">${esc(j.note || '')}</td><td><a href="#" data-i="${i}" style="color:var(--r)">✕</a></td></tr>`; }).join('') || '<tr><td colspan="7" class="note">Դեռ գործարք չկա։</td></tr>';
+  $('jBody').querySelectorAll('a').forEach(a => a.onclick = (e) => { e.preventDefault(); JOURNAL.splice(+a.dataset.i, 1); store.set('journal', JOURNAL); renderJournal(); });
+}
+$('jAdd').onclick = () => {
+  const r = parseFloat($('jR').value); if (isNaN(r)) return;
+  JOURNAL.push({ ts: Date.now(), day: todayKey(), sym: ($('jSym').value || $('sym').value).toUpperCase(), dir: $('jDir').value, r, plan: $('jPlan').value === '1', note: $('jNote').value });
+  store.set('journal', JOURNAL); $('jR').value = ''; $('jNote').value = ''; renderJournal();
+};
+
+// =====================================================================
+//  NAV / BOOT
+// =====================================================================
+function tab(name) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.t === name));
+  document.querySelectorAll('main>section').forEach(s => s.classList.toggle('hide', s.id !== 't-' + name));
+  if (name === 'journal') renderJournal();
+  if (name === 'pos') { renderPositions(); refreshPositions(); }
+  if (name === 'bt') renderForward();
+  if (name === 'flow' && !LIVE.sym) startLive($('flowSym').value);
+  if (name === 'signal' && CUR) setTimeout(() => drawChart(CUR.P, CUR.sig), 30);
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => tab(b.dataset.t));
+setInterval(() => $('clock').textContent = new Date().toLocaleTimeString(), 1000);
+loadSettingsUI(); syncTime();
+</script>
+</body>
+</html>
