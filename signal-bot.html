@@ -45,7 +45,8 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
 <body>
 <header><h1>📈 Սիգնալ Բոտ</h1><span class="tag"><span class="dot" id="hDot"></span> <span id="hTxt">offline</span></span><button id="kill">🛑 STOP</button><span id="clock"></span></header>
 <nav id="nav">
-  <button data-t="signal" class="on">Սիգնալ</button>
+  <button data-t="auto" class="on">🤖 Ավտո</button>
+  <button data-t="signal">Սիգնալ</button>
   <button data-t="flow">Live Flow</button>
   <button data-t="scan">Սկաներ</button>
   <button data-t="pos">Դիրքեր</button>
@@ -59,7 +60,25 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
 <div id="killBanner"></div>
 
 <!-- ================= SIGNAL ================= -->
-<section id="t-signal">
+<section id="t-auto">
+  <div class="card">
+    <h2>🤖 Ավտոմատ սիգնալներ</h2>
+    <p class="note" style="margin-top:0">Բոտը ինքն է ստուգում բոլոր ակտիվները և ասում՝ <b>ԳՆԻՐ</b>, <b>ՎԱՃԱՌԻՐ</b> կամ <b>ՍՊԱՍԻՐ</b>, ինչպես նաև ինչ անել բաց դիրքերի հետ։</p>
+    <label>Թայմֆրեյմներ</label>
+    <div class="chk" id="autoTfs" style="display:flex;gap:14px;flex-wrap:wrap"><label><input type="checkbox" value="15m"> 15 րոպե</label><label><input type="checkbox" value="1h"> 1 ժամ</label><label><input type="checkbox" value="4h"> 4 ժամ</label></div>
+    <div class="row" style="margin-top:6px">
+      <div><label>Ստուգել</label><select id="autoEvery"><option value="1">ամեն րոպե</option><option value="5">5 րոպեն մեկ</option><option value="15">15 րոպեն մեկ</option></select></div>
+      <div style="flex:0 0 auto"><button class="btn" id="autoToggle">▶️ Միացնել</button></div>
+    </div>
+    <div id="autoStatus" class="note" style="margin-top:8px"></div>
+  </div>
+  <div id="autoNow"></div>
+  <div id="autoCards"></div>
+  <div class="card"><h2>Այսօրվա սիգնալները</h2><div id="autoHist"></div></div>
+  <div class="card note">ℹ️ Ավտո ռեժիմը աշխատում է, քանի դեռ էջը բաց է։ iPhone-ը կասեցնում է ֆոնային էջերը, ուստի էկրանը միացված պահիր (բոտը փորձում է ինքը չթողնել, որ էկրանը անջատվի)։ Ամեն սիգնալ վավեր է 3 մոմ, և եթե գինը արդեն փախել է մուտքից, բոտը կասի «ուշ է»։ Սա ֆինանսական խորհուրդ չէ. սկզբում փորձարկիր demo-ով։</div>
+</section>
+
+<section id="t-signal" class="hide">
   <div class="card">
     <div class="row">
       <div><label>Ակտիվ</label><select id="sym"></select></div>
@@ -230,6 +249,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
   <div class="card">
     <h2>Ճարտարապետություն</h2>
     <p class="note mono">Binance REST + WebSocket → Event Bus → Engine (analyze) → Opportunity Scoring → 🛡 Risk Control (veto) → BUY / SELL / NO TRADE → Execution Plan → Position Manager → Journal → Adaptive Monitoring</p>
+    <details><summary>🤖 Ավտո սիգնալներ</summary><p class="note">Ընտրված թայմֆրեյմներով ստուգում է բոլոր ակտիվները (1/5/15 րոպեն մեկ)։ Յուրաքանչյուր BUY/SELL անցնում է նույն վերլուծությունը և Risk Control-ը, ցույց է տրվում մեկ անգամ, ունի ձայնային ծանուցում և քայլ առ քայլ հրահանգ (քանակ, Stop, TP)։ Ամեն 15վ ստուգվում է՝ դեռ վավեր է, ուշ է, թե Stop/TP-ն արդեն հասել է։ Բաց դիրքերի համար ցույց է տալիս, թե ինչ անել հիմա։</p></details>
     <details><summary>Market Momentum Detection</summary><p class="note">ROC(10) և դրա արագացումը (ROC − ROC 3 մոմ առաջ), MACD histogram, Breakout/Breakdown 20 մոմի գագաթ/հատակ + ծավալ ≥1.5σ, Momentum Reversal (ուժեղ շարժում → acceleration շրջվում է + RSI), Volume Spike (log-ծավալի z-score), Buying/Selling Pressure (Binance-ի taker buy ծավալից delta 20 մոմում)։ Չափազանց երկար իմպուլսը տույժ է ստանում (chasing)։</p></details>
     <details><summary>Real-Time Order Flow</summary><p class="note">aggTrade-ից՝ ագրեսիվ գնորդներ/վաճառողներ (market order-ի կողմը), 60վ imbalance, live CVD, խոշոր պատվերներ (≥20× մեդիան notional), Absorption (մի կողմի ագրեսիվ հոսք > 60%, ծավալը միջինից 1.5× բարձր, բայց գինը չի շարժվում)։ depth20-ից՝ Bid/Ask pressure և Order Book imbalance։</p></details>
     <details><summary>Volatility Analysis</summary><p class="note">ATR 14, ATR 5/50 հարաբերակցություն (>1.3 expansion, <0.75 compression), Bollinger Bands, %B, լայնության percentile, squeeze release, Sudden Price Movement (մոմ > 3 ATR, live՝ 10վ-ում > 1.5 ATR(1m))։ Live էջը ասում է՝ շուկան հարմար է արագ գործարքների համար, թե ոչ։</p></details>
@@ -927,7 +947,11 @@ async function klines(sym, tf, limit = 1000) {
   const now = Date.now() + HEALTH.offset;
   return raw.filter(x => x[6] < now).map(x => ({ t: x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5], ct: x[6], tb: +x[9] }));
 }
-async function bookData(sym) {
+const CACHE = {};
+async function cached(key, ttl, fn) { const c = CACHE[key]; if (c && Date.now() - c.t < ttl) return c.v; const v = await fn(); CACHE[key] = { t: Date.now(), v }; return v; }
+async function bookData(sym) { return cached('book' + sym, 20000, () => bookDataRaw(sym)); }
+async function derivData(sym) { const d = await cached('deriv' + sym, 60000, () => derivDataRaw(sym)); return { ...d }; }
+async function bookDataRaw(sym) {
   try {
     const d = await spot(`/api/v3/depth?symbol=${sym}&limit=100`);
     return bookStats(d.bids, d.asks);
@@ -940,7 +964,7 @@ function bookStats(bids, asks) {
   const bv = near(bids), av = near(asks);
   return { bids, asks, bid, ask, mid, spreadPct: (ask - bid) / mid * 100, imb: av ? bv / av : null, bv, av };
 }
-async function derivData(sym) {
+async function derivDataRaw(sym) {
   const out = { funding: null, mark: null, index: null, lsRatio: null, oiChange: null, priceChange: null, oi: null, ok: false };
   try { const p = await getJSON(`${FUT}/fapi/v1/premiumIndex?symbol=${sym}`); out.funding = +p.lastFundingRate; out.mark = +p.markPrice; out.index = +p.indexPrice; out.ok = true; } catch (e) {}
   if (!out.ok) return out;
@@ -1070,7 +1094,7 @@ BUS.on('depth', (d) => {
   const qs = bids.concat(asks).map(x => x[1]).sort((a, b) => a - b), med = qs[Math.floor(qs.length / 2)] || 0;
   const present = new Set(), wallsNow = [];
   for (const [side, arr] of [['bid', bids], ['ask', asks]]) for (const [p, q] of arr) {
-    if (q > 6 * med && p * q > 20000) { const key = side + p; present.add(key); wallsNow.push({ side, p, q, x: q / med }); if (!LIVE.walls.has(key)) LIVE.walls.set(key, { side, p, q, first: now }); }
+    if (q > 12 * med && p * q > 150000) { const key = side + p; present.add(key); wallsNow.push({ side, p, q, x: q / med }); if (!LIVE.walls.has(key)) LIVE.walls.set(key, { side, p, q, first: now }); }
   }
   const minBid = bids[bids.length - 1][0], maxAsk = asks[asks.length - 1][0];
   for (const [key, w] of LIVE.walls) {
@@ -1107,7 +1131,7 @@ function processLive() {
   // live anomalies
   const an = [];
   if (LIVE.liqN > 50 && LIVE.liqNow < 0.5 * LIVE.liqAvg) an.push({ sev: 'high', type: 'Sudden Liquidity Drop', txt: `Order book-ի իրացվելիությունը ${pc(LIVE.liqNow / LIVE.liqAvg, 0)} է միջինից` });
-  if (LIVE.spoof.length >= 3) an.push({ sev: LIVE.spoof.length >= 6 ? 'high' : 'warn', type: 'Spoofing-like Pattern', txt: `${LIVE.spoof.length} խոշոր պատ անհետացավ <10վ-ում առանց կատարվելու (60վ)` });
+  if (LIVE.spoof.length >= 8) an.push({ sev: 'warn', type: 'Spoofing-like Pattern', txt: `${LIVE.spoof.length} խոշոր պատ անհետացավ <10վ-ում առանց կատարվելու (60վ)` });
   const p10 = LIVE.priceHist.find(x => now - x.t <= 10000), p60h = LIVE.priceHist[0];
   if (p10 && LIVE.atr1m && Math.abs(LIVE.price - p10.p) > 1.5 * LIVE.atr1m) an.push({ sev: 'warn', type: 'Sudden Price Movement', txt: `10վ-ում ${(Math.abs(LIVE.price - p10.p) / LIVE.atr1m).toFixed(1)} ATR(1m)` });
   if (p60h && LIVE.atr1m && Math.abs(LIVE.price - p60h.p) > 4 * LIVE.atr1m) an.push({ sev: 'high', type: LIVE.price < p60h.p ? 'Flash Crash (live)' : 'Flash Pump (live)', txt: `60վ-ում ${(Math.abs(LIVE.price - p60h.p) / LIVE.atr1m).toFixed(1)} ATR(1m)` });
@@ -1465,6 +1489,11 @@ function renderHeader() {
 //  SCANNER
 // =====================================================================
 let lastScan = store.get('lastSignals', {}), autoTimer = null;
+function scanCtx(sym, H, deriv, book) {
+  const ctx = { htf: H, deriv: deriv && deriv.ok ? deriv : null, book, minScore: S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: book ? book.spreadPct : 0.02, slipPct: S.slip / 100 } };
+  if (LIVE.sym === sym && LIVE.flow && LIVE.trades.length > 20) { ctx.flow = LIVE.flow; ctx.liveAnoms = LIVE.anoms.filter(a => a.sev !== 'info'); }
+  return ctx;
+}
 async function scan() {
   const tf = $('scanTf').value, syms = symList(); $('scanGo').disabled = true;
   const rows = []; let i = 0; const newOnes = [];
@@ -1472,8 +1501,7 @@ async function scan() {
     $('scanStatus').textContent = `Սկանավորում… ${++i}/${syms.length} (${sym})`;
     try {
       const { P, H, deriv, book } = await runAnalysis(sym, tf, true);
-      const ctx = { htf: H, deriv: deriv && deriv.ok ? deriv : null, book, minScore: S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: book ? book.spreadPct : 0.02, slipPct: S.slip / 100 } };
-      if (LIVE.sym === sym && LIVE.flow) { ctx.flow = LIVE.flow; ctx.liveAnoms = LIVE.anoms.filter(a => a.sev !== 'info'); }
+      const ctx = scanCtx(sym, H, deriv, book);
       const sig = ENG.analyze(P, P.c.length - 1, ctx);
       const qty = sig.rawDir ? (S.bal * S.risk / 100 * sig.sizeMult) / Math.abs(sig.entry - sig.sl) : 0;
       const vetoes = riskGuard(sig, sym, qty * sig.entry, P.k[P.k.length - 1].ct, tf); sig.final = finalDecision(sig, vetoes);
@@ -1494,10 +1522,12 @@ async function scan() {
   $('scanGo').disabled = false;
   if (openPositions().length) refreshPositions();
 }
-function beep() { try { const ac = new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), gn = ac.createGain(); o.connect(gn); gn.connect(ac.destination); o.frequency.value = 880; gn.gain.value = 0.15; o.start(); o.stop(ac.currentTime + 0.35); } catch (e) {} }
+let AC = null;
+document.addEventListener('click', () => { try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); AC.resume(); } catch (e) {} });
+function beep() { try { const ac = AC || new (window.AudioContext || window.webkitAudioContext)(); const o = ac.createOscillator(), gn = ac.createGain(); o.connect(gn); gn.connect(ac.destination); o.frequency.value = 880; gn.gain.value = 0.15; o.start(); o.stop(ac.currentTime + 0.35); } catch (e) {} }
 function notify(list, tf) {
   document.title = `🔔 (${list.length}) Նոր սիգնալ`; beep();
-  try { if (window.Notification && Notification.permission === 'granted') new Notification('Նոր սիգնալ', { body: list.join(', ') + ' · ' + tf }); } catch (e) {}
+  try { if (window.Notification && Notification.permission === 'granted') new Notification('Նոր սիգնալ', { body: list.join(', ') + (tf === 'auto' ? '' : ' · ' + tf) }); } catch (e) {}
 }
 $('scanGo').onclick = () => { try { if (window.Notification && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {} scan(); };
 $('auto').onchange = () => { clearInterval(autoTimer); const m = +$('auto').value; if (m) { scan(); autoTimer = setInterval(scan, m * 60000); } };
@@ -1691,6 +1721,159 @@ $('jAdd').onclick = () => {
   store.set('journal', JOURNAL); $('jR').value = ''; $('jNote').value = ''; renderJournal();
 };
 
+
+// =====================================================================
+//  🤖 AUTO SIGNALS — scans everything on a timer and says what to do
+// =====================================================================
+const AUTO = { on: store.get('autoOn', false), tfs: store.get('autoTfs', ['15m', '1h']), every: store.get('autoEvery', 5), timer: null, ptimer: null, running: false,
+  active: store.get('autoActive', {}), hist: store.get('autoHist', []), last: null, next: null, vetoes: [], err: null, lock: null };
+function autoSave() { store.set('autoActive', AUTO.active); AUTO.hist = AUTO.hist.filter(x => Date.now() - x.created < 36 * 3600e3).slice(0, 60); store.set('autoHist', AUTO.hist); }
+function topReasons(sig) {
+  const arr = (sig.dir === 1 ? sig.L : sig.S).filter(x => x[0] > 0).sort((a, b) => b[0] - a[0]).slice(0, 3);
+  return arr.map(x => x[1]);
+}
+async function autoCycle() {
+  if (AUTO.running) return; AUTO.running = true; AUTO.err = null;
+  const pairs = []; for (const tf of AUTO.tfs) for (const s of symList()) pairs.push([s, tf]);
+  let i = 0, errs = 0; const fresh = [];
+  for (const [sym, tf] of pairs) {
+    $('autoStatus').textContent = `🔄 Ստուգում եմ… ${++i}/${pairs.length} · ${sym} ${tf}`;
+    try {
+      const { P, H, deriv, book } = await runAnalysis(sym, tf, true);
+      const sig = ENG.analyze(P, P.c.length - 1, scanCtx(sym, H, deriv, book));
+      const qty = sig.rawDir ? (S.bal * S.risk / 100 * sig.sizeMult) / Math.abs(sig.entry - sig.sl) : 0;
+      const vetoes = riskGuard(sig, sym, qty * sig.entry, P.k[P.k.length - 1].ct, tf); sig.final = finalDecision(sig, vetoes);
+      if (sig.final !== 'NO TRADE') {
+        const id = `${sym}|${tf}|${sig.time}|${sig.dir}`;
+        if (!AUTO.active[id] && !AUTO.hist.some(h => h.id === id)) {
+          const a = { id, sym, tf, dir: sig.dir, entry: sig.entry, sl: sig.sl, tp1: sig.tp1, tp2: sig.tp2, rr: sig.rr, atr: sig.atr, strength: sig.strength, qty,
+            sizeMult: sig.sizeMult, risk: sig.risk, regime: sig.regime, reasons: topReasons(sig), created: Date.now(), expires: sig.time + 3 * TF_MS[tf], price: sig.entry, status: 'active' };
+          AUTO.active[id] = a; AUTO.hist.unshift({ ...a }); fresh.push(a); logSignal(sym, tf, sig);
+        }
+      }
+    } catch (e) { errs++; AUTO.err = e; }
+  }
+  AUTO.vetoes = riskGuard(null, null, 0);
+  AUTO.last = Date.now(); AUTO.next = AUTO.last + AUTO.every * 60000; AUTO.running = false;
+  autoSave();
+  if (fresh.length) notify(fresh.map(a => (a.dir === 1 ? 'ԳՆԻՐ ' : 'ՎԱՃԱՌԻՐ ') + a.sym.replace('USDT', '') + ' ' + a.tf), 'auto');
+  if (openPositions().length) await refreshPositions();
+  await autoPrices();
+  renderAuto(errs === pairs.length ? AUTO.err : null);
+}
+async function autoPrices() {
+  const list = Object.values(AUTO.active); if (!list.length) { renderAuto(); return; }
+  const syms = [...new Set(list.map(a => a.sym))], prices = {};
+  try { const d = await spot(`/api/v3/ticker/price?symbols=${encodeURIComponent(JSON.stringify(syms))}`); for (const x of d) prices[x.symbol] = +x.price; } catch (e) {}
+  const now = Date.now() + HEALTH.offset;
+  for (const a of list) {
+    const p = (LIVE.sym === a.sym && LIVE.price) ? LIVE.price : prices[a.sym]; if (p) a.price = p;
+    let st = 'active';
+    if (now > a.expires) st = 'expired';
+    else if (a.dir === 1 ? a.price <= a.sl : a.price >= a.sl) st = 'invalid';
+    else if (a.dir === 1 ? a.price >= a.tp1 : a.price <= a.tp1) st = 'missed';
+    a.late = st === 'active' && a.dir * (a.price - a.entry) > 0.5 * a.atr;
+    if (st !== 'active') { a.status = st; const h = AUTO.hist.find(x => x.id === a.id); if (h) h.status = st; delete AUTO.active[a.id]; }
+  }
+  autoSave(); renderAuto();
+}
+function autoStart() {
+  clearInterval(AUTO.timer); clearInterval(AUTO.ptimer);
+  AUTO.timer = setInterval(autoCycle, AUTO.every * 60000); AUTO.ptimer = setInterval(autoPrices, 15000);
+  autoCycle(); keepAwake();
+}
+function autoStop() { clearInterval(AUTO.timer); clearInterval(AUTO.ptimer); AUTO.timer = AUTO.ptimer = null; AUTO.next = null; try { AUTO.lock && AUTO.lock.release(); } catch (e) {} AUTO.lock = null; renderAuto(); }
+async function keepAwake() { try { if (navigator.wakeLock && !AUTO.lock) { AUTO.lock = await navigator.wakeLock.request('screen'); AUTO.lock.addEventListener('release', () => AUTO.lock = null); } } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && AUTO.on) { keepAwake(); if (!AUTO.running && (!AUTO.last || Date.now() - AUTO.last > AUTO.every * 60000)) autoCycle(); } });
+$('autoToggle').onclick = () => {
+  AUTO.on = !AUTO.on; store.set('autoOn', AUTO.on);
+  try { if (window.Notification && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {}
+  AUTO.on ? autoStart() : autoStop(); renderAuto();
+};
+$('autoEvery').onchange = () => { AUTO.every = +$('autoEvery').value; store.set('autoEvery', AUTO.every); if (AUTO.on) autoStart(); };
+document.querySelectorAll('#autoTfs input').forEach(cb => cb.onchange = () => {
+  AUTO.tfs = [...document.querySelectorAll('#autoTfs input')].filter(x => x.checked).map(x => x.value);
+  if (!AUTO.tfs.length) { cb.checked = true; AUTO.tfs = [cb.value]; }
+  store.set('autoTfs', AUTO.tfs);
+});
+const hm = (t) => new Date(t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function autoCard(a) {
+  const coin = a.sym.replace('USDT', ''), buy = a.dir === 1, risk$ = S.bal * S.risk / 100 * (a.sizeMult || 1);
+  const R = Math.abs(a.entry - a.sl), r1 = Math.abs(a.tp1 - a.entry) / R, r2 = Math.abs(a.tp2 - a.entry) / R, notional = a.qty * a.entry;
+  const win$ = risk$ * (0.5 * r1 + 0.5 * r2);
+  const steps = buy ? [
+    `<b>Գնիր</b> ${fmt(a.qty)} ${coin} ≈ <b>${fmt(a.entry)}</b> գնով (≈ $${notional.toFixed(0)})`,
+    `<b>Անմիջապես դիր Stop Loss</b>՝ <b class="S">${fmt(a.sl)}</b> (եթե հասնի՝ −$${risk$.toFixed(2)})`,
+    `<b>Վաճառիր կեսը</b> <b class="L">${fmt(a.tp1)}</b>-ում և Stop-ը տեղափոխիր ${fmt(a.entry)} (առանց վնասի)`,
+    `<b>Վաճառիր մնացածը</b> <b class="L">${fmt(a.tp2)}</b>-ում (ընդհանուր ≈ +$${win$.toFixed(2)})`
+  ] : [
+    `<b>Բացիր Short</b> ${fmt(a.qty)} ${coin} ≈ <b>${fmt(a.entry)}</b> գնով futures-ում (≈ $${notional.toFixed(0)})`,
+    `<b>Անմիջապես դիր Stop Loss</b>՝ <b class="S">${fmt(a.sl)}</b> (եթե հասնի՝ −$${risk$.toFixed(2)})`,
+    `<b>Փակիր կեսը</b> <b class="L">${fmt(a.tp1)}</b>-ում և Stop-ը տեղափոխիր ${fmt(a.entry)} (առանց վնասի)`,
+    `<b>Փակիր մնացածը</b> <b class="L">${fmt(a.tp2)}</b>-ում (ընդհանուր ≈ +$${win$.toFixed(2)})`
+  ];
+  const move = a.price ? (a.price - a.entry) / a.entry * 100 : 0;
+  return `<div class="card" style="border:2px solid ${buy ? 'var(--g)' : 'var(--r)'}">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="sig ${buy ? 'L' : 'S'}">${buy ? '🟢 ԳՆԻՐ' : '🔴 ՎԱՃԱՌԻՐ'} ${coin}</div>
+      <div style="text-align:right"><span class="tag">${a.tf}</span><span class="tag">Ուժ ${a.strength}</span><span class="tag">R:R 1:${a.rr.toFixed(1)}</span></div>
+    </div>
+    <div class="note">Ստացվել է ${hm(a.created)} · վավեր է մինչև ${hm(a.expires)} · հիմա ${fmt(a.price)} (${move >= 0 ? '+' : ''}${move.toFixed(2)}% մուտքից)</div>
+    ${a.late ? `<div class="warn">⏳ Գինն արդեն ${fmt(Math.abs(a.price - a.entry))}-ով հեռացել է մուտքից — <b>ուշ է</b>։ Մի վազիր գնի հետևից (FOMO). մտիր միայն, եթե գինը վերադառնա ~${fmt(a.entry)}-ի մոտ։</div>` : ''}
+    <h3>Ինչ անել՝ քայլ առ քայլ</h3>
+    <ol style="margin:0;padding-left:20px;line-height:1.7">${steps.map(s => `<li>${s}</li>`).join('')}</ol>
+    ${!buy ? '<p class="note">Եթե futures չունես. սա նշանակում է՝ <b>մի գնիր</b> ' + coin + ', իսկ եթե ունես ' + coin + ' և ուզում ես պաշտպանվել անկումից, կարող ես վաճառել։</p>' : ''}
+    <h3>Ինչու</h3><ul class="rs">${a.reasons.map(r => `<li>✓ ${esc(r)}</li>`).join('')}</ul>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" data-ap="${esc(a.id)}">📌 Բացեցի</button>
+      <button class="btn sec" data-ad="${esc(a.id)}">🔍 Մանրամասն</button>
+      <button class="btn sec" data-ax="${esc(a.id)}">✕ Բաց թողնել</button>
+    </div><div class="note" id="am-${esc(a.id)}"></div></div>`;
+}
+function renderAuto(err) {
+  $('autoToggle').textContent = AUTO.on ? '⏸ Կանգնեցնել' : '▶️ Միացնել';
+  $('autoToggle').className = 'btn' + (AUTO.on ? ' sec' : '');
+  document.querySelectorAll('#autoTfs input').forEach(cb => cb.checked = AUTO.tfs.includes(cb.value));
+  $('autoEvery').value = String(AUTO.every);
+  if (!AUTO.running) $('autoStatus').innerHTML = AUTO.on
+    ? `🟢 Աշխատում է · ${symList().length} ակտիվ × ${AUTO.tfs.join(', ')}${AUTO.last ? ' · վերջին ստուգում ' + hm(AUTO.last) : ''}${AUTO.next ? ' · հաջորդը ' + hm(AUTO.next) : ''}`
+    : '⚪ Անջատված է։ Սեղմիր «Միացնել»։';
+  if (err) $('autoStatus').innerHTML += errorHelp(err);
+  const act = Object.values(AUTO.active).sort((a, b) => b.strength - a.strength);
+  // ---- "What to do now" summary ----
+  let now = '';
+  const vet = AUTO.vetoes.length ? AUTO.vetoes : riskGuard(null, null, 0);
+  if (vet.length) now += `<div class="card" style="border:2px solid var(--r)"><div class="sig S">🛑 ԱՅՍՕՐ ԱՌԵՎՏՈՒՐ ՄԻ ԱՐԱ</div>${vet.map(v => `<div class="warn bad">${esc(v)}</div>`).join('')}<p class="note">Սա պաշտպանում է կապիտալը։ Բոտը նոր սիգնալներ ցույց չի տա, մինչև արգելքը վերանա։</p></div>`;
+  const op = openPositions();
+  if (op.length) {
+    now += `<div class="card"><h2>📂 Բաց դիրքեր — ինչ անել հիմա</h2>${op.map(p => {
+      const m = POSSTATE[p.id] || {}, first = (m.actions || [])[0], coin = p.sym.replace('USDT', '');
+      const lvl = !first ? 'ok' : first.lvl === 'bad' ? 'bad' : first.lvl === 'ok' ? 'ok' : first.lvl === 'info' ? 'info' : '';
+      return `<div class="warn ${lvl}"><b>${p.dir === 1 ? 'LONG' : 'SHORT'} ${coin}</b> ${m.curR != null ? '(' + (m.curR > 0 ? '+' : '') + m.curR.toFixed(2) + 'R)' : ''} — ${first ? esc(first.txt) : 'Պահիր։ Stop-ը ' + fmt(p.sl) + ', TP1 ' + fmt(p.tp1) + '։'}</div>`;
+    }).join('')}<button class="btn sec sm" onclick="tab('pos')">Կառավարել դիրքերը →</button></div>`;
+  }
+  if (!vet.length && !act.length) now += `<div class="card"><div class="sig M">⏳ ՍՊԱՍԻՐ</div><p class="note" style="margin-bottom:0">${AUTO.on ? 'Հիմա լավ հնարավորություն չկա։ Բոտը կշարունակի ստուգել և ձայնով կտեղեկացնի, երբ լինի սիգնալ։' : 'Միացրու ավտո ռեժիմը, որ բոտը սկսի ստուգել։'} Չառևտրելը նույնպես որոշում է։</p></div>`;
+  $('autoNow').innerHTML = now;
+  $('autoCards').innerHTML = vet.length ? '' : act.map(autoCard).join('');
+  $('autoCards').querySelectorAll('[data-ap]').forEach(b => b.onclick = () => autoTake(b.dataset.ap));
+  $('autoCards').querySelectorAll('[data-ad]').forEach(b => b.onclick = () => { const a = AUTO.active[b.dataset.ad]; if (!a) return; $('sym').value = a.sym; $('tf').value = a.tf; tab('signal'); $('go').click(); });
+  $('autoCards').querySelectorAll('[data-ax]').forEach(b => b.onclick = () => autoClose(b.dataset.ax, 'skipped'));
+  const icon = { active: '🟢', taken: '📌', expired: '⌛', invalid: '❌', missed: '🏃', skipped: '✕' };
+  const label = { active: 'ակտիվ', taken: 'բացեցիր', expired: 'ժամկետը անցավ', invalid: 'Stop-ը հասավ մինչ մուտք', missed: 'TP1-ը հասավ առանց քեզ', skipped: 'բաց թողեցիր' };
+  $('autoHist').innerHTML = AUTO.hist.length ? `<table>${AUTO.hist.slice(0, 25).map(h => `<tr><td>${hm(h.created)}</td><td class="${h.dir === 1 ? 'L' : 'S'}"><b>${h.dir === 1 ? 'ԳՆԻՐ' : 'ՎԱՃԱՌԻՐ'}</b> ${h.sym.replace('USDT', '')}</td><td>${h.tf}</td><td>${fmt(h.entry)}</td><td>${icon[h.status] || ''} <span class="note">${label[h.status] || ''}</span></td></tr>`).join('')}</table>` : '<p class="note">Դեռ սիգնալ չի եղել։</p>';
+}
+function autoClose(id, status) {
+  const a = AUTO.active[id]; if (!a) return; a.status = status; const h = AUTO.hist.find(x => x.id === id); if (h) h.status = status;
+  delete AUTO.active[id]; autoSave(); renderAuto();
+}
+function autoTake(id) {
+  const a = AUTO.active[id]; if (!a) return;
+  const v = riskGuard({ rawDir: a.dir }, a.sym, a.qty * a.entry);
+  if (v.length) { $('am-' + id).innerHTML = `<span class="S">⛔ ${esc(v[0])}</span>`; return; }
+  POSITIONS.push({ id: Date.now(), sigId: a.id, sym: a.sym, tf: a.tf, dir: a.dir, entry: a.price || a.entry, sl0: a.sl, sl: a.sl, tp1: a.tp1, tp2: a.tp2, qty: a.qty, openTime: Date.now(), partial: false, maxBars: 48, status: 'open' });
+  store.set('positions', POSITIONS); autoClose(id, 'taken'); refreshPositions().then(() => renderAuto());
+}
+
 // =====================================================================
 //  NAV / BOOT
 // =====================================================================
@@ -1702,10 +1885,11 @@ function tab(name) {
   if (name === 'bt') renderForward();
   if (name === 'flow' && !LIVE.sym) startLive($('flowSym').value);
   if (name === 'signal' && CUR) setTimeout(() => drawChart(CUR.P, CUR.sig), 30);
+  if (name === 'auto') renderAuto();
 }
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => tab(b.dataset.t));
 setInterval(() => $('clock').textContent = new Date().toLocaleTimeString(), 1000);
-loadSettingsUI(); syncTime();
+loadSettingsUI(); syncTime(); renderAuto(); if (AUTO.on) autoStart();
 </script>
 </body>
 </html>
