@@ -172,6 +172,18 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
     <p class="note">Մուտքը հաջորդ մոմի բացմամբ + slippage, 50% TP1-ում, հետո Break-Even + Trailing Stop, Time Exit 48 մոմ։ Նույն մոմում SL+TP → վնաս։ Միջնորդավճարը ներառված է։</p>
   </div>
   <div id="btOut"></div>
+  <div class="card">
+    <h2>🧠 Ինքնաուսուցում</h2>
+    <p class="note" style="margin-top:0">Բոտը վերլուծում է իր պատմական գործարքները մի քանի ակտիվի վրա և գտնում. <b>որ փաստարկներն են իրականում օգնում</b> (կշիռը մեծանում է), <b>որոնք են խանգարում</b> (կշիռը փոքրանում է), և <b>որ պայմաններում է կորցնում</b> (սեսիա, շաբաթ-կիրակի, ռեժիմ)։ Սովորում է տվյալների 70%-ի վրա և ստուգում մնացած 30%-ի վրա, որը չի տեսել։ Կիրառվում է <b>միայն քո թույլտվությամբ</b> և միայն եթե ապացուցված է։</p>
+    <div class="row">
+      <div><label>Ակտիվներ</label><input id="lnSyms" value="BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT"></div>
+      <div><label>Թայմֆրեյմ</label><select id="lnTf"><option value="15m">15 րոպե</option><option value="1h" selected>1 ժամ</option><option value="4h">4 ժամ</option></select></div>
+      <div><label>Պատմություն</label><select id="lnLen"><option value="3000" selected>3,000 մոմ</option><option value="6000">6,000 մոմ</option></select></div>
+      <div style="flex:0 0 auto"><button class="btn" id="lnGo">Սովորել</button></div>
+    </div>
+    <div id="lnActive" style="margin-top:8px"></div>
+  </div>
+  <div id="lnOut"></div>
   <div class="card"><h2>📡 Model Performance Monitoring (forward test)</h2><div id="fwdOut"></div></div>
 </section>
 
@@ -265,6 +277,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
   <div class="card">
     <h2>Ճարտարապետություն</h2>
     <p class="note mono">Binance REST + WebSocket → Event Bus → Engine (analyze) → Opportunity Scoring → 🛡 Risk Control (veto) → BUY / SELL / NO TRADE → Execution Plan → Position Manager → Journal → Adaptive Monitoring</p>
+    <details><summary>🧠 Ինքնաուսուցում</summary><p class="note">Յուրաքանչյուր պատմական գործարքի համար բոտը հիշում է, թե որ փաստարկներն էին կողմ, ինչ սեսիա, օր և ռեժիմ էր։ Հետո չափում է՝ տվյալ փաստարկով գործարքների EV-ն որքանով է տարբերվում առանց դրա գործարքներից (lift), և ըստ դրա կշիռը փոխում ×0–×2 սահմաններում (քիչ դեպքերի դեպքում ավելի զգույշ՝ shrinkage)։ Վնասաբեր պայմանները (օր․ «շաբաթ-կիրակի») դառնում են արգելք։ Ամեն ինչ սովորում է 70%-ի վրա, ստուգվում 30% չտեսած տվյալների վրա, և կիրառվում միայն ապացուցված լինելու և քո հաստատման դեպքում։ Նոր հասկացություններ բոտը չի հորինում — այն գնահատում է իր գոյություն ունեցող գիտելիքը և պայմանները։</p></details>
     <details><summary>🆕 Telegram, լիկվիդացիաներ, կորելյացիա, երկար backtest</summary><p class="note">Telegram՝ սիգնալները գալիս են հեռախոսիդ (համակարգչում բոտը կարող է աշխատել 24/7)։ Լիկվիդացիաներ՝ Binance Futures forceOrder stream, կասկադներ և կլաստերներ, որոնք մտնում են Order Flow score-ի մեջ։ Կորելյացիա՝ 1ժ եկամտաբերությունների Pearson կորելյացիա, Risk Control-ը արգելում է չափից շատ նույն ուղղությամբ կորելացված դիրքեր։ Backtest՝ մինչև 10,000 մոմ պատմություն, հաշվարկը առանձին thread-ում (Web Worker)։ Օրացույց՝ ForexFactory-ի High-impact USD/EUR իրադարձությունները ավտոմատ։</p></details>
     <details><summary>🤖 Ավտո սիգնալներ</summary><p class="note">Ընտրված թայմֆրեյմներով (5ր–4ժ) ստուգում է բոլոր ակտիվները (1/5/15 րոպեն մեկ)։ Ռեժիմը փոխում է շեմը՝ Զգուշավոր 7.5, Նորմալ 6.5, Ակտիվ 5.5։ «Պատրաստվիր» ցանկը ցույց է տալիս շեմին մոտ կամ արգելված setup-ները։ Յուրաքանչյուր BUY/SELL անցնում է նույն վերլուծությունը և Risk Control-ը, ցույց է տրվում մեկ անգամ, ունի ձայնային ծանուցում և քայլ առ քայլ հրահանգ (քանակ, Stop, TP)։ Ամեն 15վ ստուգվում է՝ դեռ վավեր է, ուշ է, թե Stop/TP-ն արդեն հասել է։ Բաց դիրքերի համար ցույց է տալիս, թե ինչ անել հիմա։</p></details>
     <details><summary>Market Momentum Detection</summary><p class="note">ROC(10) և դրա արագացումը (ROC − ROC 3 մոմ առաջ), MACD histogram, Breakout/Breakdown 20 մոմի գագաթ/հատակ + ծավալ ≥1.5σ, Momentum Reversal (ուժեղ շարժում → acceleration շրջվում է + RSI), Volume Spike (log-ծավալի z-score), Buying/Selling Pressure (Binance-ի taker buy ծավալից delta 20 մոմում)։ Չափազանց երկար իմպուլսը տույժ է ստանում (chasing)։</p></details>
@@ -559,7 +572,12 @@ function ENGINE_FACTORY() {
     if (t < 210 || N(a) || N(P.e200[t]) || N(P.adx[t]) || N(P.macd.hist[t - 1]) || N(P.rocAcc[t])) return { dir: 0, rawDir: 0, ready: false, decision: 'NO TRADE' };
     const L = [], S = [], info = [], catL = {}, catS = {};
     CATS.forEach(k => { catL[k] = 0; catS[k] = 0; });
-    const add = (side, cat, p, txt) => { if (side > 0) { catL[cat] += p; L.push([p, txt, cat]); } else { catS[cat] += p; S.push([p, txt, cat]); } };
+    const add = (side, cat, p, txt) => {
+      const key = factorKey(cat, txt), m = ctx.wmul && ctx.wmul[key] != null ? ctx.wmul[key] : 1;
+      p = Math.round(p * m * 100) / 100;
+      if (side > 0) { catL[cat] += p; L.push([p, txt, cat, key, m]); } else { catS[cat] += p; S.push([p, txt, cat, key, m]); }
+    };
+    const tags = ctxTags(P, t);
 
     const adxv = P.adx[t], vola = volatilityAt(P, t);
     let regime = adxv >= 25 ? 'trend' : (adxv < 20 ? 'range' : 'transition');
@@ -736,6 +754,9 @@ function ENGINE_FACTORY() {
     if (dir && costR != null && costR > 0.4) block.push(`Կատարման ծախսը ${costR.toFixed(2)}R — ուտում է edge-ը`);
     if (risk >= 70) block.push(`Risk Score ${risk}/100 — չափազանց վտանգավոր`);
     for (const x of anoms) if (x.sev === 'high') block.push(`Անոմալիա՝ ${x.type}`);
+    tags.push('regime:' + regime);
+    const learnedBlock = ctx.blocks ? tags.filter(g => ctx.blocks.includes(g)) : [];
+    if (dir && learnedBlock.length) block.push(`🧠 Ինքնաուսուցում՝ պատմականորեն վնասաբեր պայման (${learnedBlock.map(tagName).join(', ')})`);
     if (dir && regimeOff) block.push(`«${regime === 'range' ? 'Range' : 'Trend'}» ռեժիմն անջատված է կարգավորումներում`);
 
     const final = block.length ? 0 : dir;
@@ -747,6 +768,7 @@ function ENGINE_FACTORY() {
       cats, risk, riskItems, costR, costPct, anoms,
       L, S, info, block, regime, vola, vol: vola.regime, adx: adxv, rsi: r, atr: a, htf, st, levels: lv, zones: zn, vp, fib, candle: cd, div: dv,
       roc, racc, volZ: vz, pressure: pr, breakoutUp, breakoutDn,
+      tags, keys: dir === 1 ? L.filter(x => x[0] > 0).map(x => x[3]) : dir === -1 ? S.filter(x => x[0] > 0).map(x => x[3]) : [],
       entry, sl, tp1, tp2, rr, dynTP, sup, res, price: c, sizeMult: vola.regime === 'high' ? 0.5 : 1, t, time: P.k[t].ct
     };
   }
@@ -794,7 +816,7 @@ function ENGINE_FACTORY() {
     const tS = Math.max(211, opt.tStart ?? 211), tE = Math.min(P.c.length - 2, opt.tEnd ?? P.c.length - 2);
     let t = tS;
     while (t < tE) {
-      const s = analyze(P, t, { htf: ctx.htf, minScore: ctx.minScore, allowRange: ctx.allowRange, allowTrend: ctx.allowTrend, cost: ctx.cost });
+      const s = analyze(P, t, { htf: ctx.htf, minScore: ctx.minScore, allowRange: ctx.allowRange, allowTrend: ctx.allowTrend, cost: ctx.cost, wmul: ctx.wmul, blocks: ctx.blocks });
       if (!s.ready || s.dir === 0) { t++; continue; }
       const d = s.dir, e = P.o[t + 1] * (1 + d * slip);
       if ((d === 1 && e <= s.sl) || (d === -1 && e >= s.sl)) { t++; continue; }
@@ -809,7 +831,7 @@ function ENGINE_FACTORY() {
       }
       if (res === null) { j = Math.min(j, P.c.length - 1); const open = d * (P.c[j] - e) / R; res = half ? 0.5 * r1 + 0.5 * open : open; }
       res -= (e * fee * 2) / R;
-      trades.push({ t: t + 1, exit: j, dir: d, r: res, time: P.k[t + 1].t, regime: s.regime });
+      trades.push({ t: t + 1, exit: j, dir: d, r: res, time: P.k[t + 1].t, regime: s.regime, keys: s.keys, tags: s.tags });
       t = j + 1;
     }
     return { trades, stats: stats(trades.map(x => x.r)) };
@@ -852,6 +874,56 @@ function ENGINE_FACTORY() {
       drift = { recent, past, flag: (past.exp > 0 && recent.exp < 0) || (past.win - recent.win > 0.2) };
     }
     return { full, folds, isRes, best, oosBest, oosUser, isUser, cutTime: P.k[cut].t, regimes, drift };
+  }
+
+
+  // ---------- 🧠 Self-learning: factor attribution + context filters, validated out-of-sample ----------
+  function factorKey(cat, txt) {
+    return cat + ':' + String(txt).replace(/\([^)]*\)/g, '').replace(/[-+]?\d[\d.,]*\s*(%|σ|×|x)?/g, '#').replace(/\s+/g, ' ').trim();
+  }
+  function ctxTags(P, t) {
+    const d = new Date(P.k[t].ct + 1), hr = d.getUTCHours(), dow = d.getUTCDay();
+    const session = hr < 7 ? 'Asia' : hr < 13 ? 'London' : hr < 21 ? 'NewYork' : 'Late';
+    return ['session:' + session, 'day:' + (dow === 0 || dow === 6 ? 'Weekend' : 'Weekday')];
+  }
+  const TAG_NAMES = { 'session:Asia': 'Ասիական սեսիա', 'session:London': 'Լոնդոնյան սեսիա', 'session:NewYork': 'Նյու Յորքի սեսիա', 'session:Late': 'Ուշ երեկո (UTC 21–24)',
+    'day:Weekend': 'Շաբաթ-կիրակի', 'day:Weekday': 'Աշխատանքային օրեր', 'regime:trend': 'Թրենդ ռեժիմ', 'regime:range': 'Range ռեժիմ', 'regime:transition': 'Անցումային ռեժիմ' };
+  const tagName = (g) => TAG_NAMES[g] || g;
+  function learn(sets, ctx, opt = {}) {
+    const train = [], test = [];
+    const base = { ...ctx, wmul: null, blocks: null };
+    for (const s of sets) {
+      s.cut = Math.floor(211 + (s.P.c.length - 211) * 0.7);
+      train.push(...backtest(s.P, { ...base, htf: s.H }, { ...opt, tEnd: s.cut }).trades);
+      test.push(...backtest(s.P, { ...base, htf: s.H }, { ...opt, tStart: s.cut }).trades);
+    }
+    const trainS = stats(train.map(x => x.r));
+    // 1) which arguments actually helped?
+    const keys = new Set(); train.forEach(t => (t.keys || []).forEach(k => keys.add(k)));
+    const factors = [], wmul = {};
+    for (const k of keys) {
+      const w = train.filter(t => t.keys.includes(k)).map(t => t.r), wo = train.filter(t => !t.keys.includes(k)).map(t => t.r);
+      if (w.length < 12 || wo.length < 12) continue;
+      const sw = stats(w), lift = sw.exp - stats(wo).exp, shrink = w.length / (w.length + 40);
+      const m = Math.max(0, Math.min(2, 1 + lift * shrink * 1.5));
+      factors.push({ k, n: w.length, ev: sw.exp, win: sw.win, lift, m: Math.round(m * 100) / 100 });
+      if (Math.abs(m - 1) >= 0.1) wmul[k] = Math.round(m * 100) / 100;
+    }
+    // 2) when / in which conditions does it lose?
+    const tagsAll = new Set(); train.forEach(t => (t.tags || []).forEach(g => tagsAll.add(g)));
+    const contexts = [], blocks = [];
+    for (const g of tagsAll) {
+      const s = stats(train.filter(t => t.tags.includes(g)).map(t => t.r)); contexts.push({ g, name: tagName(g), ...s });
+      if (s.n >= 15 && s.exp < -0.15 && s.exp < trainS.exp - 0.25) blocks.push(g);
+    }
+    if (blocks.length >= tagsAll.size - 1) blocks.length = 0; // never block (almost) everything
+    // 3) prove it on data the learning never saw
+    const test2 = [];
+    for (const s of sets) test2.push(...backtest(s.P, { ...ctx, htf: s.H, wmul, blocks }, { ...opt, tStart: s.cut }).trades);
+    const testBase = stats(test.map(x => x.r)), testNew = stats(test2.map(x => x.r));
+    const proven = testNew.n >= 25 && testNew.exp > 0 && testNew.exp > testBase.exp + 0.05 && testNew.maxDD <= testBase.maxDD * 1.3 + 1;
+    return { wmul, blocks, blockNames: blocks.map(tagName), factors: factors.sort((a, b) => b.lift - a.lift), contexts: contexts.sort((a, b) => b.exp - a.exp),
+      trainS, testBase, testNew, proven, nTrain: train.length, nTest: test.length };
   }
 
   function riskOfRuin(rs, riskPct, sims = 2000, len = 200) {
@@ -919,7 +991,7 @@ function ENGINE_FACTORY() {
     return x.toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: Math.min(2, d) });
   }
 
-  return { precompute, analyze, backtest, walkForward, stats, riskOfRuin, managePosition, executionPlan, triangular, anomaliesAt, volatilityAt, fmt, atr, CATS, CAT_NAMES };
+  return { precompute, analyze, backtest, walkForward, learn, factorKey, tagName, stats, riskOfRuin, managePosition, executionPlan, triangular, anomaliesAt, volatilityAt, fmt, atr, CATS, CAT_NAMES };
 }
 const ENG = ENGINE_FACTORY();
 
@@ -1345,7 +1417,7 @@ async function runAnalysis(sym, tf, extras = true) {
   return { P, H, deriv, book };
 }
 function evaluate(sym, tf, P, H, deriv, book) {
-  const ctx = buildCtx(sym, deriv, book); ctx.htf = H;
+  const ctx = buildCtx(sym, deriv, book); ctx.htf = H; Object.assign(ctx, learnCtx(tf));
   const sig = ENG.analyze(P, P.c.length - 1, ctx);
   const qty = sig.rawDir ? (S.bal * S.risk / 100 * sig.sizeMult) / Math.abs(sig.entry - sig.sl) : 0;
   const vetoes = riskGuard(sig, sym, qty * sig.entry, P.k[P.k.length - 1].ct, tf);
@@ -1412,7 +1484,7 @@ function renderLight(withPos) {
   h += `<div class="note">Ընդհանուր՝ BUY ${(sig.longScore || 0).toFixed(1)} · SELL ${(sig.shortScore || 0).toFixed(1)} · շեմ ${S.min}${sig.riskItems && sig.riskItems.length ? ' · Risk՝ ' + sig.riskItems.map(x => esc(x[1])).join(', ') : ''}</div>`;
   $('o-cats').innerHTML = h;
   $('o-guard').innerHTML = (vetoes.length ? vetoes.map(v => `<div class="warn bad">⛔ ${esc(v)}</div>`).join('') : '<div class="warn ok">✅ Բոլոր պաշտպանական ստուգումները անցել են</div>') + guardTips();
-  const li = (arr) => arr.length ? [...arr].sort((a, b) => b[0] - a[0]).map(([p, t, c]) => `<li><span class="pt ${p >= 0 ? 'L' : 'S'}">${p > 0 ? '+' : ''}${p}</span>${esc(t)} <span class="tag">${ENG.CAT_NAMES[c] || 'Cost'}</span></li>`).join('') : '<li class="note">—</li>';
+  const li = (arr) => arr.length ? [...arr].sort((a, b) => b[0] - a[0]).map(([p, t, c, k, m]) => `<li><span class="pt ${p >= 0 ? 'L' : 'S'}">${p > 0 ? '+' : ''}${p}</span>${esc(t)} <span class="tag">${ENG.CAT_NAMES[c] || 'Cost'}</span>${m != null && m !== 1 ? `<span class="tag ${m > 1 ? 'L' : 'S'}">🧠 ×${m}</span>` : ''}</li>`).join('') : '<li class="note">—</li>';
   $('o-L').innerHTML = li(sig.L || []); $('o-S').innerHTML = li(sig.S || []);
   $('o-ls').textContent = (sig.longScore || 0).toFixed(1); $('o-ss').textContent = (sig.shortScore || 0).toFixed(1);
   $('o-info').innerHTML = (sig.info || []).map(x => `<span class="tag">ℹ️ ${esc(x)}</span>`).join('') + (sig.anoms || []).map(a => `<div class="warn ${a.sev === 'high' ? 'bad' : ''}">🚨 ${esc(a.type)} — ${esc(a.txt || '')}</div>`).join('');
@@ -1619,8 +1691,10 @@ function renderHeader() {
 //  SCANNER
 // =====================================================================
 let lastScan = store.get('lastSignals', {}), autoTimer = null;
-function scanCtx(sym, H, deriv, book, minScore) {
-  const ctx = { htf: H, deriv: deriv && deriv.ok ? deriv : null, book, minScore: minScore || S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: book ? book.spreadPct : 0.02, slipPct: S.slip / 100 } };
+let LEARN = store.get('learn', {});
+function learnCtx(tf) { const L = LEARN[tf]; return L && L.on ? { wmul: L.wmul, blocks: L.blocks } : {}; }
+function scanCtx(sym, H, deriv, book, minScore, tf) {
+  const ctx = { ...learnCtx(tf), htf: H, deriv: deriv && deriv.ok ? deriv : null, book, minScore: minScore || S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: book ? book.spreadPct : 0.02, slipPct: S.slip / 100 } };
   if (LIVE.sym === sym && LIVE.flow && LIVE.trades.length > 20) { ctx.flow = LIVE.flow; ctx.liveAnoms = LIVE.anoms.filter(a => a.sev !== 'info'); }
   return ctx;
 }
@@ -1631,7 +1705,7 @@ async function scan() {
     $('scanStatus').textContent = `Սկանավորում… ${++i}/${syms.length} (${sym})`;
     try {
       const { P, H, deriv, book } = await runAnalysis(sym, tf, true);
-      const ctx = scanCtx(sym, H, deriv, book);
+      const ctx = scanCtx(sym, H, deriv, book, null, tf);
       const sig = ENG.analyze(P, P.c.length - 1, ctx);
       const qty = sig.rawDir ? (S.bal * S.risk / 100 * sig.sizeMult) / Math.abs(sig.entry - sig.sl) : 0;
       const vetoes = riskGuard(sig, sym, qty * sig.entry, P.k[P.k.length - 1].ct, tf); sig.final = finalDecision(sig, vetoes);
@@ -1782,20 +1856,77 @@ async function klinesLong(sym, tf, total, onProg) {
   const now = Date.now() + HEALTH.offset; return out.filter(x => x.ct < now);
 }
 let BTW = null;
-function runBacktestJob(k, kh, ctx, opt) {
-  const local = () => { const P = ENG.precompute(k), H = ENG.precompute(kh); const wf = ENG.walkForward(P, { ...ctx, htf: H }, opt); return { wf, ror: ENG.riskOfRuin(wf.full.trades.map(t => t.r), opt.riskPct) }; };
+const JOBS = {
+  wf: (E, d) => { const P = E.precompute(d.k), H = E.precompute(d.kh); const wf = E.walkForward(P, { ...d.ctx, htf: H }, d.opt); return { wf, ror: E.riskOfRuin(wf.full.trades.map(t => t.r), d.opt.riskPct) }; },
+  learn: (E, d) => E.learn(d.sets.map(s => ({ P: E.precompute(s.k), H: E.precompute(s.kh) })), d.ctx, d.opt)
+};
+function runJob(job, d) {
+  const local = () => JOBS[job](ENG, d);
   try {
     if (!BTW) {
-      const src = `const ENG=(${ENGINE_FACTORY.toString()})();onmessage=(e)=>{try{const {k,kh,ctx,opt}=e.data;const P=ENG.precompute(k),H=ENG.precompute(kh);ctx.htf=H;const wf=ENG.walkForward(P,ctx,opt);postMessage({wf,ror:ENG.riskOfRuin(wf.full.trades.map(t=>t.r),opt.riskPct)});}catch(err){postMessage({error:String(err)})}}`;
+      const src = `const ENG=(${ENGINE_FACTORY.toString()})();const JOBS={wf:${JOBS.wf.toString()},learn:${JOBS.learn.toString()}};onmessage=(e)=>{try{postMessage({res:JOBS[e.data.job](ENG,e.data.d)});}catch(err){postMessage({error:String(err)})}}`;
       BTW = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
     }
     return new Promise((res) => {
-      const t = setTimeout(() => { BTW.terminate(); BTW = null; res(local()); }, 120000);
-      BTW.onmessage = (e) => { clearTimeout(t); res(e.data.error ? local() : e.data); };
+      const t = setTimeout(() => { if (BTW) BTW.terminate(); BTW = null; res(local()); }, 180000);
+      BTW.onmessage = (e) => { clearTimeout(t); res(e.data.error ? local() : e.data.res); };
       BTW.onerror = () => { clearTimeout(t); BTW = null; res(local()); };
-      BTW.postMessage({ k, kh, ctx, opt });
+      BTW.postMessage({ job, d });
     });
   } catch (e) { return Promise.resolve(local()); }
+}
+function runBacktestJob(k, kh, ctx, opt) { return runJob('wf', { k, kh, ctx, opt }); }
+
+// =====================================================================
+//  🧠 SELF-LEARNING UI
+// =====================================================================
+const prettyKey = (k) => { const [c, ...r] = k.split(':'); return { cat: ENG.CAT_NAMES[c] || c, txt: r.join(':').replace(/#/g, '…') }; };
+function renderLearnActive() {
+  const rows = Object.entries(LEARN).filter(([, L]) => L);
+  $('lnActive').innerHTML = rows.length ? rows.map(([tf, L]) => `<div class="warn ${L.on ? 'ok' : 'info'}">${L.on ? '🟢 Կիրառված է' : '⚪ Պահված է, բայց անջատված'} · <b>${tf}</b> · ${new Date(L.at).toLocaleDateString()} · ${Object.keys(L.wmul).length} փաստարկի կշիռ${L.blocks.length ? ' · արգելքներ՝ ' + L.blockNames.join(', ') : ''} · OOS EV ${L.testBase.toFixed(2)}R → ${L.testNew.toFixed(2)}R
+    <div class="row" style="margin-top:6px"><button class="btn sec sm" data-lt="${tf}">${L.on ? 'Անջատել' : 'Միացնել'}</button><button class="btn sec sm" data-ld="${tf}">Ջնջել</button></div></div>`).join('') : '<p class="note">Դեռ սովորած մոդել չկա։ Բոտը աշխատում է բազային կանոններով։</p>';
+  $('lnActive').querySelectorAll('[data-lt]').forEach(b => b.onclick = () => { LEARN[b.dataset.lt].on = !LEARN[b.dataset.lt].on; store.set('learn', LEARN); renderLearnActive(); });
+  $('lnActive').querySelectorAll('[data-ld]').forEach(b => b.onclick = () => { delete LEARN[b.dataset.ld]; store.set('learn', LEARN); renderLearnActive(); });
+}
+let LAST_LEARN = null;
+$('lnGo').onclick = async () => {
+  const syms = $('lnSyms').value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean).slice(0, 6), tf = $('lnTf').value, len = +$('lnLen').value;
+  if (!syms.length) return; $('lnGo').disabled = true;
+  try {
+    const sets = [];
+    for (const s of syms) {
+      $('lnOut').innerHTML = `<div class="card note">Բեռնում եմ ${s}-ի պատմությունը… (${sets.length + 1}/${syms.length})</div>`;
+      const k = await klinesLong(s, tf, len), kh = await klinesLong(s, HTF[tf], Math.min(5000, Math.ceil(k.length * TF_MS[tf] / TF_MS[HTF[tf]]) + 260));
+      sets.push({ k, kh });
+    }
+    $('lnOut').innerHTML = `<div class="card note">🧠 Վերլուծում եմ ${sets.reduce((a, s) => a + s.k.length, 0).toLocaleString()} մոմ, գտնում ինչն է աշխատում և ստուգում չտեսած տվյալների վրա…</div>`;
+    const ctx = { minScore: S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: 0.01, slipPct: S.slip / 100 } };
+    const r = await runJob('learn', { sets, ctx, opt: { fee: S.taker / 100, slip: S.slip / 1e4 } });
+    LAST_LEARN = { tf, syms, r };
+    renderLearn();
+  } catch (e) { $('lnOut').innerHTML = errorHelp(e); }
+  $('lnGo').disabled = false;
+};
+function renderLearn() {
+  const { tf, syms, r } = LAST_LEARN, f2 = (x) => x === Infinity ? '∞' : (x || 0).toFixed(2);
+  const good = r.factors.filter(f => f.m > 1.05).slice(0, 8), bad = r.factors.filter(f => f.m < 0.95).sort((a, b) => a.lift - b.lift).slice(0, 8);
+  const row = (name, s) => `<tr><td>${name}</td><td>${s.n}</td><td>${s.n ? pc(s.win, 0) : '—'}</td><td>${f2(s.pf)}</td><td class="${s.exp > 0 ? 'L' : 'S'}">${s.exp.toFixed(2)}R</td><td>${s.maxDD.toFixed(1)}R</td></tr>`;
+  const frow = (f) => { const p = prettyKey(f.k); return `<tr><td>${esc(p.txt)} <span class="tag">${p.cat}</span></td><td>${f.n}</td><td>${pc(f.win, 0)}</td><td class="${f.ev > 0 ? 'L' : 'S'}">${f.ev.toFixed(2)}R</td><td class="${f.m > 1 ? 'L' : 'S'}"><b>×${f.m}</b></td></tr>`; };
+  $('lnOut').innerHTML = `
+  <div class="card"><h2>🧠 Արդյունք՝ ${syms.map(s => s.replace('USDT', '')).join(', ')} · ${tf}</h2>
+    <div class="warn ${r.proven ? 'ok' : 'bad'}">${r.proven ? '✅ <b>Ապացուցված է</b>։ Սովորածը բարելավեց արդյունքը այն տվյալների վրա, որոնք բոտը սովորելիս չէր տեսել։' : '❌ <b>Չի հաստատվել</b>։ Սովորածը չբարելավեց արդյունքը չտեսած տվյալների վրա (կամ գործարքները քիչ են)։ Սա նշանակում է, որ «դասերը» պատահականություն էին — չենք կիրառում։'}</div>
+    <table><tr><th>Չտեսած 30%</th><th>Գործ.</th><th>Win</th><th>PF</th><th>EV</th><th>Max DD</th></tr>${row('Առանց ուսուցման', r.testBase)}${row('🧠 Ուսուցմամբ', r.testNew)}</table>
+    ${r.proven ? `<button class="btn" id="lnApply" style="margin-top:10px">✅ Կիրառել ${tf}-ի համար</button>` : `<button class="btn sec" id="lnApply" style="margin-top:10px">Պահել, բայց չմիացնել</button>`}
+    <p class="note">Սովորել է ${r.nTrain} գործարքի վրա, ստուգել ${r.nTest}-ի վրա։ Կիրառելուց հետո ամեն փաստարկի կողքին կտեսնես 🧠 ×կշիռը, իսկ forward test-ը կցույցի՝ արդյոք դա աշխատում է իրական ժամանակում։</p></div>
+  <div class="card"><h2>✅ Ինչն է օգնում (կշիռը մեծանում է)</h2>${good.length ? `<div style="overflow-x:auto"><table><tr><th>Փաստարկ</th><th>Գործ.</th><th>Win</th><th>EV</th><th>Կշիռ</th></tr>${good.map(frow).join('')}</table></div>` : '<p class="note">Ոչ մի փաստարկ հստակ չի առանձնանում։</p>'}</div>
+  <div class="card"><h2>⚠️ Ինչն է խանգարում (կշիռը փոքրանում է)</h2>${bad.length ? `<div style="overflow-x:auto"><table><tr><th>Փաստարկ</th><th>Գործ.</th><th>Win</th><th>EV</th><th>Կշիռ</th></tr>${bad.map(frow).join('')}</table></div>` : '<p class="note">Վնասաբեր փաստարկ չի գտնվել։</p>'}</div>
+  <div class="card"><h2>🕒 Երբ և ինչ պայմաններում</h2><div style="overflow-x:auto"><table><tr><th>Պայման</th><th>Գործ.</th><th>Win</th><th>PF</th><th>EV</th><th>Max DD</th></tr>${r.contexts.map(c => row((r.blocks.includes(c.g) ? '⛔ ' : '') + c.name, c)).join('')}</table></div>
+    ${r.blocks.length ? `<div class="warn">⛔ Բոտը կխուսափի՝ ${r.blockNames.join(', ')} (պատմականորեն վնասաբեր)։</div>` : '<p class="note">Ոչ մի պայման այնքան վատ չէ, որ արգելվի։</p>'}
+    <p class="note">Սեսիաները UTC-ով՝ Ասիա 00–07 (Երևան 04–11), Լոնդոն 07–13 (11–17), Նյու Յորք 13–21 (17–01)։</p></div>`;
+  $('lnApply').onclick = () => {
+    LEARN[tf] = { on: r.proven, wmul: r.wmul, blocks: r.blocks, blockNames: r.blockNames, at: Date.now(), syms, testBase: r.testBase.exp, testNew: r.testNew.exp, proven: r.proven };
+    store.set('learn', LEARN); renderLearnActive(); $('lnApply').disabled = true; $('lnApply').textContent = r.proven ? '✓ Կիրառված է' : '✓ Պահված է (անջատված)';
+  };
 }
 $('btGo').onclick = async () => {
   const sym = $('btSym').value, tf = $('btTf').value; $('btGo').disabled = true;
@@ -1807,7 +1938,7 @@ $('btGo').onclick = async () => {
     const hlen = Math.min(5000, Math.ceil(k.length * TF_MS[tf] / TF_MS[HTF[tf]]) + 260);
     const kh = await klinesLong(sym, HTF[tf], hlen);
     $('btOut').innerHTML = `<div class="card note">Հաշվում եմ ${k.length} մոմի վրա (backtest + walk-forward + OOS)…</div>`;
-    const ctx = { minScore: S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: 0.01, slipPct: S.slip / 100 } };
+    const ctx = { ...learnCtx(tf), minScore: S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: 0.01, slipPct: S.slip / 100 } };
     const { wf, ror } = await runBacktestJob(k, kh, ctx, { fee: S.taker / 100, slip: S.slip / 1e4, riskPct: S.risk / 100 });
     const P = { k: [k[0], k[k.length - 1]] };
     const st = wf.full.stats, rs = wf.full.trades.map(t => t.r);
@@ -1903,7 +2034,7 @@ async function autoCycle() {
     $('autoStatus').textContent = `🔄 Ստուգում եմ… ${++i}/${pairs.length} · ${sym} ${tf}`;
     try {
       const { P, H, deriv, book } = await runAnalysis(sym, tf, true);
-      const sig = ENG.analyze(P, P.c.length - 1, scanCtx(sym, H, deriv, book, AUTO.mode));
+      const sig = ENG.analyze(P, P.c.length - 1, scanCtx(sym, H, deriv, book, AUTO.mode, tf));
       const qty = sig.rawDir ? (S.bal * S.risk / 100 * sig.sizeMult) / Math.abs(sig.entry - sig.sl) : 0;
       const vetoes = riskGuard(sig, sym, qty * sig.entry, P.k[P.k.length - 1].ct, tf); sig.final = finalDecision(sig, vetoes);
       if (sig.ready && sig.final === 'NO TRADE') {
@@ -2062,7 +2193,7 @@ function tab(name) {
   document.querySelectorAll('main>section').forEach(s => s.classList.toggle('hide', s.id !== 't-' + name));
   if (name === 'journal') renderJournal();
   if (name === 'pos') { renderPositions(); refreshPositions(); renderCorr(); }
-  if (name === 'bt') renderForward();
+  if (name === 'bt') { renderForward(); renderLearnActive(); }
   if (name === 'flow' && !LIVE.sym) startLive($('flowSym').value);
   if (name === 'signal' && CUR) setTimeout(() => drawChart(CUR.P, CUR.sig), 30);
   if (name === 'auto') renderAuto();
