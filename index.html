@@ -139,6 +139,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
     </div>
     <div id="status" class="note" style="margin-top:8px">Սեղմիր «Վերլուծել»։ Վերլուծությունից հետո որոշումը թարմանում է ամեն 3 վայրկյանը մեկ՝ կենդանի order flow-ով։</div>
   </div>
+  <div id="stkSigOut"></div>
   <div id="out" class="hide">
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
@@ -2687,7 +2688,7 @@ async function stkBench(tf) {
   const kb = await stkBars('SPY', tf, STK_SIZE[tf]), kbh = await stkBars('SPY', STK_HTF[tf], STK_SIZE[STK_HTF[tf]]);
   const B = ENG.precompute(kb), BH = ENG.precompute(kbh); STK.mkt = stkMarketView(B, BH); return { B, BH };
 }
-function stkOneRender(r) {
+function stkOneRender(r, outId = 'stkOneOut', cvId = 'stkChart') {
   const s = r.sig, z = r.size, buy = s.dir === 1, sell = s.dir === -1, inList = stkSyms().includes(r.sym);
   const head = buy ? '<div class="sig L">🟢 ԳՆԻՐ</div>' : sell ? `<div class="sig S">🔴 ${STK.cfg.longOnly ? 'ՄԻ ԳՆԻՐ' : 'ՎԱՃԱՌԻՐ'}</div><p class="note">${STK.cfg.longOnly ? 'Եթե ունես այս բաժնետոմսը՝ դիտարկիր վաճառել կամ Stop դնել։' : ''}</p>`
     : s.rawDir ? `<div class="sig W">⛔ ՍԻԳՆԱԼ ԿԱ, ԲԱՅՑ ԱՐԳԵԼՎԱԾ</div>` : '<div class="sig M">⏳ ՍՊԱՍԻՐ</div>';
@@ -2697,16 +2698,17 @@ function stkOneRender(r) {
       ${kv('Քանակ', z.shares + ' հատ')}${kv('Գումար', usd(z.notional))}${kv('Ռիսկ', '−' + usd(z.risk), 'S')}${kv('Միջնորդավճար', usd(2 * z.comm))}</div>`;
     if (buy) plan += `<h3>Ինչ անել IBKR-ում</h3><ol style="margin:0;padding-left:20px;line-height:1.7"><li><b>Buy</b> → <b>LMT</b> ${sf(s.entry)} · ${z.shares} հատ</li><li>Attach → <b>Bracket</b>՝ Stop ${sf(s.sl)}, Take Profit ${sf(s.tp2)}</li><li>TP1 ${sf(s.tp1)}-ում վաճառիր կեսը, Stop-ը տեղափոխիր ${sf(s.entry)}</li></ol>`;
   }
-  $('stkOneOut').innerHTML = `<div class="card" style="border:2px solid ${buy ? 'var(--g)' : sell ? 'var(--r)' : 'var(--line)'}">
+  $(outId).innerHTML = `<div class="card" style="border:2px solid ${buy ? 'var(--g)' : sell ? 'var(--r)' : 'var(--line)'}">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><div class="note">${stkName(r.sym)} · ${TFN[r.tf] || r.tf}</div>${head}</div>
       <div style="text-align:right"><div class="note">Գին</div><b style="font-size:20px">${sf(r.price)}</b>${r.prevClose ? `<div class="${r.price >= r.prevClose ? 'L' : 'S'}">${r.price >= r.prevClose ? '+' : ''}${((r.price / r.prevClose - 1) * 100).toFixed(2)}%</div>` : ''}</div></div>
     ${plan}
-    <canvas id="stkChart" style="margin-top:10px"></canvas><div class="note" style="margin-top:4px">Կանաչ՝ EMA20 · Կապույտ՝ EMA50 · Նարնջագույն՝ EMA200 · Մոխրագույն՝ Bollinger</div>
+    <canvas id="${cvId}" style="margin-top:10px"></canvas><div class="note" style="margin-top:4px">Կանաչ՝ EMA20 · Կապույտ՝ EMA50 · Նարնջագույն՝ EMA200 · Մոխրագույն՝ Bollinger</div>
     ${stkDetailHTML(r)}
-    <div class="row" style="margin-top:8px"><button class="btn sec" id="stkOneRe">🔄 Թարմացնել</button>${inList ? '' : '<button class="btn sec" id="stkOneAdd">➕ Ավելացնել ավտո ստուգման ցանկում</button>'}</div></div>`;
-  setTimeout(() => drawChart(r.P, s, 'stkChart'), 30);
-  $('stkOneRe').onclick = () => stkOne(r.sym);
-  if ($('stkOneAdd')) $('stkOneAdd').onclick = () => { STK.cfg.syms = stkSyms().concat(r.sym).join(','); stkSaveCfg(); $('stkSyms').value = STK.cfg.syms; $('stkOneAdd').disabled = true; $('stkOneAdd').textContent = '✓ Ավելացված է'; };
+    <div class="row" style="margin-top:8px"><button class="btn sec" data-re="1">🔄 Թարմացնել</button>${inList ? '' : '<button class="btn sec" data-add="1">➕ Ավելացնել ավտո ստուգման ցանկում</button>'}</div></div>`;
+  setTimeout(() => drawChart(r.P, s, cvId), 30);
+  const box = $(outId), re = box.querySelector('[data-re]'), add = box.querySelector('[data-add]');
+  re.onclick = () => outId === 'stkOneOut' ? stkOne(r.sym) : stkSignalGo();
+  if (add) add.onclick = () => { STK.cfg.syms = stkSyms().concat(r.sym).join(','); stkSaveCfg(); $('stkSyms').value = STK.cfg.syms; add.disabled = true; add.textContent = '✓ Ավելացված է'; };
 }
 async function stkOne(sym) {
   sym = (sym || $('stkOneSym').value).trim().toUpperCase().replace(/[^A-Z0-9.\-]/g, ''); if (!sym) return;
@@ -2862,13 +2864,45 @@ $('stkLnGo').onclick = async () => {
   $('stkLnGo').disabled = false; stkStatus();
 };
 
+// ---------- stocks inside the «Սիգնալ» tab's asset list ----------
+function stkFillSignalSelect() {
+  const sel = $('sym'); if (!sel) return; const cur = sel.value;
+  sel.querySelectorAll('optgroup').forEach(g => g.remove());
+  const crypto = [...sel.querySelectorAll(':scope > option')]; const g1 = document.createElement('optgroup'); g1.label = '₿ Կրիպտո'; crypto.forEach(o => g1.appendChild(o)); sel.appendChild(g1);
+  const list = [...new Set(['SPY'].concat(stkSyms(), Object.keys(STK_NAMES)))];
+  const g2 = document.createElement('optgroup'); g2.label = '🏛 Բաժնետոմսեր (ԱՄՆ)';
+  g2.innerHTML = list.map(k => `<option value="STK:${k}">${k}${STK_NAMES[k] ? ' — ' + STK_NAMES[k] : ''}</option>`).join(''); sel.appendChild(g2);
+  if (cur) sel.value = cur;
+}
+async function stkSignalGo() {
+  const sym = $('sym').value.slice(4), ctf = $('tf').value, tf = ctf === '4h' || ctf === '1d' ? '1day' : '1h';
+  CUR = null; $('out').classList.add('hide'); $('go').disabled = true;
+  if (!STK.key) { $('stkSigOut').innerHTML = `<div class="card"><div class="warn info">Բաժնետոմսերի համար պետք է անվճար Twelve Data key։</div><button class="btn" onclick="tab('stk')">Ավելացնել key-ը →</button></div>`; $('go').disabled = false; return; }
+  $('status').textContent = `Բեռնում եմ ${sym}-ի տվյալները Twelve Data-ից…`; $('stkSigOut').innerHTML = '';
+  try {
+    const { B, BH } = await stkBench(tf);
+    const r = sym === 'SPY' ? await stkAnalyze('SPY', tf, null, null) : await stkAnalyze(sym, tf, B, BH);
+    if (stkSyms().includes(sym)) STK.res[sym] = r;
+    stkOneRender(r, 'stkSigOut', 'stkSigChart');
+    const m = marketState();
+    $('status').innerHTML = `Թարմացված՝ ${new Date().toLocaleTimeString()} · ${TFN[tf]}${ctf !== '1h' && ctf !== '1d' ? ` (բաժնետոմսերի համար ${ctf}-ի փոխարեն՝ ${TFN[tf]})` : ''} · ${m.open ? '🟢 բորսան բաց է' : '🌙 բորսան փակ է, կբացվի ' + hmd(m.next)} · API ${creditsToday().n}/800`;
+  } catch (e) { $('status').innerHTML = `<div class="warn bad">${esc(e.message)}</div>`; }
+  $('go').disabled = false;
+}
+{
+  const _go = $('go').onclick;
+  $('go').onclick = () => { if ($('sym').value.startsWith('STK:')) return stkSignalGo(); $('stkSigOut').innerHTML = ''; return _go(); };
+  const _ls = loadSettingsUI; loadSettingsUI = function () { _ls(); stkFillSignalSelect(); };
+  stkFillSignalSelect();
+}
+
 // ---------- wiring ----------
 $('stkScan').onclick = () => stkScan();
 $('stkOneGo').onclick = () => stkOne();
 $('stkOneSym').onkeydown = (e) => { if (e.key === 'Enter') stkOne(); };
 $('stkList').innerHTML = Object.keys(STK_NAMES).map(k => `<option value="${k}">${STK_NAMES[k]}</option>`).join('');
 $('stkAuto').onclick = () => { try { if (window.Notification && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {} stkAutoSet(!STK.auto); };
-$('stkSyms').onchange = () => { STK.cfg.syms = $('stkSyms').value.toUpperCase().replace(/\s+/g, ''); stkSaveCfg(); };
+$('stkSyms').onchange = () => { STK.cfg.syms = $('stkSyms').value.toUpperCase().replace(/\s+/g, ''); stkSaveCfg(); stkFillSignalSelect(); };
 $('stkTf').onchange = () => { STK.cfg.tf = $('stkTf').value; stkSaveCfg(); STK.res = {}; };
 $('stkMode').onchange = () => { STK.cfg.mode = +$('stkMode').value; stkSaveCfg(); };
 $('stkBal').onchange = () => { STK.cfg.bal = Math.max(10, +$('stkBal').value || 1000); stkSaveCfg(); };
