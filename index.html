@@ -77,6 +77,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
   <div id="autoNow"></div>
   <div id="autoWatch"></div>
   <div id="autoCards"></div>
+  <div id="autoStk"></div>
   <div class="card"><h2>Այսօրվա սիգնալները</h2><div id="autoHist"></div></div>
   <div class="card note">ℹ️ Ավտո ռեժիմը աշխատում է, քանի դեռ էջը բաց է։ iPhone-ը կասեցնում է ֆոնային էջերը, ուստի էկրանը միացված պահիր (բոտը փորձում է ինքը չթողնել, որ էկրանը անջատվի)։ Ամեն սիգնալ վավեր է 3 մոմ, և եթե գինը արդեն փախել է մուտքից, բոտը կասի «ուշ է»։ Սա ֆինանսական խորհուրդ չէ. սկզբում փորձարկիր demo-ով։</div>
 </section>
@@ -2309,7 +2310,7 @@ function tab(name) {
   if (name === 'bt') { renderForward(); renderLearnActive(); }
   if (name === 'flow' && !LIVE.sym) startLive($('flowSym').value);
   if (name === 'signal' && CUR) setTimeout(() => drawChart(CUR.P, CUR.sig), 30);
-  if (name === 'auto') renderAuto();
+  if (name === 'auto') { renderAuto(); if (window.autoStkPane) autoStkPane(); }
   if (name === 'stk' && window.stkRender) stkRender();
 }
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => tab(b.dataset.t));
@@ -2494,7 +2495,7 @@ async function stkAnalyze(sym, tf, B, BH) {
   return { sym, tf, P, H, sig, price: P.c[t], prevClose, size: sig.rawDir ? stkSize(sig) : null, at: Date.now() };
 }
 async function stkScan(force) {
-  if (STK.running) return; STK.running = true; STK.err = null; stkStatus();
+  if (STK.running) return; STK.running = true; STK.err = null; stkStatus(); autoStkPane();
   const tf = STK.cfg.tf, syms = stkSyms(), fresh = [];
   try {
     const kb = await stkBars('SPY', tf, STK_SIZE[tf], force), kbh = await stkBars('SPY', STK_HTF[tf], STK_SIZE[STK_HTF[tf]], force);
@@ -2756,17 +2757,43 @@ function stkRender() {
   const act = Object.values(STK.active).sort((a, b) => b.strength - a.strength);
   $('stkCards').innerHTML = vet.length ? '' : act.length ? act.map(stkCard).join('')
     : (STK.last ? `<div class="card"><div class="sig M">⏳ ՍՊԱՍԻՐ</div><p class="note" style="margin-bottom:0">Հիմա լավ հնարավորություն չկա։ Չառևտրելը նույնպես որոշում է։</p></div>` : '');
-  $('stkCards').querySelectorAll('[data-sp]').forEach(b => b.onclick = () => {
+  stkWire($('stkCards'));
+  stkTable(); stkJournal(); stkLearnActive(); autoStkPane();
+}
+function stkWire(el) {
+  const msg = (id, html) => { const m = el.querySelector(`[id="sm-${id}"]`); if (m) m.innerHTML = html; };
+  el.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => {
     const a = STK.active[b.dataset.sp]; if (!a) return; const z = a.size || {};
-    const v = stkGuard(a.sym, z.notional || 0); if (v.length) { $('sm-' + a.id).innerHTML = `<span class="S">⛔ ${esc(v[0])}</span>`; return; }
+    const v = stkGuard(a.sym, z.notional || 0); if (v.length) { msg(a.id, `<span class="S">⛔ ${esc(v[0])}</span>`); return; }
     STK.pos.push({ id: Date.now(), sym: a.sym, tf: a.tf, dir: a.dir, entry: a.price && Math.abs(a.price - a.entry) < 0.3 * a.atr ? a.price : a.entry, sl0: a.sl, sl: a.sl, tp1: a.tp1, tp2: a.tp2,
       shares: z.shares, openTime: Date.now(), partial: false, maxBars: a.tf === '1h' ? 35 : 20, status: 'open' });
     a.status = 'taken'; const h = STK.hist.find(x => x.id === a.id); if (h) h.status = 'taken'; delete STK.active[a.id];
     store.set('stkActive', STK.active); store.set('stkHist', STK.hist); stkManage(); stkRender();
   });
-  $('stkCards').querySelectorAll('[data-sx]').forEach(b => b.onclick = () => { const a = STK.active[b.dataset.sx]; if (!a) return; const h = STK.hist.find(x => x.id === a.id); if (h) h.status = 'skipped'; delete STK.active[a.id]; store.set('stkActive', STK.active); store.set('stkHist', STK.hist); stkRender(); });
-  $('stkCards').querySelectorAll('[data-sd]').forEach(b => b.onclick = () => stkDetail(b.dataset.sd));
-  stkTable(); stkJournal(); stkLearnActive();
+  el.querySelectorAll('[data-sx]').forEach(b => b.onclick = () => { const a = STK.active[b.dataset.sx]; if (!a) return; const h = STK.hist.find(x => x.id === a.id); if (h) h.status = 'skipped'; delete STK.active[a.id]; store.set('stkActive', STK.active); store.set('stkHist', STK.hist); stkRender(); });
+  el.querySelectorAll('[data-sd]').forEach(b => b.onclick = () => { tab('stk'); stkDetail(b.dataset.sd); });
+}
+// ---------- stock signals on the 🤖 Auto page, in the same format as crypto ----------
+function autoStkPane() {
+  const el = $('autoStk'); if (!el) return;
+  if (!STK.key) {
+    el.innerHTML = `<div class="card" style="border:1px dashed var(--b)"><h2>🏛 Բաժնետոմսերի սիգնալներ</h2><p class="note" style="margin-top:0">Apple, NVIDIA, նավթ (USO), ոսկի (GLD)… Միացնելու համար պետք է անվճար Twelve Data key։</p><button class="btn" id="autoStkSetup">Միացնել բաժնետոմսերը →</button></div>`;
+    $('autoStkSetup').onclick = () => tab('stk'); return;
+  }
+  const m = marketState(), vet = stkGuard(null, 0), act = Object.values(STK.active).sort((a, b) => b.strength - a.strength);
+  const open = STK.pos.filter(p => p.status === 'open');
+  el.innerHTML = `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">🏛 Բաժնետոմսեր</h2>
+      <span class="note">${m.open ? '🟢 բորսան բաց է' : '🌙 բացվում է ' + hmd(m.next)}</span></div>
+    <div class="note" style="margin:6px 0">${STK.running ? '🔄 Ստուգում եմ… ' + (STK.prog || '') : STK.auto ? '🟢 Ավտո՝ միացված' : '⚪ Ավտոն անջատված է'}${STK.last ? ' · վերջին ստուգում ' + hm(STK.last) : ''}</div>
+    <div class="row"><div style="flex:0 0 auto"><button class="btn ${STK.auto ? 'sec' : ''}" id="autoStkTog">${STK.auto ? '⏸ Կանգնեցնել' : '▶️ Միացնել'}</button></div><div style="flex:0 0 auto"><button class="btn sec" id="autoStkScan" ${STK.running ? 'disabled' : ''}>🔍 Ստուգել հիմա</button></div></div>
+    ${vet.length ? vet.map(v => `<div class="warn bad">⛔ ${esc(v)}</div>`).join('') : ''}
+    ${open.length ? `<div class="warn info">📂 Բաց դիրքեր՝ ${open.map(p => `<b>${p.sym}</b>${p.m && p.m.actions && p.m.actions[0] ? ' — ' + esc(p.m.actions[0].txt) : ''}`).join('; ')} <a href="#" id="autoStkPos" style="color:var(--b)">կառավարել →</a></div>` : ''}
+    ${!vet.length && !act.length && STK.last ? '<div class="sig M" style="font-size:20px;margin-top:8px">⏳ ՍՊԱՍԻՐ</div><p class="note" style="margin:0">Բաժնետոմսերում հիմա լավ հնարավորություն չկա։</p>' : ''}</div>
+    <div id="autoStkCards">${vet.length ? '' : act.map(stkCard).join('')}</div>`;
+  $('autoStkTog').onclick = () => { try { if (window.Notification && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {} stkAutoSet(!STK.auto); };
+  $('autoStkScan').onclick = () => stkScan();
+  if ($('autoStkPos')) $('autoStkPos').onclick = (e) => { e.preventDefault(); tab('stk'); };
+  stkWire($('autoStkCards'));
 }
 
 // ---------- Backtest & self-learning (same analyze(), in a Web Worker) ----------
@@ -2849,8 +2876,8 @@ $('stkRisk').onchange = () => { STK.cfg.risk = Math.min(5, Math.max(0.1, +$('stk
 $('stkMaxPos').onchange = () => { STK.cfg.maxPos = Math.min(100, Math.max(5, +$('stkMaxPos').value || 25)); stkSaveCfg(); };
 $('stkTier').onchange = () => { STK.cfg.tiered = $('stkTier').value === '1'; stkSaveCfg(); };
 $('stkLong').onchange = () => { STK.cfg.longOnly = $('stkLong').checked; stkSaveCfg(); };
-window.stkRender = stkRender;
-if (STK.auto) stkAutoSet(true);
+window.stkRender = stkRender; window.autoStkPane = autoStkPane;
+if (STK.auto) stkAutoSet(true); else autoStkPane();
 setInterval(() => { if (!$('t-stk').classList.contains('hide')) { stkMarketCard(); if (!STK.running) stkStatus(); } }, 30000);
 
 </script>
