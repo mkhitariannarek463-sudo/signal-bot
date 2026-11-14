@@ -1005,7 +1005,13 @@ async function syncTime() { try { const t0 = Date.now(); const r = await spot('/
 // =====================================================================
 async function tgSend(text, token, chat) {
   token = token || S.tgToken; chat = chat || S.tgChat; if (!token || !chat) return false;
-  try { const r = await fetchJSON(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${encodeURIComponent(chat)}&parse_mode=HTML&disable_web_page_preview=true&text=${encodeURIComponent(text)}`); return !!r.ok; } catch (e) { return false; }
+  const url = `https://api.telegram.org/bot${token}/sendMessage?chat_id=${encodeURIComponent(chat)}&parse_mode=HTML&disable_web_page_preview=true&text=${encodeURIComponent(text)}`;
+  try { const r = await fetchJSON(url); return r.ok ? true : false; }
+  catch (e) {
+    if (/^HTTP 4/.test(e.message)) return false;           // Telegram answered: wrong token / chat id
+    try { await fetch(url, { mode: 'no-cors' }); return 'maybe'; } catch (e2) {}   // browser blocked reading the reply: send blind
+    try { const i = new Image(); i.src = url; return 'maybe'; } catch (e3) { return false; }
+  }
 }
 // =====================================================================
 //  SETTINGS / STORAGE
@@ -1046,11 +1052,17 @@ $('tgFind').onclick = async () => {
     const m = (r.result || []).map(u => (u.message || u.channel_post || {}).chat).filter(Boolean).pop();
     if (m) { $('sTgChat').value = m.id; $('tgMsg').innerHTML = `✓ Գտա՝ ${esc(m.first_name || m.title || '')} (${m.id})։ Սեղմիր «Պահել կարգավորումները»։`; }
     else $('tgMsg').textContent = 'Հաղորդագրություն չգտա։ Բացիր բոտը Telegram-ում, գրիր «hi» և նորից փորձիր։';
-  } catch (e) { $('tgMsg').textContent = 'Սխալ՝ ' + e.message + ' (ստուգիր token-ը)'; }
+  } catch (e) {
+    const u = `https://api.telegram.org/bot${tok}/getUpdates`;
+    $('tgMsg').innerHTML = /^HTTP 4/.test(e.message) ? '<span class="S">Token-ը սխալ է (Telegram-ը մերժեց)։ Պատճենիր նորից BotFather-ից։</span>'
+      : `Բրաուզերը թույլ չտվեց կարդալ պատասխանը։ Ձեռքով՝ <a href="${esc(u)}" style="color:var(--b)">բաց այս հղումը</a>, գտիր <span class="mono">"chat":{"id":<b>123456789</b></span> և այդ թիվը գրիր Chat ID դաշտում։ Կամ Telegram-ում գրիր <b>@userinfobot</b>-ին — նա կասի քո ID-ն։`;
+  }
 };
 $('tgTest').onclick = async () => {
   const ok = await tgSend('✅ Սիգնալ Բոտը միացված է։ Այստեղ կգան ԳՆԻՐ/ՎԱՃԱՌԻՐ սիգնալները։', $('sTgToken').value.trim(), $('sTgChat').value.trim());
-  $('tgMsg').innerHTML = ok ? '<span class="L">✓ Ուղարկվեց — ստուգիր Telegram-ը</span>' : '<span class="S">✗ Չստացվեց — ստուգիր token-ը և chat ID-ն</span>';
+  $('tgMsg').innerHTML = ok === true ? '<span class="L">✓ Ուղարկվեց — ստուգիր Telegram-ը</span>'
+    : ok === 'maybe' ? '<span class="W">↗ Ուղարկված է, բայց բրաուզերը հաստատում չտվեց — ստուգիր Telegram-ը։ Եթե չի եկել, ստուգիր token-ը և Chat ID-ն։</span>'
+    : '<span class="S">✗ Telegram-ը մերժեց — token-ը կամ Chat ID-ն սխալ է։ Chat ID-ն պետք է լինի միայն թիվ։</span>';
 };
 $('kill').onclick = () => { S.kill = !S.kill; store.set('settings', S); renderKill(); };
 
