@@ -125,6 +125,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
   <div class="card"><h2>⚡ Կապ և ուշացում</h2><div class="grid" id="fHealth"></div></div>
   <div class="card"><h2>Ագրեսիվ գնորդներ vs վաճառողներ (60վ)</h2><div id="fAgg"></div><h3>Cumulative Volume Delta (live)</h3><canvas id="cvdC" style="height:140px"></canvas></div>
   <div class="card"><h2>Order Book</h2><div id="fBook"></div></div>
+  <div class="card"><h2>💥 Լիկվիդացիաներ (Binance Futures, live)</h2><div id="fLiq" class="note">Սպասում եմ լիկվիդացիաների… (հանգիստ շուկայում կարող են րոպեներով չլինել)</div></div>
   <div class="card"><h2>🐋 Խոշոր market պատվերներ</h2><div id="fLarge" class="note">Սպասում եմ տվյալների…</div></div>
   <div class="card"><h2>🚨 Անոմալիաներ (live)</h2><div id="fAnom"></div></div>
   <div class="card"><h2>Վոլատիլություն 1m (արագ գործարքների համար)</h2><div id="fVola"></div></div>
@@ -148,6 +149,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
   <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2 style="margin:0">Բաց դիրքեր — Dynamic Exit Management</h2><button class="btn sec sm" id="posRefresh">Թարմացնել</button></div>
   <p class="note">Բոտը պատվեր չի ուղարկում բորսա։ Դու ես բացում գործարքը, իսկ բոտը ամեն րոպե հաշվում է Break-Even, Trailing Stop, Time Exit և Emergency Exit։ Դիրք ավելացնում ես «Սիգնալ» էջից՝ «📌 Բացեցի» կոճակով։</p>
   <div class="grid" id="posSummary"></div></div>
+  <div class="card"><h2>🔗 Կորելյացիա (պորտֆելի ռիսկ)</h2><div id="corrOut" class="note">Տվյալները կհայտնվեն սկաների/ավտո ռեժիմի առաջին ստուգումից հետո (1ժ մոմեր)։</div></div>
   <div id="posList"></div>
 </section>
 
@@ -164,6 +166,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
     <div class="row">
       <div><label>Ակտիվ</label><select id="btSym"></select></div>
       <div><label>Թայմֆրեյմ</label><select id="btTf"><option value="5m">5 րոպե</option><option value="15m">15 րոպե</option><option value="1h" selected>1 ժամ</option><option value="4h">4 ժամ</option></select></div>
+      <div><label>Պատմություն</label><select id="btLen"><option value="1000">1,000 մոմ</option><option value="3000" selected>3,000 մոմ</option><option value="6000">6,000 մոմ</option><option value="10000">10,000 մոմ</option></select></div>
       <div style="flex:0 0 auto"><button class="btn" id="btGo">Գործարկել</button></div>
     </div>
     <p class="note">Մուտքը հաջորդ մոմի բացմամբ + slippage, 50% TP1-ում, հետո Break-Even + Trailing Stop, Time Exit 48 մոմ։ Նույն մոմում SL+TP → վնաս։ Միջնորդավճարը ներառված է։</p>
@@ -217,6 +220,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
     <div class="row" style="margin-top:8px">
       <div><label>Stale data սահման (վայրկյան)</label><input id="sStale" type="number"></div>
       <div><label>Max latency (մվ)</label><input id="sMaxLat" type="number"></div>
+      <div><label>Max կորելացված դիրքեր (նույն ուղղությամբ)</label><input id="sMaxCorr" type="number"></div>
     </div>
   </div>
   <div class="card">
@@ -238,7 +242,17 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
     <p class="note">Բոտը ինքը երբեք չի փոխում այս կանոնները։ Եթե Backtest/Adaptive-ը ցույց է տալիս, որ ռեժիմը վնասաբեր է, որոշումը քոնն է՝ նոր թեստից հետո։</p>
   </div>
   <div class="card">
-    <h2>Տնտեսական օրացույց (ձեռքով)</h2>
+    <h2>📲 Telegram ծանուցումներ</h2>
+    <p class="note" style="margin-top:0">1) Telegram-ում գրիր <b>@BotFather</b>-ին → /newbot → պատճենիր token-ը։ 2) Բացիր քո նոր բոտը և գրիր նրան «hi»։ 3) Տեղադրիր token-ը այստեղ և սեղմիր «Գտնել chat ID»։</p>
+    <div class="row"><div><label>Bot token</label><input id="sTgToken" placeholder="123456:ABC..."></div><div><label>Chat ID</label><input id="sTgChat" placeholder="123456789"></div></div>
+    <div class="row" style="margin-top:8px"><button class="btn sec" id="tgFind">Գտնել chat ID</button><button class="btn sec" id="tgTest">Ուղարկել թեստ</button></div>
+    <div id="tgMsg" class="note" style="margin-top:6px"></div>
+    <p class="note">Ծանուցումներ՝ նոր ԳՆԻՐ/ՎԱՃԱՌԻՐ, բաց դիրքի EXIT/EMERGENCY, օրական Stop։ 💡 Համակարգչում (Chrome) բոտը թող բաց ավտո ռեժիմով — սիգնալները կգան հեռախոսիդ Telegram-ով 24/7։ Token-ը պահվում է միայն այս բրաուզերում։</p>
+  </div>
+  <div class="card">
+    <h2>Տնտեսական օրացույց</h2>
+    <div class="row"><div><p class="note" style="margin:0">Բոտը փորձում է ավտոմատ բեռնել այս շաբաթվա High-impact իրադարձությունները (USD/EUR)։ Եթե չստացվի, ավելացրու ձեռքով։</p></div><div style="flex:0 0 auto"><button class="btn sec" id="calLoad">Բեռնել</button></div></div>
+    <div id="calMsg" class="note" style="margin:6px 0"></div>
     <p class="note">Այսօրվա CPI/NFP/FOMC/ECB ժամերը (Երևանի ժամով) վերցրու <a href="https://www.forexfactory.com/calendar" style="color:var(--b)">ForexFactory</a>-ից։ ±30 րոպե սիգնալ չի տրվի։</p>
     <div class="row"><div><label>Իրադարձություն</label><input id="evName" placeholder="US CPI"></div><div><label>Ժամ</label><input id="evTime" type="time"></div><div style="flex:0 0 auto"><button class="btn sec" id="evAdd">Ավելացնել</button></div></div>
     <div id="evList" style="margin-top:8px"></div>
@@ -251,6 +265,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
   <div class="card">
     <h2>Ճարտարապետություն</h2>
     <p class="note mono">Binance REST + WebSocket → Event Bus → Engine (analyze) → Opportunity Scoring → 🛡 Risk Control (veto) → BUY / SELL / NO TRADE → Execution Plan → Position Manager → Journal → Adaptive Monitoring</p>
+    <details><summary>🆕 Telegram, լիկվիդացիաներ, կորելյացիա, երկար backtest</summary><p class="note">Telegram՝ սիգնալները գալիս են հեռախոսիդ (համակարգչում բոտը կարող է աշխատել 24/7)։ Լիկվիդացիաներ՝ Binance Futures forceOrder stream, կասկադներ և կլաստերներ, որոնք մտնում են Order Flow score-ի մեջ։ Կորելյացիա՝ 1ժ եկամտաբերությունների Pearson կորելյացիա, Risk Control-ը արգելում է չափից շատ նույն ուղղությամբ կորելացված դիրքեր։ Backtest՝ մինչև 10,000 մոմ պատմություն, հաշվարկը առանձին thread-ում (Web Worker)։ Օրացույց՝ ForexFactory-ի High-impact USD/EUR իրադարձությունները ավտոմատ։</p></details>
     <details><summary>🤖 Ավտո սիգնալներ</summary><p class="note">Ընտրված թայմֆրեյմներով (5ր–4ժ) ստուգում է բոլոր ակտիվները (1/5/15 րոպեն մեկ)։ Ռեժիմը փոխում է շեմը՝ Զգուշավոր 7.5, Նորմալ 6.5, Ակտիվ 5.5։ «Պատրաստվիր» ցանկը ցույց է տալիս շեմին մոտ կամ արգելված setup-ները։ Յուրաքանչյուր BUY/SELL անցնում է նույն վերլուծությունը և Risk Control-ը, ցույց է տրվում մեկ անգամ, ունի ձայնային ծանուցում և քայլ առ քայլ հրահանգ (քանակ, Stop, TP)։ Ամեն 15վ ստուգվում է՝ դեռ վավեր է, ուշ է, թե Stop/TP-ն արդեն հասել է։ Բաց դիրքերի համար ցույց է տալիս, թե ինչ անել հիմա։</p></details>
     <details><summary>Market Momentum Detection</summary><p class="note">ROC(10) և դրա արագացումը (ROC − ROC 3 մոմ առաջ), MACD histogram, Breakout/Breakdown 20 մոմի գագաթ/հատակ + ծավալ ≥1.5σ, Momentum Reversal (ուժեղ շարժում → acceleration շրջվում է + RSI), Volume Spike (log-ծավալի z-score), Buying/Selling Pressure (Binance-ի taker buy ծավալից delta 20 մոմում)։ Չափազանց երկար իմպուլսը տույժ է ստանում (chasing)։</p></details>
     <details><summary>Real-Time Order Flow</summary><p class="note">aggTrade-ից՝ ագրեսիվ գնորդներ/վաճառողներ (market order-ի կողմը), 60վ imbalance, live CVD, խոշոր պատվերներ (≥20× մեդիան notional), Absorption (մի կողմի ագրեսիվ հոսք > 60%, ծավալը միջինից 1.5× բարձր, բայց գինը չի շարժվում)։ depth20-ից՝ Bid/Ask pressure և Order Book imbalance։</p></details>
@@ -283,7 +298,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
 
 <script>
 // ===================== ENGINE v2 (pure functions, no DOM, no network) =====================
-const ENG = (() => {
+function ENGINE_FACTORY() {
   const N = (v) => v === null || v === undefined || Number.isNaN(v);
   const CATS = ['tech', 'mom', 'volu', 'flow', 'vola'];
   const CAT_NAMES = { tech: 'Technical', mom: 'Momentum', volu: 'Volume', flow: 'Order Flow', vola: 'Volatility' };
@@ -373,7 +388,10 @@ const ENG = (() => {
     }
     return { highs, lows };
   }
-  const confirmedBefore = (list, t) => { const o = []; for (const x of list) { if (x.c <= t) o.push(x); else break; } return o; };
+  const confirmedBefore = (list, t) => {
+    let lo = 0, hi = list.length; while (lo < hi) { const m = (lo + hi) >> 1; if (list[m].c <= t) lo = m + 1; else hi = m; }
+    return list.slice(Math.max(0, lo - 80), lo);
+  };
 
   // ---------- precompute everything once per dataset ----------
   function precompute(k) {
@@ -653,6 +671,8 @@ const ENG = (() => {
       if (f.absorption === -1) add(-1, 'flow', 1, 'Absorption՝ գնումները կլանվում են ask-ում, գինը չի աճում');
       if (f.largeNet > 0.5) add(1, 'flow', 0.5, 'Խոշոր market գնումներ (whales)');
       if (f.largeNet < -0.5) add(-1, 'flow', 0.5, 'Խոշոր market վաճառքներ (whales)');
+      if (f.liqCascade === -1) { add(1, 'flow', 0.5, 'Long-երի լիկվիդացիաների կասկադ — հարկադիր վաճառքը սպառվում է, հնարավոր վերադարձ'); add(-1, 'flow', -0.5, 'Ուշ short՝ long-երի լիկվիդացիաներից հետո'); }
+      if (f.liqCascade === 1) { add(-1, 'flow', 0.5, 'Short-երի լիկվիդացիաների կասկադ (short squeeze) — հնարավոր հետընթաց'); add(1, 'flow', -0.5, 'Ուշ long՝ short squeeze-ից հետո'); }
     }
 
     // ================= REGIME ADAPTATION (user-approved switches) =================
@@ -810,17 +830,17 @@ const ENG = (() => {
     // sequential folds
     const folds = [], k = 4, span = Math.floor((n - 211) / k);
     for (let f = 0; f < k; f++) {
-      const b = backtest(P, ctx, { ...opt, tStart: 211 + f * span, tEnd: 211 + (f + 1) * span });
-      folds.push({ from: P.k[211 + f * span].t, ...b.stats });
+      const a0 = 211 + f * span, a1 = 211 + (f + 1) * span;
+      folds.push({ from: P.k[a0].t, ...stats(full.trades.filter(x => x.t >= a0 && x.t < a1).map(x => x.r)) });
     }
     // IS/OOS: choose minScore on first 70%, test unchanged on last 30%
-    const cut = Math.floor(211 + (n - 211) * 0.7), grid = [5.5, 6, 6.5, 7, 7.5, 8];
+    const cut = Math.floor(211 + (n - 211) * 0.7), grid = [5.5, 6.5, 7.5];
     const isRes = grid.map(m => ({ m, s: backtest(P, { ...ctx, minScore: m }, { ...opt, tEnd: cut }).stats }));
     const eligible = isRes.filter(x => x.s.n >= 8);
     const best = (eligible.length ? eligible : isRes).reduce((a, b) => b.s.exp > a.s.exp ? b : a);
     const oosBest = backtest(P, { ...ctx, minScore: best.m }, { ...opt, tStart: cut }).stats;
-    const oosUser = backtest(P, ctx, { ...opt, tStart: cut }).stats;
-    const isUser = backtest(P, ctx, { ...opt, tEnd: cut }).stats;
+    const oosUser = stats(full.trades.filter(x => x.t >= cut).map(x => x.r));
+    const isUser = stats(full.trades.filter(x => x.t < cut).map(x => x.r));
     // regime performance
     const regimes = {};
     for (const r of ['trend', 'transition', 'range']) regimes[r] = stats(full.trades.filter(x => x.regime === r).map(x => x.r));
@@ -900,7 +920,8 @@ const ENG = (() => {
   }
 
   return { precompute, analyze, backtest, walkForward, stats, riskOfRuin, managePosition, executionPlan, triangular, anomaliesAt, volatilityAt, fmt, atr, CATS, CAT_NAMES };
-})();
+}
+const ENG = ENGINE_FACTORY();
 
 
 </script>
@@ -980,35 +1001,57 @@ async function derivDataRaw(sym) {
 async function syncTime() { try { const t0 = Date.now(); const r = await spot('/api/v3/time'); HEALTH.offset = r.serverTime - (t0 + Date.now()) / 2; } catch (e) {} }
 
 // =====================================================================
+//  TELEGRAM ALERTS
+// =====================================================================
+async function tgSend(text, token, chat) {
+  token = token || S.tgToken; chat = chat || S.tgChat; if (!token || !chat) return false;
+  try { const r = await fetchJSON(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${encodeURIComponent(chat)}&parse_mode=HTML&disable_web_page_preview=true&text=${encodeURIComponent(text)}`); return !!r.ok; } catch (e) { return false; }
+}
+// =====================================================================
 //  SETTINGS / STORAGE
 // =====================================================================
 const store = {
   get(k, d) { try { const v = localStorage.getItem('sb2_' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('sb2_' + k, JSON.stringify(v)); } catch (e) {} }
 };
-const DEF = { bal: 1000, risk: 1, lev: 5, dayLoss: 3, dayMax: 4, maxConsec: 3, cooldown: 60, maxOpen: 3, maxExp: 300, stale: 15, maxLat: 3000,
+const DEF = { bal: 1000, risk: 1, lev: 5, dayLoss: 3, dayMax: 4, maxConsec: 3, cooldown: 60, maxOpen: 3, maxExp: 300, stale: 15, maxLat: 3000, maxCorr: 2, tgToken: '', tgChat: '',
   maker: 0.02, taker: 0.05, slip: 10, arbFee: 0.1, min: 6.5, allowTrend: true, allowRange: true, kill: false,
   syms: 'BTCUSDT,ETHUSDT,SOLUSDT,BNBUSDT,XRPUSDT,DOGEUSDT,ADAUSDT,LINKUSDT,AVAXUSDT' };
 let S = Object.assign({}, DEF, store.get('settings', {}));
 let EVENTS = store.get('events', []), JOURNAL = store.get('journal', []), POSITIONS = store.get('positions', []), SIGLOG = store.get('siglog', []), BTREF = store.get('btref', {});
 const symList = () => S.syms.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
-const FIELDS = { sBal: 'bal', sRisk: 'risk', sLev: 'lev', sDayLoss: 'dayLoss', sDayMax: 'dayMax', sMaxConsec: 'maxConsec', sCooldown: 'cooldown', sMaxOpen: 'maxOpen', sMaxExp: 'maxExp', sStale: 'stale', sMaxLat: 'maxLat', sMaker: 'maker', sTaker: 'taker', sSlip: 'slip', sArbFee: 'arbFee', sMin: 'min' };
+const FIELDS = { sBal: 'bal', sRisk: 'risk', sLev: 'lev', sDayLoss: 'dayLoss', sDayMax: 'dayMax', sMaxConsec: 'maxConsec', sCooldown: 'cooldown', sMaxOpen: 'maxOpen', sMaxExp: 'maxExp', sStale: 'stale', sMaxLat: 'maxLat', sMaxCorr: 'maxCorr', sMaker: 'maker', sTaker: 'taker', sSlip: 'slip', sArbFee: 'arbFee', sMin: 'min' };
 function loadSettingsUI() {
   for (const [id, k] of Object.entries(FIELDS)) $(id).value = S[k];
-  $('sSyms').value = S.syms; $('sAllowTrend').checked = S.allowTrend; $('sAllowRange').checked = S.allowRange;
+  $('sSyms').value = S.syms; $('sTgToken').value = S.tgToken || ''; $('sTgChat').value = S.tgChat || ''; $('sAllowTrend').checked = S.allowTrend; $('sAllowRange').checked = S.allowRange;
   const opts = symList().map(s => `<option>${s}</option>`).join('');
   for (const id of ['sym', 'btSym', 'flowSym']) { const v = $(id).value; $(id).innerHTML = opts; if (v && symList().includes(v)) $(id).value = v; }
   renderEvents(); renderKill();
 }
 $('sSave').onclick = () => {
   for (const [id, k] of Object.entries(FIELDS)) { const v = parseFloat($(id).value); if (!isNaN(v)) S[k] = v; }
-  S.lev = Math.max(1, S.lev); S.syms = $('sSyms').value; S.allowTrend = $('sAllowTrend').checked; S.allowRange = $('sAllowRange').checked;
+  S.lev = Math.max(1, S.lev); S.syms = $('sSyms').value; S.tgToken = $('sTgToken').value.trim(); S.tgChat = $('sTgChat').value.trim(); S.allowTrend = $('sAllowTrend').checked; S.allowRange = $('sAllowRange').checked;
   store.set('settings', S); loadSettingsUI(); $('sSaved').textContent = '✓ Պահված է'; setTimeout(() => $('sSaved').textContent = '', 2000);
 };
 function renderKill() {
   $('kill').classList.toggle('on', !!S.kill); $('kill').textContent = S.kill ? '🛑 STOP ON' : '🛑 STOP';
   $('killBanner').innerHTML = S.kill ? '<div class="warn bad">🛑 EMERGENCY STOP միացված է — բոլոր սիգնալները արգելափակված են։ Անջատելու համար սեղմիր նորից։</div>' : '';
 }
+
+$('tgFind').onclick = async () => {
+  const tok = $('sTgToken').value.trim(); if (!tok) { $('tgMsg').textContent = 'Նախ տեղադրիր token-ը։'; return; }
+  $('tgMsg').textContent = 'Փնտրում եմ…';
+  try {
+    const r = await fetchJSON(`https://api.telegram.org/bot${tok}/getUpdates`);
+    const m = (r.result || []).map(u => (u.message || u.channel_post || {}).chat).filter(Boolean).pop();
+    if (m) { $('sTgChat').value = m.id; $('tgMsg').innerHTML = `✓ Գտա՝ ${esc(m.first_name || m.title || '')} (${m.id})։ Սեղմիր «Պահել կարգավորումները»։`; }
+    else $('tgMsg').textContent = 'Հաղորդագրություն չգտա։ Բացիր բոտը Telegram-ում, գրիր «hi» և նորից փորձիր։';
+  } catch (e) { $('tgMsg').textContent = 'Սխալ՝ ' + e.message + ' (ստուգիր token-ը)'; }
+};
+$('tgTest').onclick = async () => {
+  const ok = await tgSend('✅ Սիգնալ Բոտը միացված է։ Այստեղ կգան ԳՆԻՐ/ՎԱՃԱՌԻՐ սիգնալները։', $('sTgToken').value.trim(), $('sTgChat').value.trim());
+  $('tgMsg').innerHTML = ok ? '<span class="L">✓ Ուղարկվեց — ստուգիր Telegram-ը</span>' : '<span class="S">✗ Չստացվեց — ստուգիր token-ը և chat ID-ն</span>';
+};
 $('kill').onclick = () => { S.kill = !S.kill; store.set('settings', S); renderKill(); };
 
 // ----- economic calendar -----
@@ -1019,6 +1062,25 @@ function renderEvents() {
   $('evList').querySelectorAll('a').forEach(a => a.onclick = (ev) => { ev.preventDefault(); EVENTS.splice(+a.dataset.i, 1); store.set('events', EVENTS); renderEvents(); });
 }
 $('evAdd').onclick = () => { if (!$('evTime').value) return; EVENTS.push({ name: $('evName').value || 'News', time: $('evTime').value, day: todayKey() }); store.set('events', EVENTS); $('evName').value = ''; renderEvents(); };
+
+async function loadCalendar(manual) {
+  const last = store.get('calAt', 0); if (!manual && Date.now() - last < 6 * 3600e3) return;
+  $('calMsg').textContent = 'Բեռնում եմ…';
+  try {
+    const d = await fetchJSON('https://nfs.faireconomy.media/ff_calendar_thisweek.json');
+    const today = todayKey(); let added = 0;
+    for (const e of d) {
+      if (e.impact !== 'High' || !['USD', 'EUR'].includes(e.country)) continue;
+      const t = new Date(e.date); if (isNaN(t)) continue;
+      const day = t.getFullYear() + '-' + (t.getMonth() + 1) + '-' + t.getDate(); if (day !== today) continue;
+      const time = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0'), name = e.country + ' ' + e.title;
+      if (!EVENTS.some(x => x.name === name && x.time === time)) { EVENTS.push({ name, time, day, auto: true }); added++; }
+    }
+    store.set('events', EVENTS); store.set('calAt', Date.now()); renderEvents();
+    $('calMsg').textContent = `✓ Բեռնված է (ForexFactory)։ Այսօր High-impact USD/EUR՝ ${EVENTS.filter(x => x.auto).length}${added ? ' (նոր ' + added + ')' : ''}։`;
+  } catch (e) { $('calMsg').textContent = 'Ավտոմատ բեռնումը չստացվեց (' + e.message + ') — ավելացրու ձեռքով։'; }
+}
+$('calLoad').onclick = () => loadCalendar(true);
 function eventBlock() {
   const now = new Date();
   for (const e of EVENTS) { if (e.day !== todayKey()) continue; const [h, m] = e.time.split(':').map(Number); const t = new Date(); t.setHours(h, m, 0, 0); if (Math.abs(now - t) <= 30 * 60000) return e; }
@@ -1034,14 +1096,29 @@ const BUS = { h: {}, on(e, f) { (this.h[e] = this.h[e] || []).push(f); }, emit(e
 
 function stopLive() {
   const ws = LIVE.ws; LIVE.ws = null; if (ws) { try { ws.close(); } catch (e) {} }
+  const lw = LIVE.lws; LIVE.lws = null; if (lw) { try { lw.close(); } catch (e) {} }
   clearInterval(LIVE.poll); LIVE.poll = null; HEALTH.ws = 'off';
 }
 function startLive(sym) {
   if (LIVE.sym === sym && (LIVE.ws || LIVE.poll)) return;
   stopLive();
-  Object.assign(LIVE, { sym, wsFails: 0, trades: [], cvd: 0, cvdSeries: [], depth: null, liqAvg: null, liqN: 0, walls: new Map(), spoof: [], large: [], price: null, priceHist: [], flow: null, anoms: [], lastAggId: 0, book: null, wallsNow: [] });
+  Object.assign(LIVE, { sym, wsFails: 0, trades: [], cvd: 0, cvdSeries: [], depth: null, liqAvg: null, liqN: 0, walls: new Map(), spoof: [], large: [], price: null, priceHist: [], flow: null, anoms: [], lastAggId: 0, book: null, wallsNow: [], liqs: [] });
+  connectLiq(sym);
   klines(sym, '1m', 120).then(k => { const a = ENG.atr(k.map(x => x.h), k.map(x => x.l), k.map(x => x.c)); LIVE.atr1m = a[a.length - 1]; LIVE.atr1mPct = LIVE.atr1m / k[k.length - 1].c * 100; }).catch(() => {});
   connectWS();
+}
+function connectLiq(sym) {
+  let ws; try { ws = new WebSocket(`wss://fstream.binance.com/ws/${sym.toLowerCase()}@forceOrder`); } catch (e) { return; }
+  LIVE.lws = ws;
+  ws.onmessage = (ev) => {
+    if (LIVE.lws !== ws) return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+    const o = m.o || (m.data && m.data.o); if (!o) return;
+    const p = +(o.ap || o.p), q = +(o.z || o.q);
+    LIVE.liqs.unshift({ t: o.T || m.E || Date.now(), side: o.S === 'SELL' ? 'long' : 'short', p, n: p * q });
+    if (LIVE.liqs.length > 300) LIVE.liqs.pop();
+  };
+  ws.onclose = () => { if (LIVE.lws !== ws) return; LIVE.lws = null; setTimeout(() => { if (LIVE.sym === sym && !LIVE.lws) connectLiq(sym); }, 5000); };
+  ws.onerror = () => { try { ws.close(); } catch (e) {} };
 }
 function connectWS() {
   const s = LIVE.sym.toLowerCase(); let ws;
@@ -1127,7 +1204,11 @@ function processLive() {
     if (B / (B + Sv) > 0.6 && dp < 0.3 * a1) absorption = -1;
   }
   const L5 = LIVE.large.filter(x => tnow - x.t < 300000); let lb = 0, lsell = 0; for (const x of L5) x.buy ? lb += x.n : lsell += x.n;
-  LIVE.flow = { imb: B + Sv ? (B - Sv) / (B + Sv) : 0, B, S: Sv, absorption, largeNet: lb + lsell ? (lb - lsell) / (lb + lsell) : 0, avgMin, vol60: B + Sv };
+  const lq = (LIVE.liqs || []).filter(x => tnow - x.t < 300000); let lLong = 0, lShort = 0; for (const x of lq) x.side === 'long' ? lLong += x.n : lShort += x.n;
+  let liqCascade = 0; const lt = lLong + lShort;
+  if (lt > Math.max(100000, 0.03 * tot5)) { if (lLong / lt > 0.75) liqCascade = -1; else if (lShort / lt > 0.75) liqCascade = 1; }
+  LIVE.liqStat = { lLong, lShort, liqCascade, n: lq.length };
+  LIVE.flow = { imb: B + Sv ? (B - Sv) / (B + Sv) : 0, B, S: Sv, absorption, largeNet: lb + lsell ? (lb - lsell) / (lb + lsell) : 0, avgMin, vol60: B + Sv, liqCascade };
   LIVE.cvdSeries.push({ t: now, v: LIVE.cvd, p: LIVE.price }); if (LIVE.cvdSeries.length > 300) LIVE.cvdSeries.shift();
   if (LIVE.price != null) { LIVE.priceHist.push({ t: now, p: LIVE.price }); LIVE.priceHist = LIVE.priceHist.filter(x => now - x.t < 65000); }
   // live anomalies
@@ -1166,6 +1247,10 @@ function riskGuard(sig, sym, notional, dataTime, tf) {
   const exp = op.reduce((a, p) => a + p.qty * p.entry, 0);
   if (notional && exp + notional > S.bal * S.maxExp / 100) v.push(`Max Exposure՝ ${((exp + notional) / S.bal * 100).toFixed(0)}% > ${S.maxExp}%`);
   if (sig && sig.rawDir && op.some(p => p.sym === sym && p.dir === sig.rawDir)) v.push('Duplicate՝ այս ակտիվով նույն ուղղությամբ դիրք արդեն բաց է');
+  if (sig && sig.rawDir && sym) {
+    const cl = op.filter(p => p.dir === sig.rawDir && p.sym !== sym && ((c => c == null ? 0.8 : c)(corr(sym, p.sym))) >= 0.7);
+    if (cl.length >= S.maxCorr) v.push(`Կորելյացիա՝ արդեն ${cl.length} նույն ուղղությամբ դիրք (${cl.map(p => p.sym.replace('USDT', '')).join(', ')}), որոնք շարժվում են ${sym.replace('USDT', '')}-ի հետ միասին`);
+  }
   if (HEALTH.restErrs >= 3) v.push(`API Failure՝ REST-ը չի պատասխանում (${esc(HEALTH.lastRestErr || '')})`);
   if (sym && LIVE.sym === sym && (HEALTH.ws === 'live' || HEALTH.ws === 'REST polling') && HEALTH.wsLastMsg && now - HEALTH.wsLastMsg > S.stale * 1000) v.push(`Stale data՝ հոսքը լուռ է ${((now - HEALTH.wsLastMsg) / 1000).toFixed(0)}վ`);
   if (sym && HEALTH.wsLag != null && LIVE.sym === sym && HEALTH.wsLag > S.maxLat) v.push(`Latency ${HEALTH.wsLag.toFixed(0)} մվ > ${S.maxLat}`);
@@ -1175,6 +1260,26 @@ function riskGuard(sig, sym, notional, dataTime, tf) {
 }
 function finalDecision(sig, vetoes) { return sig.dir && !vetoes.length ? sig.decision : 'NO TRADE'; }
 
+
+// =====================================================================
+//  PORTFOLIO CORRELATION (1h returns)
+// =====================================================================
+const RETS = {};
+function updRets(sym, K) { if (!K || K.c.length < 60) return; const n = K.c.length, m = Math.min(200, n - 1), o = {}; for (let i = n - m; i < n; i++) o[K.k[i].t] = Math.log(K.c[i] / K.c[i - 1]); RETS[sym] = o; }
+function corr(a, b) {
+  if (a === b) return 1; const A = RETS[a], B = RETS[b]; if (!A || !B) return null;
+  const xs = [], ys = []; for (const t in A) if (t in B) { xs.push(A[t]); ys.push(B[t]); }
+  const n = xs.length; if (n < 30) return null;
+  const mx = xs.reduce((s, x) => s + x, 0) / n, my = ys.reduce((s, y) => s + y, 0) / n; let sxy = 0, sx = 0, sy = 0;
+  for (let i = 0; i < n; i++) { const dx = xs[i] - mx, dy = ys[i] - my; sxy += dx * dy; sx += dx * dx; sy += dy * dy; }
+  return sx && sy ? sxy / Math.sqrt(sx * sy) : null;
+}
+function renderCorr() {
+  const syms = symList().filter(s => RETS[s]); if (syms.length < 2) return;
+  const sh = (s) => s.replace('USDT', '');
+  $('corrOut').innerHTML = `<div style="overflow-x:auto"><table style="font-size:12px"><tr><th></th>${syms.map(s => `<th>${sh(s)}</th>`).join('')}</tr>${syms.map(a => `<tr><td><b>${sh(a)}</b></td>${syms.map(b => { const c = corr(a, b); const col = c == null ? '' : c > 0.7 ? 'S' : c > 0.4 ? 'W' : 'L'; return `<td class="${col}">${c == null ? '—' : c.toFixed(2)}</td>`; }).join('')}</tr>`).join('')}</table></div>
+    <p class="note">≥0.7 (կարմիր)՝ շարժվում են գրեթե միասին։ Նույն ուղղությամբ այդպիսի մի քանի դիրքը իրականում մեկ մեծ խաղադրույք է։ Risk Control-ը թույլ չի տա ավելի քան ${S.maxCorr} այդպիսի դիրք։</p>`;
+}
 // =====================================================================
 //  SIGNAL LOG — forward testing + duplicate protection + drift monitoring
 // =====================================================================
@@ -1224,6 +1329,7 @@ async function runAnalysis(sym, tf, extras = true) {
     if (deriv) { const c = P.c, n = c.length, back = { '5m': 288, '15m': 96, '1h': 24, '4h': 6, '1d': 1 }[tf] || 24; deriv.priceChange = (c[n - 1] - c[Math.max(0, n - 1 - back)]) / c[Math.max(0, n - 1 - back)]; }
   }
   resolveLogs(sym, tf, P);
+  if (tf === '1h') updRets(sym, P); else if (HTF[tf] === '1h') updRets(sym, H);
   return { P, H, deriv, book };
 }
 function evaluate(sym, tf, P, H, deriv, book) {
@@ -1463,6 +1569,16 @@ BUS.on('tick', () => {
       <h3>Խոշոր «պատեր» (Unusual Order Book)</h3>${LIVE.wallsNow.length ? LIVE.wallsNow.map(w => `<span class="tag ${w.side === 'bid' ? 'L' : 'S'}">${w.side} ${fmt(w.p)} · ${w.x.toFixed(0)}× մեդիան</span>`).join('') : '<span class="note">Չկան</span>'}
       <div class="note" style="margin-top:6px">Անհետացած պատեր 60վ-ում (spoofing-like)՝ ${LIVE.spoof.length}</div>`;
   }
+  const tnow = now + HEALTH.offset, ls = LIVE.liqStat || { lLong: 0, lShort: 0, liqCascade: 0 }, L = LIVE.liqs || [];
+  if (L.length || ls.lLong + ls.lShort) {
+    const step = (LIVE.price || 1) * 0.002, cl = {};
+    for (const x of L.filter(x => tnow - x.t < 3600000)) { const k = Math.round(x.p / step) * step; cl[k] = cl[k] || { p: k, long: 0, short: 0 }; cl[k][x.side] += x.n; }
+    const top = Object.values(cl).sort((a, b) => (b.long + b.short) - (a.long + a.short)).slice(0, 5);
+    $('fLiq').innerHTML = `<div class="grid">${kv('Long-եր լիկվիդ. 5ր', '$' + (ls.lLong / 1e3).toFixed(0) + 'k', 'S')}${kv('Short-եր լիկվիդ. 5ր', '$' + (ls.lShort / 1e3).toFixed(0) + 'k', 'L')}${kv('Կասկադ', ls.liqCascade === -1 ? '⬇ Long-երի' : ls.liqCascade === 1 ? '⬆ Short squeeze' : '—', ls.liqCascade ? 'W' : '')}</div>
+      <h3>Liquidation Clusters (վերջին 1ժ, 0.2% գոտիներ)</h3>${top.length ? `<table>${top.map(c => `<tr><td>${fmt(c.p)}</td><td class="S">long $${(c.long / 1e3).toFixed(0)}k</td><td class="L">short $${(c.short / 1e3).toFixed(0)}k</td></tr>`).join('')}</table>` : '<span class="note">—</span>'}
+      <h3>Վերջինները</h3><table>${L.slice(0, 8).map(x => `<tr><td>${new Date(x.t).toLocaleTimeString()}</td><td class="${x.side === 'long' ? 'S' : 'L'}">${x.side === 'long' ? 'LONG լիկվիդ.' : 'SHORT լիկվիդ.'}</td><td>${fmt(x.p)}</td><td>$${(x.n / 1e3).toFixed(1)}k</td></tr>`).join('')}</table>
+      <p class="note">Long-երի կասկադից հետո գինը հաճախ վերադառնում է (հարկադիր վաճառքը սպառվում է)։ Binance-ը ուղարկում է ամենամեծ լիկվիդացիան յուրաքանչյուր վայրկյանի համար, ոչ բոլորը։</p>`;
+  }
   $('fLarge').innerHTML = LIVE.large.length ? `<div class="note">Շեմ՝ $${(LIVE.largeThr / 1e3).toFixed(0)}k (20× մեդիան)</div><table>${LIVE.large.slice(0, 12).map(x => `<tr><td>${new Date(x.t).toLocaleTimeString()}</td><td class="${x.buy ? 'L' : 'S'}">${x.buy ? 'MARKET BUY' : 'MARKET SELL'}</td><td>${fmt(x.p)}</td><td>$${(x.n / 1e3).toFixed(0)}k</td></tr>`).join('')}</table>` : '<span class="note">Դեռ չկան</span>';
   $('fAnom').innerHTML = LIVE.anoms.length ? LIVE.anoms.map(a => `<div class="warn ${a.sev === 'high' ? 'bad' : a.sev === 'info' ? 'info' : ''}">${a.sev === 'high' ? '⛔ ԱՐԳԵԼՎԱԾ' : a.sev === 'info' ? 'ℹ️' : '⚠️'} ${esc(a.type)} — ${esc(a.txt)}</div>`).join('') : '<div class="warn ok">✅ Անոմալիաներ չկան</div>';
   // volatility & scalp suitability
@@ -1548,7 +1664,7 @@ async function refreshPositions() {
       if (price == null) { try { price = +(await spot(`/api/v3/ticker/price?symbol=${p.sym}`)).price; } catch (e) { price = P.c[P.c.length - 1]; } }
       const opp = ENG.analyze(P, P.c.length - 1, { minScore: S.min + 1 });
       POSSTATE[p.id] = ENG.managePosition(p, P, { price, liveAnoms: LIVE.sym === p.sym ? LIVE.anoms.filter(a => a.sev === 'high') : [], opposite: opp.dir === -p.dir ? opp : null });
-      if (POSSTATE[p.id].status !== 'hold' && !POSSTATE[p.id].alerted) { POSSTATE[p.id].alerted = true; notify([p.sym + ' ' + (POSSTATE[p.id].status === 'emergency' ? 'EMERGENCY EXIT' : 'EXIT')], p.tf); }
+      if (POSSTATE[p.id].status !== 'hold' && !POSSTATE[p.id].alerted) { POSSTATE[p.id].alerted = true; notify([p.sym + ' ' + (POSSTATE[p.id].status === 'emergency' ? 'EMERGENCY EXIT' : 'EXIT')], p.tf); tgSend(`${POSSTATE[p.id].status === 'emergency' ? '🚨 <b>EMERGENCY EXIT' : '🔔 <b>EXIT'} ${p.sym.replace('USDT', '')}</b> (${p.dir === 1 ? 'LONG' : 'SHORT'})\n` + POSSTATE[p.id].actions.map(a => a.txt).join('\n')); }
     } catch (e) { POSSTATE[p.id] = { err: e.message }; }
   }
   renderPositions();
@@ -1640,18 +1756,51 @@ $('arbGo').onclick = async () => {
 // =====================================================================
 //  BACKTEST / ADAPTIVE
 // =====================================================================
+
+// ---- long history + Web Worker backtest ----
+async function klinesLong(sym, tf, total, onProg) {
+  let out = [], end = null;
+  while (out.length < total) {
+    const lim = Math.min(1000, total - out.length);
+    const raw = await spot(`/api/v3/klines?symbol=${sym}&interval=${tf}&limit=${lim}${end ? '&endTime=' + end : ''}`);
+    if (!raw.length) break;
+    out = raw.map(x => ({ t: x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5], ct: x[6], tb: +x[9] })).concat(out);
+    end = raw[0][0] - 1; if (onProg) onProg(out.length); if (raw.length < lim) break;
+  }
+  const now = Date.now() + HEALTH.offset; return out.filter(x => x.ct < now);
+}
+let BTW = null;
+function runBacktestJob(k, kh, ctx, opt) {
+  const local = () => { const P = ENG.precompute(k), H = ENG.precompute(kh); const wf = ENG.walkForward(P, { ...ctx, htf: H }, opt); return { wf, ror: ENG.riskOfRuin(wf.full.trades.map(t => t.r), opt.riskPct) }; };
+  try {
+    if (!BTW) {
+      const src = `const ENG=(${ENGINE_FACTORY.toString()})();onmessage=(e)=>{try{const {k,kh,ctx,opt}=e.data;const P=ENG.precompute(k),H=ENG.precompute(kh);ctx.htf=H;const wf=ENG.walkForward(P,ctx,opt);postMessage({wf,ror:ENG.riskOfRuin(wf.full.trades.map(t=>t.r),opt.riskPct)});}catch(err){postMessage({error:String(err)})}}`;
+      BTW = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+    }
+    return new Promise((res) => {
+      const t = setTimeout(() => { BTW.terminate(); BTW = null; res(local()); }, 120000);
+      BTW.onmessage = (e) => { clearTimeout(t); res(e.data.error ? local() : e.data); };
+      BTW.onerror = () => { clearTimeout(t); BTW = null; res(local()); };
+      BTW.postMessage({ k, kh, ctx, opt });
+    });
+  } catch (e) { return Promise.resolve(local()); }
+}
 $('btGo').onclick = async () => {
   const sym = $('btSym').value, tf = $('btTf').value; $('btGo').disabled = true;
   $('btOut').innerHTML = '<div class="card note">Բեռնում և հաշվում եմ (walk-forward-ը մի քանի վայրկյան է)…</div>';
   await new Promise(r => setTimeout(r, 30));
   try {
-    const [k, kh] = await Promise.all([klines(sym, tf, 1000), klines(sym, HTF[tf], 500)]);
-    const P = ENG.precompute(k), H = ENG.precompute(kh);
-    const ctx = { htf: H, minScore: S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: 0.01, slipPct: S.slip / 100 } };
-    const wf = ENG.walkForward(P, ctx, { fee: S.taker / 100, slip: S.slip / 1e4 });
-    const st = wf.full.stats, rs = wf.full.trades.map(t => t.r), ror = ENG.riskOfRuin(rs, S.risk / 100);
+    const len = +$('btLen').value;
+    const k = await klinesLong(sym, tf, len, (n) => $('btOut').innerHTML = `<div class="card note">Բեռնում եմ պատմությունը… ${n}/${len} մոմ</div>`);
+    const hlen = Math.min(5000, Math.ceil(k.length * TF_MS[tf] / TF_MS[HTF[tf]]) + 260);
+    const kh = await klinesLong(sym, HTF[tf], hlen);
+    $('btOut').innerHTML = `<div class="card note">Հաշվում եմ ${k.length} մոմի վրա (backtest + walk-forward + OOS)…</div>`;
+    const ctx = { minScore: S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: 0.01, slipPct: S.slip / 100 } };
+    const { wf, ror } = await runBacktestJob(k, kh, ctx, { fee: S.taker / 100, slip: S.slip / 1e4, riskPct: S.risk / 100 });
+    const P = { k: [k[0], k[k.length - 1]] };
+    const st = wf.full.stats, rs = wf.full.trades.map(t => t.r);
     BTREF[sym + '|' + tf] = { exp: st.exp, win: st.win, n: st.n, at: Date.now() }; store.set('btref', BTREF);
-    resolveLogs(sym, tf, P);
+    try { resolveLogs(sym, tf, ENG.precompute(k.slice(-1000))); } catch (e) {}
     const f2 = (x) => x === Infinity ? '∞' : (x || 0).toFixed(2);
     let verdict;
     if (st.n < 30) verdict = `<div class="warn">⚠️ Միայն ${st.n} գործարք — վիճակագրորեն քիչ է (պետք է ≥30)։</div>`;
@@ -1764,7 +1913,14 @@ async function autoCycle() {
   AUTO.vetoes = riskGuard(null, null, 0);
   AUTO.last = Date.now(); AUTO.next = AUTO.last + AUTO.every * 60000; AUTO.running = false;
   autoSave();
-  if (fresh.length) notify(fresh.map(a => (a.dir === 1 ? 'ԳՆԻՐ ' : 'ՎԱՃԱՌԻՐ ') + a.sym.replace('USDT', '') + ' ' + a.tf), 'auto');
+  if (fresh.length) {
+    notify(fresh.map(a => (a.dir === 1 ? 'ԳՆԻՐ ' : 'ՎԱՃԱՌԻՐ ') + a.sym.replace('USDT', '') + ' ' + a.tf), 'auto');
+    for (const a of fresh) {
+      const c = a.sym.replace('USDT', ''), R = Math.abs(a.entry - a.sl), r$ = S.bal * S.risk / 100 * (a.sizeMult || 1);
+      tgSend(`${a.dir === 1 ? '🟢 <b>ԳՆԻՐ' : '🔴 <b>ՎԱՃԱՌԻՐ (Short)'} ${c}</b> · ${a.tf}\nՄուտք ≈ <b>${fmt(a.entry)}</b>\nStop Loss: <b>${fmt(a.sl)}</b> (−$${r$.toFixed(2)})\nTP1 (50%): ${fmt(a.tp1)} → Stop-ը մուտքին\nTP2: ${fmt(a.tp2)}\nՔանակ: ${fmt(a.qty)} ${c}\nՈւժ ${a.strength} · R:R 1:${a.rr.toFixed(1)}\nՎավեր է մինչև ${hm(a.expires)}\n\n${a.reasons.map(r => '✓ ' + r).join('\n')}`);
+    }
+  }
+  if (AUTO.vetoes.length && !AUTO.tgVeto) { AUTO.tgVeto = true; tgSend('🛑 <b>Այսօր առևտուր մի արա</b>\n' + AUTO.vetoes.join('\n')); } else if (!AUTO.vetoes.length) AUTO.tgVeto = false;
   if (openPositions().length) await refreshPositions();
   await autoPrices();
   renderAuto(errs === pairs.length ? AUTO.err : null);
@@ -1893,7 +2049,7 @@ function tab(name) {
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.t === name));
   document.querySelectorAll('main>section').forEach(s => s.classList.toggle('hide', s.id !== 't-' + name));
   if (name === 'journal') renderJournal();
-  if (name === 'pos') { renderPositions(); refreshPositions(); }
+  if (name === 'pos') { renderPositions(); refreshPositions(); renderCorr(); }
   if (name === 'bt') renderForward();
   if (name === 'flow' && !LIVE.sym) startLive($('flowSym').value);
   if (name === 'signal' && CUR) setTimeout(() => drawChart(CUR.P, CUR.sig), 30);
@@ -1901,7 +2057,7 @@ function tab(name) {
 }
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => tab(b.dataset.t));
 setInterval(() => $('clock').textContent = new Date().toLocaleTimeString(), 1000);
-loadSettingsUI(); syncTime(); renderAuto(); if (AUTO.on) autoStart();
+loadSettingsUI(); syncTime(); renderAuto(); if (AUTO.on) autoStart(); setTimeout(() => loadCalendar(false), 1500);
 </script>
 </body>
 </html>
