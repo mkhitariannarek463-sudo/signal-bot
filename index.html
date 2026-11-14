@@ -46,6 +46,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
 <header><h1>📈 Սիգնալ Բոտ</h1><span class="tag"><span class="dot" id="hDot"></span> <span id="hTxt">offline</span></span><button id="kill">🛑 STOP</button><span id="clock"></span></header>
 <nav id="nav">
   <button data-t="auto" class="on">🤖 Ավտո</button>
+  <button data-t="stk">🏛 Բաժնետոմսեր</button>
   <button data-t="signal">Սիգնալ</button>
   <button data-t="flow">Live Flow</button>
   <button data-t="scan">Սկաներ</button>
@@ -78,6 +79,48 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
   <div id="autoCards"></div>
   <div class="card"><h2>Այսօրվա սիգնալները</h2><div id="autoHist"></div></div>
   <div class="card note">ℹ️ Ավտո ռեժիմը աշխատում է, քանի դեռ էջը բաց է։ iPhone-ը կասեցնում է ֆոնային էջերը, ուստի էկրանը միացված պահիր (բոտը փորձում է ինքը չթողնել, որ էկրանը անջատվի)։ Ամեն սիգնալ վավեր է 3 մոմ, և եթե գինը արդեն փախել է մուտքից, բոտը կասի «ուշ է»։ Սա ֆինանսական խորհուրդ չէ. սկզբում փորձարկիր demo-ով։</div>
+</section>
+
+
+<!-- ================= STOCKS ================= -->
+<section id="t-stk" class="hide">
+  <div class="card" id="stkMarket"></div>
+  <div class="card">
+    <h2>🏛 Բաժնետոմսեր, նավթ, ոսկի — ավտոմատ սիգնալներ</h2>
+    <p class="note" style="margin-top:0">Նույն վերլուծական շարժիչը, ինչ կրիպտոյում, գումարած բաժնետոմսերի մոդուլներ՝ շուկայի ռեժիմ (SPY), Relative Strength, gap ռիսկ, ԱՄՆ բորսայի ժամեր, IBKR-ի միջնորդավճարներ։ Նավթը՝ <b>USO</b>, ոսկին՝ <b>GLD</b>, ամբողջ շուկան՝ <b>SPY</b> (ETF-ներ, որոնք գնվում են IBKR-ում բաժնետոմսի պես)։</p>
+    <div id="stkKeyBox"></div>
+    <div class="row">
+      <div style="flex:3 1 260px"><label>Ակտիվներ (ստորակետով)</label><input id="stkSyms"></div>
+      <div><label>Թայմֆրեյմ</label><select id="stkTf"><option value="1h">1 ժամ</option><option value="1day">1 օր</option></select></div>
+      <div><label>Ռեժիմ</label><select id="stkMode"><option value="7.5">🛡 Զգուշավոր</option><option value="6.5">⚖️ Նորմալ</option><option value="5.5">⚡ Ակտիվ</option></select></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div><label>Կապիտալ ($)</label><input id="stkBal" type="number" step="any"></div>
+      <div><label>Ռիսկ մեկ գործարքում (%)</label><input id="stkRisk" type="number" step="0.1"></div>
+      <div><label>Max մեկ դիրքում (% կապիտալից)</label><input id="stkMaxPos" type="number" step="1"></div>
+      <div><label>IBKR միջնորդավճար</label><select id="stkTier"><option value="1">Tiered (min ~$0.35)</option><option value="0">Fixed (min $1)</option></select></div>
+    </div>
+    <p class="note" style="margin:4px 0 0">Փոքր կապիտալի համար <b>Tiered</b>-ն ավելի էժան է։ IBKR-ում՝ Settings → Account Settings → Pricing Structure → Tiered։</p>
+    <div class="chk"><label><input type="checkbox" id="stkLong"> Միայն գնում (Cash հաշիվ — short չկա, լծակ չկա)</label></div>
+    <div class="row" style="margin-top:6px">
+      <div style="flex:0 0 auto"><button class="btn" id="stkScan">🔍 Ստուգել հիմա</button></div>
+      <div style="flex:0 0 auto"><button class="btn sec" id="stkAuto">▶️ Ավտո</button></div>
+    </div>
+    <div id="stkStatus" class="note" style="margin-top:8px"></div>
+  </div>
+  <div id="stkVeto"></div>
+  <div id="stkPos"></div>
+  <div id="stkCards"></div>
+  <div class="card"><h2>📋 Բոլոր ակտիվները</h2><div id="stkTable" style="overflow-x:auto"><p class="note">Սեղմիր «Ստուգել հիմա»։</p></div></div>
+  <div id="stkDetail"></div>
+  <div class="card"><h2>📊 Backtest + Walk-Forward (բաժնետոմսեր)</h2>
+    <div class="row"><div><label>Ակտիվ</label><input id="stkBtSym" value="AAPL"></div><div style="flex:0 0 auto"><button class="btn" id="stkBtGo">Թեստավորել</button></div></div>
+    <p class="note">Թեստավորում է ընտրված թայմֆրեյմով (1 ժամ՝ ~3 տարի, 1 օր՝ ~10 տարի)։ Ծախսում է 4 API կրեդիտ։ Հաշվում է IBKR միջնորդավճարը, gap-երը (Stop-ը կարող է «թռչել»), միայն long ռեժիմը։</p>
+    <div id="stkBtOut"></div></div>
+  <div class="card"><h2>🧠 Ինքնաուսուցում (բաժնետոմսեր)</h2>
+    <p class="note" style="margin-top:0">Բոտը պատմության 70%-ի վրա գտնում է՝ որ փաստարկներն ու ժամերն են աշխատում, ապա ստուգում մնացած 30%-ի վրա, որը «չի տեսել»։ Կիրառվում է միայն ապացուցվելու դեպքում և քո հաստատմամբ։</p>
+    <button class="btn" id="stkLnGo">🧠 Սովորել watchlist-ի վրա</button><div id="stkLnActive" style="margin-top:8px"></div><div id="stkLnOut"></div></div>
+  <div class="card"><h2>📒 Բաժնետոմսերի արդյունքներ</h2><div id="stkJournal"></div></div>
 </section>
 
 <section id="t-signal" class="hide">
@@ -577,7 +620,7 @@ function ENGINE_FACTORY() {
       p = Math.round(p * m * 100) / 100;
       if (side > 0) { catL[cat] += p; L.push([p, txt, cat, key, m]); } else { catS[cat] += p; S.push([p, txt, cat, key, m]); }
     };
-    const tags = ctxTags(P, t);
+    const tags = ctxTags(P, t, ctx.stock);
 
     const adxv = P.adx[t], vola = volatilityAt(P, t);
     let regime = adxv >= 25 ? 'trend' : (adxv < 20 ? 'range' : 'transition');
@@ -693,6 +736,45 @@ function ENGINE_FACTORY() {
       if (f.liqCascade === 1) { add(-1, 'flow', 0.5, 'Short-երի լիկվիդացիաների կասկադ (short squeeze) — հնարավոր հետընթաց'); add(1, 'flow', -0.5, 'Ուշ long՝ short squeeze-ից հետո'); }
     }
 
+    // ================= STOCKS: market regime (SPY), relative strength, gaps =================
+    let stk = null;
+    if (ctx.stock) {
+      stk = { mkt: 0, rs20: null, rs60: null, gapMed: null, gapToday: null, lastBar: false };
+      const ct = P.k[t].ct;
+      if (!ctx.isBench) {
+        stk.mkt = htfTrendAt(ctx.benchH, ct);
+        if (stk.mkt === 1) { add(1, 'tech', 1, 'Շուկան (SPY) աճող թրենդում է'); add(-1, 'tech', -1.5, 'Դեմ ես գնում ամբողջ շուկային (SPY-ն աճում է)'); }
+        if (stk.mkt === -1) { add(-1, 'tech', 1, 'Շուկան (SPY) նվազող թրենդում է'); add(1, 'tech', -1.5, 'Դեմ ես գնում ամբողջ շուկային (SPY-ն ընկնում է)'); }
+        const B = ctx.bench;
+        if (B && t >= 60) {
+          let lo = 0, hi = B.k.length - 1, bi = -1;
+          while (lo <= hi) { const m = (lo + hi) >> 1; if (B.k[m].ct <= ct) { bi = m; lo = m + 1; } else hi = m - 1; }
+          if (bi >= 60) {
+            stk.rs20 = (c / P.c[t - 20] - 1) - (B.c[bi] / B.c[bi - 20] - 1);
+            stk.rs60 = (c / P.c[t - 60] - 1) - (B.c[bi] / B.c[bi - 60] - 1);
+            const thr = Math.max(0.004, (a / c) * Math.sqrt(20) * 0.5);
+            const p20 = (stk.rs20 * 100).toFixed(1);
+            if (stk.rs20 > thr && stk.rs60 > 0) { add(1, 'mom', 1.5, `Relative Strength՝ SPY-ից ուժեղ (+${p20}% 20 մոմում)`); add(-1, 'mom', -1, 'Short ուժեղ բաժնետոմսի վրա (RS դրական)'); }
+            if (stk.rs20 < -thr && stk.rs60 < 0) { add(-1, 'mom', 1.5, `Relative Weakness՝ SPY-ից թույլ (${p20}% 20 մոմում)`); add(1, 'mom', -1, 'Թույլ բաժնետոմս (RS բացասական)'); }
+          }
+        }
+      }
+      // overnight gaps: median of the last 20 session opens vs previous close
+      const daily = (ctx.tfMs || 0) >= 864e5, gaps = [];
+      let todayGap = null; const today = nyTime(ct).day;
+      for (let i = t; i > 1 && gaps.length < 20; i--) {
+        const newDay = daily || nyTime(P.k[i].t).day !== nyTime(P.k[i - 1].t).day;
+        if (!newDay) continue;
+        const g = P.o[i] / P.c[i - 1] - 1; gaps.push(Math.abs(g));
+        if (!daily && todayGap === null && nyTime(P.k[i].t).day === today) todayGap = g;
+      }
+      if (gaps.length >= 5) { const s2 = gaps.slice().sort((x, y) => x - y); stk.gapMed = s2[Math.floor(s2.length / 2)]; }
+      stk.gapToday = todayGap;
+      if (todayGap != null && Math.abs(todayGap) > 0.02) info.push(`Այսօրվա gap՝ ${(todayGap * 100).toFixed(1)}% (բացվել է ${todayGap > 0 ? 'վերև' : 'ներքև'})`);
+      stk.lastBar = !daily && nyTime(ct + 1).h >= 15.9;
+      if (stk.lastBar) info.push('Սա օրվա վերջին մոմն է՝ մուտքը կլինի հաջորդ բացմանը (gap ռիսկ)');
+    }
+
     // ================= REGIME ADAPTATION (user-approved switches) =================
     const regimeOff = (regime === 'range' && ctx.allowRange === false) || (regime !== 'range' && ctx.allowTrend === false);
 
@@ -744,6 +826,12 @@ function ENGINE_FACTORY() {
     if (dir && rr < 2) rk(10, `R:R 1:${rr.toFixed(2)}`);
     if (b && b.spreadPct > 0.08) rk(15, 'Լայն spread');
     for (const x of anoms) rk(x.sev === 'high' ? 50 : 15, x.type);
+    if (stk && dir) {
+      if (stk.gapMed != null && stk.gapMed * entry > 0.5 * Math.abs(entry - sl)) rk(15, `Գիշերային gap-ը (մեդիան ${(stk.gapMed * 100).toFixed(1)}%) կարող է անցնել Stop-ի վրայով`);
+      if (stk.gapToday != null && Math.abs(stk.gapToday) > 0.03 && Math.sign(stk.gapToday) === dir) rk(10, 'Մեծ gap նույն ուղղությամբ — գինն արդեն շատ է շարժվել');
+      if (stk.lastBar) rk(5, 'Մուտքը՝ միայն վաղը բացմանը');
+      if ((dir === 1 && stk.mkt === -1) || (dir === -1 && stk.mkt === 1)) rk(15, 'Դեմ շուկայի (SPY) թրենդին');
+    }
     risk = Math.min(100, risk);
 
     // ---------- Gates ----------
@@ -767,7 +855,7 @@ function ENGINE_FACTORY() {
       longScore: ls, shortScore: ss, strength: Math.max(0, Math.min(100, Math.round((top / 16) * 100))),
       cats, risk, riskItems, costR, costPct, anoms,
       L, S, info, block, regime, vola, vol: vola.regime, adx: adxv, rsi: r, atr: a, htf, st, levels: lv, zones: zn, vp, fib, candle: cd, div: dv,
-      roc, racc, volZ: vz, pressure: pr, breakoutUp, breakoutDn,
+      roc, racc, volZ: vz, pressure: pr, breakoutUp, breakoutDn, stk,
       tags, keys: dir === 1 ? L.filter(x => x[0] > 0).map(x => x[3]) : dir === -1 ? S.filter(x => x[0] > 0).map(x => x[3]) : [],
       entry, sl, tp1, tp2, rr, dynTP, sup, res, price: c, sizeMult: vola.regime === 'high' ? 0.5 : 1, t, time: P.k[t].ct
     };
@@ -816,15 +904,20 @@ function ENGINE_FACTORY() {
     const tS = Math.max(211, opt.tStart ?? 211), tE = Math.min(P.c.length - 2, opt.tEnd ?? P.c.length - 2);
     let t = tS;
     while (t < tE) {
-      const s = analyze(P, t, { htf: ctx.htf, minScore: ctx.minScore, allowRange: ctx.allowRange, allowTrend: ctx.allowTrend, cost: ctx.cost, wmul: ctx.wmul, blocks: ctx.blocks });
-      if (!s.ready || s.dir === 0) { t++; continue; }
+      const s = analyze(P, t, { htf: ctx.htf, minScore: ctx.minScore, allowRange: ctx.allowRange, allowTrend: ctx.allowTrend, cost: ctx.cost, wmul: ctx.wmul, blocks: ctx.blocks,
+        stock: ctx.stock, bench: ctx.bench, benchH: ctx.benchH, isBench: ctx.isBench, tfMs: ctx.tfMs });
+      if (!s.ready || s.dir === 0 || (opt.longOnly && s.dir === -1)) { t++; continue; }
       const d = s.dir, e = P.o[t + 1] * (1 + d * slip);
       if ((d === 1 && e <= s.sl) || (d === -1 && e >= s.sl)) { t++; continue; }
       const R = Math.abs(e - s.sl); let res = null, half = false, j = t + 1, slNow = s.sl, ext = e;
       const r1 = Math.abs(s.tp1 - e) / R;
       for (; j < P.c.length && j <= t + maxHold; j++) {
         const hi = P.h[j], lo = P.l[j];
-        if (d === 1 ? lo <= slNow : hi >= slNow) { res = half ? 0.5 * r1 + 0.5 * d * (slNow - e) / R : -1 - slip * e / R; break; }
+        if (d === 1 ? lo <= slNow : hi >= slNow) {
+          // a gap through the stop fills at the open, not at the stop price
+          const fill = d === 1 ? Math.min(slNow, P.o[j]) : Math.max(slNow, P.o[j]);
+          res = half ? 0.5 * r1 + 0.5 * d * (fill - e) / R : d * (fill - e) / R - slip * e / R; break;
+        }
         if (!half && (d === 1 ? hi >= s.tp1 : lo <= s.tp1)) { half = true; slNow = e; }
         if (half && (d === 1 ? hi >= s.tp2 : lo <= s.tp2)) { res = 0.5 * r1 + 0.5 * Math.abs(s.tp2 - e) / R; break; }
         if (half) { ext = d === 1 ? Math.max(ext, hi) : Math.min(ext, lo); const tr = d === 1 ? ext - 2.5 * P.atr[j] : ext + 2.5 * P.atr[j]; slNow = d === 1 ? Math.max(slNow, tr) : Math.min(slNow, tr); }
@@ -881,13 +974,28 @@ function ENGINE_FACTORY() {
   function factorKey(cat, txt) {
     return cat + ':' + String(txt).replace(/\([^)]*\)/g, '').replace(/[-+]?\d[\d.,]*\s*(%|σ|×|x)?/g, '#').replace(/\s+/g, ' ').trim();
   }
-  function ctxTags(P, t) {
+  // US Eastern time helpers (DST: 2nd Sunday of March → 1st Sunday of November)
+  function nyOffsetH(ms) {
+    const d = new Date(ms), y = d.getUTCFullYear();
+    const nth = (m, n) => { const f = new Date(Date.UTC(y, m, 1)).getUTCDay(); return 1 + ((7 - f) % 7) + 7 * (n - 1); };
+    const start = Date.UTC(y, 2, nth(2, 2), 7), end = Date.UTC(y, 10, nth(10, 1), 6);
+    return ms >= start && ms < end ? -4 : -5;
+  }
+  function nyTime(ms) { const d = new Date(ms + nyOffsetH(ms) * 3600e3); return { h: d.getUTCHours() + d.getUTCMinutes() / 60, dow: d.getUTCDay(), day: d.toISOString().slice(0, 10) }; }
+  function ctxTags(P, t, stock) {
+    if (stock) {
+      const ny = nyTime(P.k[t].ct + 1), h = ny.h;
+      const sess = h <= 11.5 ? 'Open' : h <= 14.5 ? 'Mid' : 'Close';
+      return ['stk:' + sess, 'dow:' + ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][ny.dow]];
+    }
     const d = new Date(P.k[t].ct + 1), hr = d.getUTCHours(), dow = d.getUTCDay();
     const session = hr < 7 ? 'Asia' : hr < 13 ? 'London' : hr < 21 ? 'NewYork' : 'Late';
     return ['session:' + session, 'day:' + (dow === 0 || dow === 6 ? 'Weekend' : 'Weekday')];
   }
   const TAG_NAMES = { 'session:Asia': 'Ասիական սեսիա', 'session:London': 'Լոնդոնյան սեսիա', 'session:NewYork': 'Նյու Յորքի սեսիա', 'session:Late': 'Ուշ երեկո (UTC 21–24)',
-    'day:Weekend': 'Շաբաթ-կիրակի', 'day:Weekday': 'Աշխատանքային օրեր', 'regime:trend': 'Թրենդ ռեժիմ', 'regime:range': 'Range ռեժիմ', 'regime:transition': 'Անցումային ռեժիմ' };
+    'day:Weekend': 'Շաբաթ-կիրակի', 'day:Weekday': 'Աշխատանքային օրեր',
+    'stk:Open': 'Բորսայի բացման ժամեր (NY 09:30–11:30)', 'stk:Mid': 'Կեսօր (NY 11:30–14:30)', 'stk:Close': 'Փակման ժամեր (NY 14:30–16:00)',
+    'dow:Mon': 'Երկուշաբթի', 'dow:Tue': 'Երեքշաբթի', 'dow:Wed': 'Չորեքշաբթի', 'dow:Thu': 'Հինգշաբթի', 'dow:Fri': 'Ուրբաթ', 'regime:trend': 'Թրենդ ռեժիմ', 'regime:range': 'Range ռեժիմ', 'regime:transition': 'Անցումային ռեժիմ' };
   const tagName = (g) => TAG_NAMES[g] || g;
   function learn(sets, ctx, opt = {}) {
     const train = [], test = [];
@@ -991,10 +1099,9 @@ function ENGINE_FACTORY() {
     return x.toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: Math.min(2, d) });
   }
 
-  return { precompute, analyze, backtest, walkForward, learn, factorKey, tagName, stats, riskOfRuin, managePosition, executionPlan, triangular, anomaliesAt, volatilityAt, fmt, atr, CATS, CAT_NAMES };
+  return { nyTime, nyOffsetH, precompute, analyze, backtest, walkForward, learn, factorKey, tagName, stats, riskOfRuin, managePosition, executionPlan, triangular, anomaliesAt, volatilityAt, fmt, atr, CATS, CAT_NAMES };
 }
 const ENG = ENGINE_FACTORY();
-
 
 </script>
 <script>
@@ -1864,7 +1971,7 @@ function runJob(job, d) {
   const local = () => JOBS[job](ENG, d);
   try {
     if (!BTW) {
-      const src = `const ENG=(${ENGINE_FACTORY.toString()})();const JOBS={wf:${JOBS.wf.toString()},learn:${JOBS.learn.toString()}};onmessage=(e)=>{try{postMessage({res:JOBS[e.data.job](ENG,e.data.d)});}catch(err){postMessage({error:String(err)})}}`;
+      const src = `const ENG=(${ENGINE_FACTORY.toString()})();const JOBS={${Object.entries(JOBS).map(([k, f]) => k + ':' + f.toString()).join(',')}};onmessage=(e)=>{try{postMessage({res:JOBS[e.data.job](ENG,e.data.d)});}catch(err){postMessage({error:String(err)})}}`;
       BTW = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
     }
     return new Promise((res) => {
@@ -2197,10 +2304,506 @@ function tab(name) {
   if (name === 'flow' && !LIVE.sym) startLive($('flowSym').value);
   if (name === 'signal' && CUR) setTimeout(() => drawChart(CUR.P, CUR.sig), 30);
   if (name === 'auto') renderAuto();
+  if (name === 'stk' && window.stkRender) stkRender();
 }
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => tab(b.dataset.t));
 setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString(); renderHeader(); }, 1000);
 loadSettingsUI(); syncTime(); renderAuto(); if (AUTO.on) autoStart(); setTimeout(() => loadCalendar(false), 1500);
+</script>
+<script>
+// =====================================================================
+//  🏛 STOCKS — US stocks & ETFs (oil = USO, gold = GLD, market = SPY) via Twelve Data
+// =====================================================================
+const TD = 'https://api.twelvedata.com';
+const STK_IV = { '1h': 36e5, '1day': 864e5, '1week': 6048e5 };
+const STK_HTF = { '1h': '1day', '1day': '1week' };
+const STK_SIZE = { '1h': 700, '1day': 400, '1week': 300 };
+const STK_NAMES = { SPY: 'S&P 500 (ամբողջ շուկա)', QQQ: 'Nasdaq 100', USO: 'Նավթ (WTI ETF)', GLD: 'Ոսկի (ETF)', SLV: 'Արծաթ (ETF)', UNG: 'Գազ (ETF)', AAPL: 'Apple', MSFT: 'Microsoft', NVDA: 'NVIDIA',
+  AMZN: 'Amazon', GOOGL: 'Google', META: 'Meta', TSLA: 'Tesla', AMD: 'AMD', NFLX: 'Netflix', XOM: 'ExxonMobil (նավթ)', CVX: 'Chevron (նավթ)', JPM: 'JPMorgan', 'BRK.B': 'Berkshire' };
+const STK_DEF = { syms: 'AAPL,MSFT,NVDA,AMZN,GOOGL,META,TSLA,QQQ,USO,GLD', tf: '1day', mode: 6.5, bal: 1000, risk: 1, maxPos: 25, longOnly: true, tiered: true };
+const STK = {
+  key: store.get('stkKey', ''), cfg: Object.assign({}, STK_DEF, store.get('stkCfg', {})),
+  res: {}, active: store.get('stkActive', {}), hist: store.get('stkHist', []), pos: store.get('stkPos', []), jr: store.get('stkJr', []),
+  learn: store.get('stkLearn', {}), credits: store.get('stkCredits', { day: '', n: 0 }), data: store.get('stkData', {}),
+  calls: [], running: false, auto: store.get('stkAutoOn', false), timer: null, last: null, err: null, wait: 0, mkt: null
+};
+const stkSyms = () => STK.cfg.syms.split(',').map(s => s.trim().toUpperCase()).filter(Boolean).slice(0, 15);
+const stkName = (s) => STK_NAMES[s] ? `${s} <span class="note">${STK_NAMES[s]}</span>` : s;
+const sf = (x) => x == null || !isFinite(x) ? '—' : x >= 1 ? x.toFixed(2) : x.toFixed(4);   // US stocks tick = $0.01
+const TFN = { '1h': '1 ժամ', '1day': '1 օր' };
+const usd = (x) => '$' + (Math.abs(x) >= 100 ? x.toFixed(0) : x.toFixed(2));
+const stkSaveCfg = () => store.set('stkCfg', STK.cfg);
+function stkSaveData() {
+  // compact cache so a page reload does not burn API credits
+  try { localStorage.setItem('sb2_stkData', JSON.stringify(STK.data)); }
+  catch (e) { const ks = Object.keys(STK.data).sort((a, b) => STK.data[a].at - STK.data[b].at); for (const k of ks.slice(0, Math.ceil(ks.length / 2))) delete STK.data[k]; try { localStorage.setItem('sb2_stkData', JSON.stringify(STK.data)); } catch (e2) {} }
+}
+
+// ---------- US market clock ----------
+function nyNow(ms = Date.now()) { return ENG.nyTime(ms); }
+function nyToMs(dayStr, h) { const t0 = Date.parse(dayStr + 'T00:00:00Z'); return t0 + h * 3600e3 - ENG.nyOffsetH(t0 + 12 * 3600e3) * 3600e3; }
+function marketState(ms = Date.now()) {
+  const ny = nyNow(ms), wd = ny.dow >= 1 && ny.dow <= 5, open = wd && ny.h >= 9.5 && ny.h < 16;
+  let d = ny.day, next = null;
+  for (let i = 0; i < 8 && !next; i++) {
+    const dt = new Date(Date.parse(d + 'T12:00:00Z') + i * 864e5), dow = dt.getUTCDay(), ds = dt.toISOString().slice(0, 10);
+    if (dow === 0 || dow === 6) continue;
+    const o = nyToMs(ds, 9.5); if (o > ms) next = o;
+  }
+  let lastClose = null;
+  for (let i = 0; i < 8 && !lastClose; i++) {
+    const dt = new Date(Date.parse(d + 'T12:00:00Z') - i * 864e5), dow = dt.getUTCDay(), ds = dt.toISOString().slice(0, 10);
+    if (dow === 0 || dow === 6) continue;
+    const c = nyToMs(ds, 16); if (c <= ms) lastClose = c;
+  }
+  const close = open ? nyToMs(ny.day, 16) : null;
+  return { open, next, close, lastClose, ny };
+}
+const hmd = (t) => new Date(t).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+
+// ---------- Twelve Data with client-side rate limiting (free plan: 8/min, 800/day) ----------
+function creditsToday() { const d = new Date().toISOString().slice(0, 10); if (STK.credits.day !== d) STK.credits = { day: d, n: 0 }; return STK.credits; }
+async function tdSlot() {
+  for (;;) {
+    const now = Date.now(); STK.calls = STK.calls.filter(t => now - t < 61000);
+    if (STK.calls.length < 7) { STK.calls.push(now); return; }
+    const w = 61000 - (now - STK.calls[0]); STK.wait = Math.ceil(w / 1000); stkStatus();
+    await new Promise(r => setTimeout(r, Math.min(w + 100, 5000)));
+  }
+}
+async function td(path) {
+  if (!STK.key) throw new Error('Նախ մուտքագրիր Twelve Data API key-ը (անվճար է)');
+  const c = creditsToday(); if (c.n >= 790) throw new Error('Twelve Data-ի օրական 800 հարցման սահմանը սպառվեց։ Վաղը կվերականգնվի (UTC 00:00 = Երևան 04:00)');
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await tdSlot(); STK.wait = 0;
+    c.n++; store.set('stkCredits', STK.credits);
+    const d = await getJSON(`${TD}/${path}&apikey=${encodeURIComponent(STK.key)}`, 20000);
+    if (d && d.status === 'error') {
+      if (d.code === 429 && attempt === 0) { STK.calls = Array(7).fill(Date.now()); continue; }
+      if (d.code === 401 || d.code === 403) throw new Error('API key-ը սխալ է կամ այս տվյալը վճարովի է (' + d.message + ')');
+      throw new Error('Twelve Data՝ ' + d.message);
+    }
+    return d;
+  }
+  throw new Error('Twelve Data՝ չափից շատ հարցումներ');
+}
+function tdParse(values, iv) {
+  const now = Date.now(), ms = marketState(now);
+  const k = values.map(x => {
+    const day = x.datetime.length <= 10, t = Date.parse(day ? x.datetime + 'T00:00:00Z' : x.datetime.replace(' ', 'T') + 'Z');
+    let ct;
+    if (iv === '1h') { const ny = ENG.nyTime(t); ct = Math.min(t + 36e5, t + (16 - ny.h) * 3600e3) - 1; }
+    else if (iv === '1day') ct = nyToMs(x.datetime.slice(0, 10), 16) - 1;
+    else ct = nyToMs(new Date(t + 4 * 864e5).toISOString().slice(0, 10), 16) - 1;
+    const tt = iv === '1h' ? t : ct - (iv === '1day' ? 6.5 * 3600e3 : 4 * 864e5);
+    return { t: tt, ct, o: +x.open, h: +x.high, l: +x.low, c: +x.close, v: +(x.volume || 0) };
+  }).filter(x => isFinite(x.c) && x.c > 0).sort((a, b) => a.t - b.t);
+  // only completed bars (the engine never acts on an unfinished candle)
+  return k.filter(x => x.ct < now || (!ms.open && x.ct <= (ms.lastClose || 0)));
+}
+function stkFresh(e, iv) {
+  if (!e) return false;
+  const now = Date.now(), m = marketState(now);
+  if (iv !== '1h') return now - e.at < (m.open ? 30 * 60e3 : 6 * 3600e3) && !(m.lastClose && e.at < m.lastClose + 60e3 && now > m.lastClose + 60e3);
+  if (!m.open) return e.at > (m.lastClose || 0) + 60e3;
+  // hourly bars close at NY xx:30 → refresh once per new bar
+  const ny = m.ny, mins = Math.round(ny.h * 60), sinceBar = ((mins - 570) % 60 + 60) % 60;
+  return now - e.at < sinceBar * 60e3 - 60e3;
+}
+async function stkBars(sym, iv, size, force) {
+  const key = sym + '|' + iv + '|' + size, e = STK.data[key];
+  if (!force && stkFresh(e, iv)) return e.k;
+  const d = await td(`time_series?symbol=${encodeURIComponent(sym)}&interval=${iv}&outputsize=${size}&timezone=UTC`);
+  if (!d.values || !d.values.length) throw new Error(`${sym}: տվյալ չկա`);
+  const k = tdParse(d.values, iv);
+  if (size <= 800) { STK.data[key] = { at: Date.now(), k }; stkSaveData(); }
+  return k;
+}
+
+// ---------- Sizing with IBKR Pro Fixed commissions ----------
+// IBKR Pro: Fixed = $0.005/share, min $1; Tiered = $0.0035/share, min $0.35 (+ small exchange/regulatory fees); both capped at 1% of value
+function ibkrComm(shares, price) {
+  const v = shares * price; if (v <= 0) return 0;
+  return STK.cfg.tiered ? Math.min(Math.max(0.35, 0.0035 * Math.ceil(shares)), 0.01 * v) + 0.05 : Math.min(Math.max(1, 0.005 * Math.ceil(shares)), 0.01 * v);
+}
+function stkSize(sig) {
+  const cfg = STK.cfg, riskUSD = cfg.bal * cfg.risk / 100 * (sig.sizeMult || 1), R = Math.abs(sig.entry - sig.sl);
+  let sh = R > 0 ? riskUSD / R : 0; const cap = cfg.bal * cfg.maxPos / 100; let capped = false;
+  if (sh * sig.entry > cap) { sh = cap / sig.entry; capped = true; }
+  sh = sh >= 10 ? Math.floor(sh) : Math.floor(sh * 100) / 100;
+  const comm = ibkrComm(sh, sig.entry);
+  return { shares: sh, notional: sh * sig.entry, risk: sh * R, comm, capped, commR: sh * R ? 2 * comm / (sh * R) : 0 };
+}
+
+// ---------- Risk Control for stocks (independent veto layer) ----------
+function stkToday() {
+  const day = new Date().toDateString(), tr = STK.jr.filter(j => new Date(j.ts).toDateString() === day);
+  let consec = 0; for (let i = STK.jr.length - 1; i >= 0 && STK.jr[i].r < 0; i--) consec++;
+  return { n: tr.length, r: tr.reduce((a, j) => a + j.r, 0), consec };
+}
+function stkGuard(sym, notional) {
+  const v = [], t = stkToday(), open = STK.pos.filter(p => p.status === 'open');
+  if (S.kill) v.push('🛑 Kill Switch-ը միացված է');
+  if (t.r <= -S.dayLoss) v.push(`Օրական վնասի սահմանը (${S.dayLoss}R) հասավ`);
+  if (t.n >= S.dayMax) v.push(`Այսօր արդեն ${t.n} գործարք է (max ${S.dayMax})`);
+  if (t.consec >= S.maxConsec) v.push(`${t.consec} վնաս անընդմեջ — դադար`);
+  if (sym) {
+    if (open.length >= S.maxOpen) v.push(`Արդեն ${open.length} բաց դիրք կա (max ${S.maxOpen})`);
+    if (open.some(p => p.sym === sym)) v.push(`${sym}-ում արդեն դիրք ունես`);
+    const used = open.reduce((a, p) => a + p.shares * p.entry * (p.partial ? 0.5 : 1), 0);
+    if (used + notional > STK.cfg.bal * 1.001) v.push(`Բավարար գումար չկա (Cash հաշիվ՝ ազատ ≈ ${usd(Math.max(0, STK.cfg.bal - used))})`);
+    const hot = open.filter(p => Math.abs(stkCorr(p.sym, sym) || 0) > 0.8);
+    if (hot.length >= S.maxCorr) v.push(`Բարձր կոռելյացիա ${hot.map(p => p.sym).join(', ')}-ի հետ — նույն ռիսկն ես կրկնապատկում`);
+  }
+  return v;
+}
+function stkCorr(a, b) {
+  if (a === b) return 1;
+  const A = (STK.data[a + '|1day|400'] || {}).k, B = (STK.data[b + '|1day|400'] || {}).k; if (!A || !B) return null;
+  const ra = {}; for (let i = Math.max(1, A.length - 60); i < A.length; i++) ra[A[i].t] = Math.log(A[i].c / A[i - 1].c);
+  const x = [], y = []; for (let i = Math.max(1, B.length - 60); i < B.length; i++) if (ra[B[i].t] != null) { x.push(ra[B[i].t]); y.push(Math.log(B[i].c / B[i - 1].c)); }
+  if (x.length < 20) return null;
+  const mx = x.reduce((s, v) => s + v, 0) / x.length, my = y.reduce((s, v) => s + v, 0) / y.length;
+  let sxy = 0, sxx = 0, syy = 0; for (let i = 0; i < x.length; i++) { sxy += (x[i] - mx) * (y[i] - my); sxx += (x[i] - mx) ** 2; syy += (y[i] - my) ** 2; }
+  return sxx && syy ? sxy / Math.sqrt(sxx * syy) : null;
+}
+
+// ---------- Analysis ----------
+function stkCtx(sym, tf, H, B, BH, minScore) {
+  const L = STK.learn[tf] && STK.learn[tf].on ? STK.learn[tf] : null;
+  return { stock: true, htf: H, bench: B, benchH: BH, isBench: sym === 'SPY', tfMs: STK_IV[tf], minScore,
+    allowTrend: S.allowTrend, allowRange: S.allowRange, wmul: L ? L.wmul : null, blocks: L ? L.blocks : null,
+    cost: { takerPct: 0.05, spreadPct: 0.02, slipPct: 0.02 } };
+}
+async function stkAnalyze(sym, tf, B, BH) {
+  const k = await stkBars(sym, tf, STK_SIZE[tf]), kh = await stkBars(sym, STK_HTF[tf], STK_SIZE[STK_HTF[tf]]);
+  if (k.length < 230) throw new Error(`${sym}: քիչ պատմություն (${k.length} մոմ)`);
+  const P = ENG.precompute(k), H = ENG.precompute(kh), t = P.c.length - 1;
+  const ctx = stkCtx(sym, tf, H, B, BH, STK.cfg.mode);
+  // commission depends on position size → estimate it from a provisional analysis, then re-run
+  let sig = ENG.analyze(P, t, ctx);
+  if (sig.rawDir) { const z = stkSize(sig); if (z.notional > 0) ctx.cost.takerPct = z.comm / z.notional * 100; sig = ENG.analyze(P, t, ctx); }
+  const D = (STK.data[sym + '|1day|400'] || {}).k || (tf === '1day' ? k : null);
+  const prevClose = D && D.length > 1 ? (marketState().open ? D[D.length - 1].c : D[D.length - 2].c) : null;
+  return { sym, tf, P, H, sig, price: P.c[t], prevClose, size: sig.rawDir ? stkSize(sig) : null, at: Date.now() };
+}
+async function stkScan(force) {
+  if (STK.running) return; STK.running = true; STK.err = null; stkStatus();
+  const tf = STK.cfg.tf, syms = stkSyms(), fresh = [];
+  try {
+    const kb = await stkBars('SPY', tf, STK_SIZE[tf], force), kbh = await stkBars('SPY', STK_HTF[tf], STK_SIZE[STK_HTF[tf]], force);
+    const B = ENG.precompute(kb), BH = ENG.precompute(kbh);
+    STK.mkt = stkMarketView(B, BH);
+    if (tf === '1h') try { await stkBars('SPY', '1day', 400); } catch (e) {}
+    let i = 0;
+    for (const sym of syms) {
+      STK.prog = `${++i}/${syms.length} · ${sym}`; stkStatus();
+      try {
+        if (tf === '1h' && sym !== 'SPY') await stkBars(sym, '1day', 400);   // daily data → correlations, day change (cached)
+        const r = sym === 'SPY' ? await stkAnalyze('SPY', tf, null, null) : await stkAnalyze(sym, tf, B, BH);
+        STK.res[sym] = r; const s = r.sig;
+        if (s.dir === 1 || (s.dir === -1 && !STK.cfg.longOnly)) {
+          const id = `${sym}|${tf}|${s.time}|${s.dir}`;
+          if (!STK.active[id] && !STK.hist.some(h => h.id === id)) {
+            const a = { id, sym, tf, dir: s.dir, entry: s.entry, sl: s.sl, tp1: s.tp1, tp2: s.tp2, rr: s.rr, atr: s.atr, strength: s.strength, risk: s.risk, time: s.time,
+              size: r.size, reasons: topReasons(s), riskItems: s.riskItems.map(x => x[1]), created: Date.now(), price: r.price, status: 'active' };
+            STK.active[id] = a; STK.hist.unshift({ ...a }); fresh.push(a);
+          }
+        }
+      } catch (e) { STK.err = e; STK.res[sym] = { sym, err: e.message }; }
+    }
+    stkUpdateActive(); stkManage();
+    STK.last = Date.now();
+  } catch (e) { STK.err = e; }
+  STK.running = false; STK.prog = '';
+  STK.hist = STK.hist.slice(0, 60); store.set('stkActive', STK.active); store.set('stkHist', STK.hist);
+  if (fresh.length) {
+    const vet = stkGuard(null, 0);
+    notify(fresh.map(a => (a.dir === 1 ? 'ԳՆԻՐ ' : 'ՎԱՃԱՌԻՐ ') + a.sym), 'auto');
+    if (!vet.length) for (const a of fresh) {
+      const z = a.size || {};
+      tgSend(`${a.dir === 1 ? '🟢 <b>ԳՆԻՐ' : '🔴 <b>ՎԱՃԱՌԻՐ'} ${a.sym}</b> · ${a.tf} (բաժնետոմս)\nLimit մուտք ≈ <b>${sf(a.entry)}</b>\nStop Loss: <b>${sf(a.sl)}</b> (−${usd(z.risk || 0)})\nTP1 (կեսը): ${sf(a.tp1)} → Stop-ը մուտքին\nTP2: ${sf(a.tp2)}\nՔանակ: ${z.shares} բաժնետոմս ≈ ${usd(z.notional || 0)}\nՈւժ ${a.strength} · Ռիսկ ${a.risk}/100\n\n${a.reasons.map(r => '✓ ' + r).join('\n')}`);
+    }
+  }
+  stkRender();
+}
+function stkMarketView(B, BH) {
+  const t = B.c.length - 1, th = BH.c.length - 1, c = BH.c[th];
+  const trend = c > BH.e50[th] && BH.e50[th] > (BH.e200[th] || 0) ? 1 : c < BH.e50[th] && BH.e50[th] < (BH.e200[th] || Infinity) ? -1 : 0;
+  const atrPct = BH.atr[th] / c * 100, hist = [];
+  for (let i = Math.max(15, th - 250); i <= th; i++) if (BH.atr[i]) hist.push(BH.atr[i] / BH.c[i]);
+  const rank = hist.filter(x => x <= atrPct / 100).length / Math.max(1, hist.length);
+  return { price: B.c[t], trend, atrPct, fear: rank, rsi: BH.rsi[th] };
+}
+function stkUpdateActive() {
+  for (const a of Object.values(STK.active)) {
+    const r = STK.res[a.sym]; if (!r || !r.P) continue;
+    const P = r.P, after = P.k.filter(k => k.t > a.time);
+    let st = 'active'; const hi = Math.max(r.price, ...after.map(k => k.h)), lo = Math.min(r.price, ...after.map(k => k.l));
+    a.price = r.price;
+    if (a.dir === 1 ? lo <= a.sl : hi >= a.sl) st = 'invalid';
+    else if (a.dir === 1 ? hi >= a.tp1 : lo <= a.tp1) st = 'missed';
+    else if (after.length >= 3) st = 'expired';
+    a.late = st === 'active' && a.dir * (a.price - a.entry) > 0.5 * a.atr;
+    if (st !== 'active') { a.status = st; const h = STK.hist.find(x => x.id === a.id); if (h) h.status = st; delete STK.active[a.id]; }
+  }
+}
+function stkManage() {
+  for (const p of STK.pos.filter(p => p.status === 'open')) {
+    const r = STK.res[p.sym]; if (!r || !r.P) continue;
+    const opp = r.sig && r.sig.rawDir === -p.dir && r.sig.longScore + r.sig.shortScore > 0 && Math.max(r.sig.longScore, r.sig.shortScore) >= STK.cfg.mode + 1 ? r.sig : null;
+    p.m = ENG.managePosition(p, r.P, { opposite: opp });
+    const ms = marketState();
+    if (ms.open && ms.close - Date.now() < 30 * 60e3 && p.m.curR < 0) p.m.actions.push({ lvl: 'warn', txt: 'Բորսան փակվում է 30 րոպեից, իսկ դիրքը մինուսում է՝ մտածիր, արդյոք ուզում ես պահել գիշերը (gap ռիսկ)' });
+  }
+  store.set('stkPos', STK.pos.map(p => { const { m, ...rest } = p; return rest; }));
+}
+
+// ---------- Auto mode: one check after each hourly bar closes (NY xx:30 + 1 min) ----------
+function stkAutoTick() {
+  if (!STK.auto || STK.running) return;
+  const m = marketState(), now = Date.now();
+  const due = !STK.last || (m.open ? !stkFresh({ at: STK.last }, '1h') : (m.lastClose && STK.last < m.lastClose + 60e3 && now > m.lastClose + 90e3));
+  if (due) stkScan();
+  else stkStatus();
+}
+function stkAutoSet(on) {
+  STK.auto = on; store.set('stkAutoOn', on); clearInterval(STK.timer); STK.timer = null;
+  if (on) { STK.timer = setInterval(stkAutoTick, 30000); stkAutoTick(); try { keepAwake(); } catch (e) {} }
+  stkRender();
+}
+
+// ---------- UI ----------
+function stkStatus() {
+  const c = creditsToday(), m = marketState();
+  let s = STK.running ? `🔄 Ստուգում եմ… ${STK.prog || ''}${STK.wait ? ` · ⏳ API սահմանաչափ (8/րոպե)՝ սպասում եմ ${STK.wait}վ` : ''}`
+    : STK.auto ? `🟢 Ավտո՝ միացված · ${m.open ? 'ստուգում է ամեն ժամային մոմի փակումից հետո' : 'բորսան փակ է, կստուգի բացվելուց հետո'}` : '⚪ Ավտոն անջատված է';
+  if (STK.last && !STK.running) s += ` · վերջին ստուգում ${hm(STK.last)}`;
+  s += ` · API՝ ${c.n}/800 այսօր`;
+  $('stkStatus').innerHTML = s + (STK.err && !STK.running ? `<div class="warn bad">${esc(STK.err.message || STK.err)}</div>` : '');
+}
+function stkKeyBox() {
+  $('stkKeyBox').innerHTML = STK.key ? `<p class="note">🔑 Twelve Data key՝ պահված է միայն այս սարքում (${STK.key.slice(0, 3)}••••) · <a href="#" id="stkKeyChange" style="color:var(--b)">փոխել</a></p>`
+    : `<div class="warn info"><b>Քայլ 1 — անվճար տվյալների բանալի (մեկ անգամ)</b><ol style="margin:6px 0;padding-left:20px;line-height:1.6">
+      <li>Բաց <a href="https://twelvedata.com/register" target="_blank" rel="noopener" style="color:var(--b)">twelvedata.com/register</a> և գրանցվիր (անվճար, Basic plan)։</li>
+      <li>Մուտք գործիր → <b>API Keys</b> → պատճենիր key-ը։</li>
+      <li>Տեղադրիր այստեղ և սեղմիր «Պահել»։ Key-ը <b>ոչ ոքի</b> մի ուղարկիր։</li></ol>
+      <div class="row"><div style="flex:3 1 200px"><input id="stkKeyIn" type="password" placeholder="Twelve Data API key" autocomplete="off"></div><div style="flex:0 0 auto"><button class="btn" id="stkKeySave">Պահել</button></div></div></div>`;
+  if ($('stkKeySave')) $('stkKeySave').onclick = () => { const v = $('stkKeyIn').value.trim(); if (!v) return; STK.key = v; store.set('stkKey', v); stkKeyBox(); stkScan(); };
+  if ($('stkKeyChange')) $('stkKeyChange').onclick = (e) => { e.preventDefault(); STK.key = ''; store.set('stkKey', ''); stkKeyBox(); };
+}
+function stkMarketCard() {
+  const m = marketState(), v = STK.mkt;
+  const st = m.open ? `<span class="L">🟢 Բաց է</span> · կփակվի ${hm(m.close)} (քո ժամով)` : `<span class="W">🌙 Փակ է</span> · կբացվի <b>${hmd(m.next)}</b> (քո ժամով)`;
+  let mk = '';
+  if (v) {
+    const tr = v.trend === 1 ? '<b class="L">աճող</b>' : v.trend === -1 ? '<b class="S">նվազող</b>' : '<b class="W">կողային</b>';
+    const fear = v.fear > 0.85 ? '<b class="S">բարձր վախ</b>' : v.fear > 0.6 ? '<b class="W">բարձրացած</b>' : '<b class="L">հանգիստ</b>';
+    mk = `<div class="grid" style="margin-top:8px">${kv('SPY (շուկա)', sf(v.price))}${kv('Շուկայի թրենդ (օրական)', tr)}${kv('Տատանողականություն', fear + ` <span class="note">${v.atrPct.toFixed(2)}%/օր</span>`)}</div>
+      ${v.trend === -1 ? '<div class="warn">⚠️ Ամբողջ շուկան նվազող թրենդում է։ Բաժնետոմսերի մեծ մասը ընկնում է շուկայի հետ միասին․ բոտը long-երը խստացնում է։</div>' : ''}
+      ${v.fear > 0.85 ? '<div class="warn bad">⚠️ Շուկայում տատանողականությունը վերջին տարվա ամենաբարձրերից է՝ դիրքերը փոքրացրու կամ սպասիր։</div>' : ''}`;
+  }
+  $('stkMarket').innerHTML = `<h2>🇺🇸 ԱՄՆ բորսա՝ ${st}</h2><p class="note" style="margin:0">Աշխատում է երկուշաբթի–ուրբաթ, Նյու Յորքի 09:30–16:00 (Երևանի ժամով ձմռանը 18:30–01:00)։ Տոն օրերին փակ է։</p>${mk}`;
+}
+function stkCard(a) {
+  const buy = a.dir === 1, z = a.size || { shares: 0, notional: 0, risk: 0, comm: 0 }, m = marketState();
+  const R = Math.abs(a.entry - a.sl), win = z.shares * (0.5 * Math.abs(a.tp1 - a.entry) + 0.5 * Math.abs(a.tp2 - a.entry)) - 2 * z.comm;
+  const move = a.price ? (a.price - a.entry) / a.entry * 100 : 0;
+  const steps = buy ? [
+    `IBKR-ում բաց <b>${a.sym}</b> → <b>Buy</b> → Order type՝ <b>LMT (Limit)</b>, գին՝ <b>${sf(a.entry)}</b>, քանակ՝ <b>${z.shares}</b> (≈ ${usd(z.notional)})${z.shares < 1 ? ' · fractional' : ''}`,
+    `Միևնույն պատվերին կցիր <b>Stop Loss</b>՝ <b class="S">${sf(a.sl)}</b> (Attach → Bracket)։ Եթե հասնի՝ −${usd(z.risk)}`,
+    `<b>Take Profit 1</b>՝ <b class="L">${sf(a.tp1)}</b>-ում վաճառիր կեսը, Stop-ը տեղափոխիր ${sf(a.entry)} (առանց վնասի)`,
+    `<b>Take Profit 2</b>՝ <b class="L">${sf(a.tp2)}</b>-ում վաճառիր մնացածը (ընդհանուր ≈ +${usd(win)})`
+  ] : [
+    `Եթե ունես <b>${a.sym}</b>՝ դիտարկիր վաճառել (կամ դիր Stop ${sf(a.sl)}-ից ցածր չէ ռիսկդ)`,
+    'Եթե չունես՝ <b>մի գնիր</b>։ Short-ը Cash հաշվով հնարավոր չէ, և սկսնակի համար վտանգավոր է։'
+  ];
+  return `<div class="card" style="border:2px solid ${buy ? 'var(--g)' : 'var(--r)'}">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <div class="sig ${buy ? 'L' : 'S'}">${buy ? '🟢 ԳՆԻՐ' : '🔴 ՎԱՃԱՌԻՐ'} ${a.sym}</div>
+      <div style="text-align:right"><span class="tag">${TFN[a.tf] || a.tf}</span><span class="tag">Ուժ ${a.strength}</span><span class="tag">R:R 1:${a.rr.toFixed(1)}</span><span class="tag">Ռիսկ ${a.risk}/100</span></div></div>
+    <div class="note">${STK_NAMES[a.sym] ? STK_NAMES[a.sym] + ' · ' : ''}Ստացվել է ${hm(a.created)} · հիմա ${sf(a.price)} (${move >= 0 ? '+' : ''}${move.toFixed(2)}% մուտքից)</div>
+    ${!m.open ? `<div class="warn info">🌙 Բորսան փակ է։ Պատվերը կարող ես դնել հիմա, կաշխատի բացմանը (${hmd(m.next)})։ Limit պատվերը քեզ պաշտպանում է, եթե գինը բացվի gap-ով վերև․ մի փոխիր այն Market-ի։</div>` : ''}
+    ${a.late ? `<div class="warn">⏳ Գինն արդեն հեռացել է մուտքից՝ <b>ուշ է</b>։ Մտիր միայն Limit-ով ~${sf(a.entry)}, մի վազիր գնի հետևից։</div>` : ''}
+    ${z.capped ? `<div class="warn info">ℹ️ Քանակը սահմանափակվել է «Max մեկ դիրքում» ${STK.cfg.maxPos}%-ով, ուստի իրական ռիսկը ${usd(z.risk)} է։</div>` : ''}
+    ${z.commR > 0.15 ? `<div class="warn">💸 Միջնորդավճարը (${usd(2 * z.comm)} գնել+վաճառել) ռիսկի ${(z.commR * 100).toFixed(0)}%-ն է։ Փոքր գումարով շատ գործարքները ծախսատար են${STK.cfg.tiered ? '' : '․ IBKR-ում ընտրիր Tiered գնագոյացում (min ~$0.35)'}։</div>` : ''}
+    <h3>Ինչ անել IBKR-ում՝ քայլ առ քայլ</h3><ol style="margin:0;padding-left:20px;line-height:1.7">${steps.map(s => `<li>${s}</li>`).join('')}</ol>
+    <h3>Ինչու</h3><ul class="rs">${a.reasons.map(r => `<li>✓ ${esc(r)}</li>`).join('')}</ul>
+    ${a.riskItems && a.riskItems.length ? `<h3>Ռիսկեր</h3><ul class="rs">${a.riskItems.map(r => `<li>⚠️ ${esc(r)}</li>`).join('')}</ul>` : ''}
+    <div class="row" style="margin-top:8px">${buy ? `<button class="btn" data-sp="${esc(a.id)}">📌 Գնեցի (հետևել)</button>` : ''}<button class="btn sec" data-sd="${esc(a.sym)}">🔍 Մանրամասն</button><button class="btn sec" data-sx="${esc(a.id)}">✕ Բաց թողնել</button></div>
+    <div class="note" id="sm-${esc(a.id)}"></div></div>`;
+}
+function stkDecisionCell(r) {
+  if (r.err) return `<span class="note">⚠️ ${esc(r.err)}</span>`;
+  const s = r.sig;
+  if (s.dir === 1) return '<b class="L">🟢 ԳՆԻՐ</b>';
+  if (s.dir === -1) return STK.cfg.longOnly ? '<b class="S">🔴 Մի գնիր / եթե ունես՝ վաճառիր</b>' : '<b class="S">🔴 ՎԱՃԱՌԻՐ</b>';
+  if (s.rawDir) return `<span class="W">⛔ ${s.rawDir === 1 ? 'Գնելու' : 'Վաճառելու'} սիգնալ, բայց արգելված</span>${s.block && s.block[0] ? `<br><span class="note">${esc(s.block[0])}</span>` : ''}`;
+  const top = Math.max(s.longScore || 0, s.shortScore || 0);
+  if (top >= STK.cfg.mode * 0.75) return `<span class="W">🟡 Ձևավորվում է (${s.longScore >= s.shortScore ? 'գնում' : 'վաճառք'})</span>`;
+  return '<span class="M">⏳ Սպասիր</span>';
+}
+function stkTable() {
+  const rows = stkSyms().map(sym => STK.res[sym] || { sym, none: true });
+  if (!rows.some(r => !r.none)) return;
+  $('stkTable').innerHTML = `<table><tr><th>Ակտիվ</th><th>Գին</th><th>Օրը</th><th>Որոշում</th><th>Score B/S</th><th>RS vs SPY</th><th>Ռիսկ</th></tr>${rows.map(r => {
+    if (r.none) return `<tr><td>${stkName(r.sym)}</td><td colspan="6" class="note">—</td></tr>`;
+    if (r.err) return `<tr><td>${stkName(r.sym)}</td><td colspan="6">${stkDecisionCell(r)}</td></tr>`;
+    const s = r.sig, ch = r.prevClose ? (r.price / r.prevClose - 1) * 100 : null, rs = s.stk && s.stk.rs20 != null ? s.stk.rs20 * 100 : null;
+    return `<tr data-sd="${esc(r.sym)}" style="cursor:pointer"><td>${stkName(r.sym)}</td><td>${sf(r.price)}</td><td class="${ch >= 0 ? 'L' : 'S'}">${ch == null ? '—' : (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%'}</td><td>${stkDecisionCell(r)}</td>
+      <td>${(s.longScore || 0).toFixed(1)} / ${(s.shortScore || 0).toFixed(1)}</td><td class="${rs >= 0 ? 'L' : 'S'}">${rs == null ? '—' : (rs >= 0 ? '+' : '') + rs.toFixed(1) + '%'}</td><td>${s.risk ?? '—'}</td></tr>`;
+  }).join('')}</table>${rows.filter(r => r.sig && (r.sig.block || []).some(b => /ծախս/.test(b))).length >= 2 && STK.cfg.tf === '1h' ? `<div class="warn">💸 IBKR-ի միջնորդավճարը (${STK.cfg.tiered ? 'Tiered՝ min ~$0.40' : 'Fixed՝ min $1'}) գանձվում է և՛ գնելիս, և՛ վաճառելիս։ Ժամային գործարքներում Stop-ը նեղ է, ուստի ${usd(STK.cfg.bal)} կապիտալի դեպքում միջնորդավճարը «ուտում» է շահույթի մեծ մասը։ Փոխիր թայմֆրեյմը <b>«1 օր»</b>՝ Stop-ն ավելի լայն է, գործարքները՝ քիչ, ծախսը՝ ցածր։</div>` : ''}<p class="note">Սեղմիր տողի վրա՝ մանրամասն վերլուծության համար։ RS՝ վերջին 20 մոմում ակտիվը որքանով է SPY-ից ուժեղ կամ թույլ։</p>`;
+  $('stkTable').querySelectorAll('[data-sd]').forEach(tr => tr.onclick = () => stkDetail(tr.dataset.sd));
+}
+function stkDetail(sym) {
+  const r = STK.res[sym]; if (!r || !r.sig) return;
+  const s = r.sig, cats = ENG.CATS.map(k => s.cats ? s.cats[k] : null).filter(Boolean);
+  const bar = (c) => { const w = Math.min(50, Math.abs(c.net) * 6); return `<div class="cat"><span>${c.name}</span><div class="dbar"><i style="${c.net >= 0 ? 'left:50%' : 'right:50%'};width:${w}%;background:${c.net >= 0 ? 'var(--g)' : 'var(--r)'}"></i></div><b class="${c.net >= 0 ? 'L' : 'S'}">${c.net >= 0 ? '+' : ''}${c.net.toFixed(1)}</b></div>`; };
+  const li = (arr) => arr.filter(x => x[0] !== 0).sort((a, b) => b[0] - a[0]).map(x => `<li><span class="pt ${x[0] > 0 ? 'L' : 'S'}">${x[0] > 0 ? '+' : ''}${x[0]}</span>${esc(x[1])}${x[4] && x[4] !== 1 ? ` <span class="tag">🧠 ×${x[4]}</span>` : ''}</li>`).join('') || '<li class="note">—</li>';
+  const st = s.stk || {};
+  $('stkDetail').innerHTML = `<div class="card"><h2>🔍 ${stkName(sym)} · ${r.tf}</h2>
+    <div class="grid">${kv('Գին', sf(r.price))}${kv('Որոշում', stkDecisionCell(r))}${kv('Ռեժիմ', s.regime || '—')}${kv('ADX', s.adx ? s.adx.toFixed(0) : '—')}${kv('RSI', s.rsi ? s.rsi.toFixed(0) : '—')}
+      ${kv('RS 20 / 60', st.rs20 != null ? (st.rs20 * 100).toFixed(1) + '% / ' + (st.rs60 * 100).toFixed(1) + '%' : '—')}${kv('Gap մեդիան', st.gapMed != null ? (st.gapMed * 100).toFixed(2) + '%' : '—')}${kv('Ռիսկ', (s.risk ?? '—') + '/100')}</div>
+    ${s.block && s.block.length ? s.block.map(b => `<div class="warn bad">⛔ ${esc(b)}</div>`).join('') : ''}
+    <h3>Trade Opportunity Scoring</h3>${cats.map(bar).join('')}
+    <div class="row" style="align-items:start"><div><h3 class="L">Գնելու կողմ (${(s.longScore || 0).toFixed(1)})</h3><ul class="rs">${li(s.L || [])}</ul></div>
+      <div><h3 class="S">Վաճառելու կողմ (${(s.shortScore || 0).toFixed(1)})</h3><ul class="rs">${li(s.S || [])}</ul></div></div>
+    ${(s.info || []).map(x => `<div class="warn info">ℹ️ ${esc(x)}</div>`).join('')}
+    ${s.riskItems && s.riskItems.length ? `<h3>Ռիսկի գործոններ</h3><ul class="rs">${s.riskItems.map(x => `<li>+${x[0]} ${esc(x[1])}</li>`).join('')}</ul>` : ''}
+    <p class="note">«Order Flow» կատեգորիան բաժնետոմսերի համար դատարկ է՝ անվճար տվյալները order book և ֆյուչերսների դիրքավորում չեն տալիս։</p></div>`;
+  $('stkDetail').scrollIntoView({ behavior: 'smooth' });
+}
+function stkPosCard() {
+  const open = STK.pos.filter(p => p.status === 'open');
+  if (!open.length) { $('stkPos').innerHTML = ''; return; }
+  $('stkPos').innerHTML = `<div class="card"><h2>📂 Իմ դիրքերը — ինչ անել հիմա</h2>${open.map(p => {
+    const m = p.m || {}, first = (m.actions || [])[0], lvl = !first ? 'ok' : { bad: 'bad', ok: 'ok', info: 'info' }[first.lvl] || '';
+    const pnl = m.price ? (m.price - p.entry) * p.shares * (p.partial ? 0.5 : 1) * p.dir : 0;
+    return `<div class="warn ${lvl}"><b>${p.sym}</b> · ${p.shares} հատ @ ${sf(p.entry)} ${m.curR != null ? `· <b class="${m.curR >= 0 ? 'L' : 'S'}">${m.curR >= 0 ? '+' : ''}${m.curR.toFixed(2)}R (${pnl >= 0 ? '+' : '−'}${usd(Math.abs(pnl))})</b>` : ''}<br>
+      ${(m.actions && m.actions.length ? m.actions : [{ txt: `Պահիր։ Stop ${sf(p.sl)}, TP1 ${sf(p.tp1)}, TP2 ${sf(p.tp2)}` }]).map(x => '→ ' + esc(x.txt)).join('<br>')}
+      <div class="row" style="margin-top:6px">${m.sl && m.sl !== p.sl ? `<button class="btn sec sm" data-psl="${p.id}">✓ Stop-ը տեղափոխեցի ${sf(m.sl)}</button>` : ''}${!p.partial ? `<button class="btn sec sm" data-pp="${p.id}">✓ Կեսը վաճառեցի</button>` : ''}
+      <input data-pxv="${p.id}" type="number" step="any" placeholder="Վաճառքի գին" style="max-width:130px"><button class="btn sec sm" data-px="${p.id}">✓ Փակեցի</button></div></div>`;
+  }).join('')}<p class="note">Դիրքերը թարմանում են ամեն ստուգման ժամանակ։ Բոտը չի տեսնում քո IBKR հաշիվը, ուստի նշիր, թե ինչ ես արել։</p></div>`;
+  const find = (id) => STK.pos.find(p => String(p.id) === String(id));
+  $('stkPos').querySelectorAll('[data-psl]').forEach(b => b.onclick = () => { const p = find(b.dataset.psl); p.sl = p.m.sl; stkManage(); stkRender(); });
+  $('stkPos').querySelectorAll('[data-pp]').forEach(b => b.onclick = () => { const p = find(b.dataset.pp); p.partial = true; p.r1 = (p.tp1 - p.entry) / Math.abs(p.entry - p.sl0) * p.dir; if (p.sl * p.dir < p.entry * p.dir) p.sl = p.entry; stkManage(); stkRender(); });
+  $('stkPos').querySelectorAll('[data-px]').forEach(b => b.onclick = () => {
+    const p = find(b.dataset.px), inp = $('stkPos').querySelector(`[data-pxv="${p.id}"]`), x = parseFloat(inp.value) || (p.m && p.m.price); if (!x) return;
+    const R = Math.abs(p.entry - p.sl0), rRest = p.dir * (x - p.entry) / R, r = p.partial ? 0.5 * (p.r1 || 1.5) + 0.5 * rRest : rRest;
+    p.status = 'closed'; p.exit = x; p.r = Math.round(r * 100) / 100;
+    STK.jr.push({ ts: Date.now(), sym: p.sym, r: p.r, usd: p.r * R * p.shares }); store.set('stkJr', STK.jr); stkManage(); stkRender();
+  });
+}
+function stkJournal() {
+  const st = ENG.stats(STK.jr.map(j => j.r)), t = stkToday(), usdSum = STK.jr.reduce((a, j) => a + (j.usd || 0), 0);
+  $('stkJournal').innerHTML = `<div class="grid">${kv('Գործարքներ', st.n)}${kv('Win Rate', st.n ? pc(st.win, 0) : '—')}${kv('Expected Value', st.n ? st.exp.toFixed(2) + 'R' : '—', st.exp > 0 ? 'L' : st.n ? 'S' : '')}${kv('Ընդհանուր', (usdSum >= 0 ? '+' : '−') + usd(Math.abs(usdSum)), usdSum >= 0 ? 'L' : 'S')}${kv('Այսօր', t.r.toFixed(1) + 'R')}${kv('Max DD', st.n ? st.maxDD.toFixed(1) + 'R' : '—')}</div>
+    ${STK.jr.length ? `<table style="margin-top:8px">${STK.jr.slice(-15).reverse().map(j => `<tr><td>${new Date(j.ts).toLocaleDateString()}</td><td>${esc(j.sym)}</td><td class="${j.r >= 0 ? 'L' : 'S'}">${j.r >= 0 ? '+' : ''}${j.r}R</td><td class="${j.usd >= 0 ? 'L' : 'S'}">${j.usd >= 0 ? '+' : '−'}${usd(Math.abs(j.usd || 0))}</td></tr>`).join('')}</table>` : '<p class="note">Դեռ փակված գործարք չկա։ Սկզբում փորձիր IBKR Paper Trading-ով և այստեղ նշիր արդյունքները։</p>'}`;
+}
+function stkRender() {
+  stkKeyBox(); stkMarketCard(); stkStatus();
+  $('stkSyms').value = STK.cfg.syms; $('stkTf').value = STK.cfg.tf; $('stkMode').value = String(STK.cfg.mode);
+  $('stkBal').value = STK.cfg.bal; $('stkRisk').value = STK.cfg.risk; $('stkMaxPos').value = STK.cfg.maxPos; $('stkLong').checked = STK.cfg.longOnly; $('stkTier').value = STK.cfg.tiered ? '1' : '0';
+  $('stkAuto').textContent = STK.auto ? '⏸ Կանգնեցնել ավտոն' : '▶️ Ավտո'; $('stkScan').disabled = STK.running;
+  const vet = stkGuard(null, 0);
+  $('stkVeto').innerHTML = vet.length ? `<div class="card" style="border:2px solid var(--r)"><div class="sig S">🛑 ԱՅՍՕՐ ԱՌԵՎՏՈՒՐ ՄԻ ԱՐԱ</div>${vet.map(v => `<div class="warn bad">${esc(v)}</div>`).join('')}</div>` : '';
+  stkPosCard();
+  const act = Object.values(STK.active).sort((a, b) => b.strength - a.strength);
+  $('stkCards').innerHTML = vet.length ? '' : act.length ? act.map(stkCard).join('')
+    : (STK.last ? `<div class="card"><div class="sig M">⏳ ՍՊԱՍԻՐ</div><p class="note" style="margin-bottom:0">Հիմա լավ հնարավորություն չկա։ Չառևտրելը նույնպես որոշում է։</p></div>` : '');
+  $('stkCards').querySelectorAll('[data-sp]').forEach(b => b.onclick = () => {
+    const a = STK.active[b.dataset.sp]; if (!a) return; const z = a.size || {};
+    const v = stkGuard(a.sym, z.notional || 0); if (v.length) { $('sm-' + a.id).innerHTML = `<span class="S">⛔ ${esc(v[0])}</span>`; return; }
+    STK.pos.push({ id: Date.now(), sym: a.sym, tf: a.tf, dir: a.dir, entry: a.price && Math.abs(a.price - a.entry) < 0.3 * a.atr ? a.price : a.entry, sl0: a.sl, sl: a.sl, tp1: a.tp1, tp2: a.tp2,
+      shares: z.shares, openTime: Date.now(), partial: false, maxBars: a.tf === '1h' ? 35 : 20, status: 'open' });
+    a.status = 'taken'; const h = STK.hist.find(x => x.id === a.id); if (h) h.status = 'taken'; delete STK.active[a.id];
+    store.set('stkActive', STK.active); store.set('stkHist', STK.hist); stkManage(); stkRender();
+  });
+  $('stkCards').querySelectorAll('[data-sx]').forEach(b => b.onclick = () => { const a = STK.active[b.dataset.sx]; if (!a) return; const h = STK.hist.find(x => x.id === a.id); if (h) h.status = 'skipped'; delete STK.active[a.id]; store.set('stkActive', STK.active); store.set('stkHist', STK.hist); stkRender(); });
+  $('stkCards').querySelectorAll('[data-sd]').forEach(b => b.onclick = () => stkDetail(b.dataset.sd));
+  stkTable(); stkJournal(); stkLearnActive();
+}
+
+// ---------- Backtest & self-learning (same analyze(), in a Web Worker) ----------
+JOBS.swf = (E, d) => {
+  const P = E.precompute(d.k), H = E.precompute(d.kh), ctx = { ...d.ctx, htf: H, bench: d.bk ? E.precompute(d.bk) : null, benchH: d.bkh ? E.precompute(d.bkh) : null };
+  const wf = E.walkForward(P, ctx, d.opt); return { wf, ror: E.riskOfRuin(wf.full.trades.map(t => t.r), d.opt.riskPct), from: d.k[0].t, to: d.k[d.k.length - 1].t };
+};
+JOBS.slearn = (E, d) => E.learn(d.sets.map(s => ({ P: E.precompute(s.k), H: E.precompute(s.kh) })), { ...d.ctx, bench: E.precompute(d.bk), benchH: E.precompute(d.bkh) }, d.opt);
+// IBKR fixed: max($1, $0.005/share) but ≤1% of value → as a fraction of a typical (capped) position
+function stkBtCost() { const v = Math.max(1, STK.cfg.bal * STK.cfg.maxPos / 100); return { fee: Math.max(0.0001, Math.min(0.01, (STK.cfg.tiered ? 0.4 : 1) / v)), slip: 0.0002 }; }
+$('stkBtGo').onclick = async () => {
+  const sym = $('stkBtSym').value.trim().toUpperCase(); if (!sym) return; $('stkBtGo').disabled = true;
+  try {
+    const tf = STK.cfg.tf, htf = STK_HTF[tf], n = tf === '1h' ? 5000 : 2500, nh = tf === '1h' ? 1500 : 600;
+    $('stkBtOut').innerHTML = `<p class="note">Բեռնում եմ պատմությունը (${tf === '1h' ? '~3 տարի ժամային' : '~10 տարի օրական'})…</p>`;
+    const k = await stkBars(sym, tf, n, true), kh = await stkBars(sym, htf, nh, true);
+    const bk = sym === 'SPY' ? null : await stkBars('SPY', tf, n, true), bkh = sym === 'SPY' ? null : await stkBars('SPY', htf, nh, true);
+    $('stkBtOut').innerHTML = `<p class="note">Հաշվում եմ ${k.length} մոմի վրա (backtest + walk-forward + out-of-sample)…</p>`;
+    const c = stkBtCost(), ctx = { ...stkCtx(sym, tf, null, null, null, STK.cfg.mode), htf: null, bench: null, benchH: null };
+    ctx.cost = { takerPct: c.fee * 100, spreadPct: 0.02, slipPct: 0.02 };
+    const { wf, ror, from, to } = await runJob('swf', { k, kh, bk, bkh, ctx, opt: { fee: c.fee, slip: c.slip, longOnly: STK.cfg.longOnly, riskPct: STK.cfg.risk / 100, maxHold: tf === '1h' ? 35 : 20 } });
+    const st = wf.full.stats, f2 = (x) => x === Infinity ? '∞' : (x || 0).toFixed(2);
+    const row = (n, s) => `<tr><td>${n}</td><td>${s.n}</td><td>${s.n ? pc(s.win, 0) : '—'}</td><td>${f2(s.pf)}</td><td class="${s.exp > 0 ? 'L' : 'S'}">${s.exp.toFixed(2)}R</td></tr>`;
+    const verdict = st.n < 30 ? `<div class="warn">⚠️ Միայն ${st.n} գործարք՝ քիչ է եզրակացության համար։</div>` : st.exp > 0.1 && wf.oosUser.exp > 0 ? '<div class="warn ok">✅ Դրական EV, և չտեսած (OOS) հատվածում էլ է դրական։ Հաջորդ քայլը՝ Paper Trading։</div>'
+      : st.exp > 0 ? '<div class="warn">⚠️ Ընդհանուր դրական, բայց OOS-ում թույլ՝ edge-ը անկայուն է։</div>' : `<div class="warn bad">⛔ Բացասական EV՝ ${sym}-ով այս ռազմավարությամբ մի առևտրիր։</div>`;
+    STK.bt = STK.bt || {}; STK.bt[sym] = { exp: st.exp, n: st.n };
+    $('stkBtOut').innerHTML = `<h3>${sym} · ${tf} · ${new Date(from).toLocaleDateString()} – ${new Date(to).toLocaleDateString()}${STK.cfg.longOnly ? ' · միայն long' : ''}</h3>${verdict}
+      <div class="grid">${kv('Գործարքներ', st.n)}${kv('Win Rate', st.n ? pc(st.win) : '—')}${kv('Profit Factor', f2(st.pf), st.pf > 1 ? 'L' : 'S')}${kv('EV', st.exp.toFixed(2) + 'R', st.exp > 0 ? 'L' : 'S')}${kv('Ընդհանուր', st.total.toFixed(1) + 'R')}${kv('Max DD', st.maxDD.toFixed(1) + 'R', 'S')}${kv('Risk of Ruin', ror ? pc(ror.ruin) : '—')}</div>
+      <canvas id="stkEq" style="height:160px;margin-top:8px"></canvas>
+      <h3>Walk-Forward (4 հատված)</h3><table><tr><th>Սկիզբ</th><th>Գործ.</th><th>Win</th><th>PF</th><th>EV</th></tr>${wf.folds.map(f => row(new Date(f.from).toLocaleDateString(), f)).join('')}</table>
+      <h3>Out-of-Sample (վերջին 30%)</h3><table><tr><th></th><th>Գործ.</th><th>Win</th><th>PF</th><th>EV</th></tr>${row('Քո ռեժիմ (' + STK.cfg.mode + ')', wf.oosUser)}${row('IS-ի լավագույնը (' + wf.best.m + ')', wf.oosBest)}</table>
+      <h3>Ըստ ռեժիմի</h3><table><tr><th></th><th>Գործ.</th><th>Win</th><th>PF</th><th>EV</th></tr>${Object.entries(wf.regimes).map(([r, s]) => row(r, s)).join('')}</table>
+      <p class="note">Հաշվի է առնված IBKR միջնորդավճարը, սլիպեջը և gap-երը (եթե գինը բացվում է Stop-ից այն կողմ, վնասը հաշվվում է բացման գնով)։ Անցյալի արդյունքը ապագայի երաշխիք չէ։</p>`;
+    const eq = $('stkEq'); if (eq) { eq.id = 'eq'; drawEquity(wf.full.trades.map(t => t.r)); eq.id = 'stkEq'; }
+  } catch (e) { $('stkBtOut').innerHTML = `<div class="warn bad">${esc(e.message)}</div>`; }
+  $('stkBtGo').disabled = false; stkStatus();
+};
+function stkLearnActive() {
+  const tf = STK.cfg.tf, L = STK.learn[tf];
+  $('stkLnActive').innerHTML = L ? `<div class="warn ${L.on ? 'ok' : 'info'}">${L.on ? '🟢 Կիրառված է' : '⚪ Պահված է, բայց անջատված'} · ${tf} · ${new Date(L.at).toLocaleDateString()} · ${Object.keys(L.wmul).length} փաստարկի կշիռ${L.blocks.length ? ' · արգելքներ՝ ' + L.blockNames.join(', ') : ''} · OOS EV ${L.testBase.toFixed(2)}R → ${L.testNew.toFixed(2)}R
+    <div class="row" style="margin-top:6px"><button class="btn sec sm" id="stkLnT">${L.on ? 'Անջատել' : 'Միացնել'}</button><button class="btn sec sm" id="stkLnD">Ջնջել</button></div></div>` : '';
+  if ($('stkLnT')) $('stkLnT').onclick = () => { L.on = !L.on; store.set('stkLearn', STK.learn); stkLearnActive(); };
+  if ($('stkLnD')) $('stkLnD').onclick = () => { delete STK.learn[tf]; store.set('stkLearn', STK.learn); stkLearnActive(); };
+}
+$('stkLnGo').onclick = async () => {
+  const syms = stkSyms().filter(s => s !== 'SPY').slice(0, 6); if (!syms.length) return; $('stkLnGo').disabled = true;
+  const tf = STK.cfg.tf, htf = STK_HTF[tf], n = tf === '1h' ? 5000 : 2500, nh = tf === '1h' ? 1500 : 600;
+  try {
+    const sets = [];
+    for (const s of syms) { $('stkLnOut').innerHTML = `<p class="note">Բեռնում եմ ${s}-ի պատմությունը (${sets.length + 1}/${syms.length})… API սահմանաչափի պատճառով կարող է տևել 1–3 րոպե։</p>`; sets.push({ k: await stkBars(s, tf, n, true), kh: await stkBars(s, htf, nh, true) }); }
+    const bk = await stkBars('SPY', tf, n, true), bkh = await stkBars('SPY', htf, nh, true);
+    $('stkLnOut').innerHTML = `<p class="note">🧠 Վերլուծում եմ ${sets.reduce((a, s) => a + s.k.length, 0).toLocaleString()} մոմ…</p>`;
+    const c = stkBtCost(), ctx = { ...stkCtx('X', tf, null, null, null, STK.cfg.mode), wmul: null, blocks: null, cost: { takerPct: c.fee * 100, spreadPct: 0.02, slipPct: 0.02 } };
+    delete ctx.bench; delete ctx.benchH;
+    const r = await runJob('slearn', { sets, bk, bkh, ctx, opt: { fee: c.fee, slip: c.slip, longOnly: STK.cfg.longOnly, maxHold: tf === '1h' ? 35 : 20 } });
+    const good = r.factors.filter(f => f.m > 1.05).slice(0, 6), bad = r.factors.filter(f => f.m < 0.95).sort((a, b) => a.lift - b.lift).slice(0, 6);
+    const frow = (f) => { const p = prettyKey(f.k); return `<tr><td>${esc(p.txt)}</td><td>${f.n}</td><td class="${f.ev > 0 ? 'L' : 'S'}">${f.ev.toFixed(2)}R</td><td><b>×${f.m}</b></td></tr>`; };
+    const row = (n, s) => `<tr><td>${n}</td><td>${s.n}</td><td>${s.n ? pc(s.win, 0) : '—'}</td><td class="${s.exp > 0 ? 'L' : 'S'}">${s.exp.toFixed(2)}R</td><td>${s.maxDD.toFixed(1)}R</td></tr>`;
+    $('stkLnOut').innerHTML = `<div class="warn ${r.proven ? 'ok' : 'bad'}">${r.proven ? '✅ <b>Ապացուցված է</b>՝ սովորածը բարելավեց արդյունքը չտեսած տվյալների վրա։' : '❌ <b>Չի հաստատվել</b>՝ «դասերը» չբարելավեցին չտեսած տվյալները (կամ գործարքները քիչ են)։ Չենք կիրառում։'}</div>
+      <table><tr><th>Չտեսած 30%</th><th>Գործ.</th><th>Win</th><th>EV</th><th>Max DD</th></tr>${row('Առանց ուսուցման', r.testBase)}${row('🧠 Ուսուցմամբ', r.testNew)}</table>
+      ${good.length ? `<h3>✅ Ինչն է օգնում</h3><table>${good.map(frow).join('')}</table>` : ''}${bad.length ? `<h3>⚠️ Ինչն է խանգարում</h3><table>${bad.map(frow).join('')}</table>` : ''}
+      <h3>🕒 Երբ է աշխատում</h3><table><tr><th>Պայման</th><th>Գործ.</th><th>Win</th><th>EV</th><th>Max DD</th></tr>${r.contexts.map(c => row((r.blocks.includes(c.g) ? '⛔ ' : '') + c.name, c)).join('')}</table>
+      <button class="btn ${r.proven ? '' : 'sec'}" id="stkLnApply" style="margin-top:10px">${r.proven ? '✅ Կիրառել' : 'Պահել, բայց չմիացնել'}</button>`;
+    $('stkLnApply').onclick = () => { STK.learn[tf] = { on: r.proven, wmul: r.wmul, blocks: r.blocks, blockNames: r.blockNames, at: Date.now(), testBase: r.testBase.exp, testNew: r.testNew.exp }; store.set('stkLearn', STK.learn); stkLearnActive(); $('stkLnApply').disabled = true; };
+  } catch (e) { $('stkLnOut').innerHTML = `<div class="warn bad">${esc(e.message)}</div>`; }
+  $('stkLnGo').disabled = false; stkStatus();
+};
+
+// ---------- wiring ----------
+$('stkScan').onclick = () => stkScan();
+$('stkAuto').onclick = () => { try { if (window.Notification && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {} stkAutoSet(!STK.auto); };
+$('stkSyms').onchange = () => { STK.cfg.syms = $('stkSyms').value.toUpperCase().replace(/\s+/g, ''); stkSaveCfg(); };
+$('stkTf').onchange = () => { STK.cfg.tf = $('stkTf').value; stkSaveCfg(); STK.res = {}; };
+$('stkMode').onchange = () => { STK.cfg.mode = +$('stkMode').value; stkSaveCfg(); };
+$('stkBal').onchange = () => { STK.cfg.bal = Math.max(10, +$('stkBal').value || 1000); stkSaveCfg(); };
+$('stkRisk').onchange = () => { STK.cfg.risk = Math.min(5, Math.max(0.1, +$('stkRisk').value || 1)); stkSaveCfg(); stkRender(); };
+$('stkMaxPos').onchange = () => { STK.cfg.maxPos = Math.min(100, Math.max(5, +$('stkMaxPos').value || 25)); stkSaveCfg(); };
+$('stkTier').onchange = () => { STK.cfg.tiered = $('stkTier').value === '1'; stkSaveCfg(); };
+$('stkLong').onchange = () => { STK.cfg.longOnly = $('stkLong').checked; stkSaveCfg(); };
+window.stkRender = stkRender;
+if (STK.auto) stkAutoSet(true);
+setInterval(() => { if (!$('t-stk').classList.contains('hide')) { stkMarketCard(); if (!STK.running) stkStatus(); } }, 30000);
+
 </script>
 </body>
 </html>
