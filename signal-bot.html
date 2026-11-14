@@ -65,14 +65,16 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
     <h2>🤖 Ավտոմատ սիգնալներ</h2>
     <p class="note" style="margin-top:0">Բոտը ինքն է ստուգում բոլոր ակտիվները և ասում՝ <b>ԳՆԻՐ</b>, <b>ՎԱՃԱՌԻՐ</b> կամ <b>ՍՊԱՍԻՐ</b>, ինչպես նաև ինչ անել բաց դիրքերի հետ։</p>
     <label>Թայմֆրեյմներ</label>
-    <div class="chk" id="autoTfs" style="display:flex;gap:14px;flex-wrap:wrap"><label><input type="checkbox" value="15m"> 15 րոպե</label><label><input type="checkbox" value="1h"> 1 ժամ</label><label><input type="checkbox" value="4h"> 4 ժամ</label></div>
+    <div class="chk" id="autoTfs" style="display:flex;gap:14px;flex-wrap:wrap"><label><input type="checkbox" value="5m"> 5 րոպե</label><label><input type="checkbox" value="15m"> 15 րոպե</label><label><input type="checkbox" value="1h"> 1 ժամ</label><label><input type="checkbox" value="4h"> 4 ժամ</label></div>
     <div class="row" style="margin-top:6px">
+      <div><label>Ռեժիմ</label><select id="autoMode"><option value="7.5">🛡 Զգուշավոր (քիչ, ուժեղ)</option><option value="6.5">⚖️ Նորմալ</option><option value="5.5">⚡ Ակտիվ (շատ, թույլ)</option></select></div>
       <div><label>Ստուգել</label><select id="autoEvery"><option value="1">ամեն րոպե</option><option value="5">5 րոպեն մեկ</option><option value="15">15 րոպեն մեկ</option></select></div>
       <div style="flex:0 0 auto"><button class="btn" id="autoToggle">▶️ Միացնել</button></div>
     </div>
     <div id="autoStatus" class="note" style="margin-top:8px"></div>
   </div>
   <div id="autoNow"></div>
+  <div id="autoWatch"></div>
   <div id="autoCards"></div>
   <div class="card"><h2>Այսօրվա սիգնալները</h2><div id="autoHist"></div></div>
   <div class="card note">ℹ️ Ավտո ռեժիմը աշխատում է, քանի դեռ էջը բաց է։ iPhone-ը կասեցնում է ֆոնային էջերը, ուստի էկրանը միացված պահիր (բոտը փորձում է ինքը չթողնել, որ էկրանը անջատվի)։ Ամեն սիգնալ վավեր է 3 մոմ, և եթե գինը արդեն փախել է մուտքից, բոտը կասի «ուշ է»։ Սա ֆինանսական խորհուրդ չէ. սկզբում փորձարկիր demo-ով։</div>
@@ -82,7 +84,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
   <div class="card">
     <div class="row">
       <div><label>Ակտիվ</label><select id="sym"></select></div>
-      <div><label>Թայմֆրեյմ</label><select id="tf"><option value="15m">15 րոպե</option><option value="1h" selected>1 ժամ</option><option value="4h">4 ժամ</option><option value="1d">1 օր</option></select></div>
+      <div><label>Թայմֆրեյմ</label><select id="tf"><option value="5m">5 րոպե</option><option value="15m">15 րոպե</option><option value="1h" selected>1 ժամ</option><option value="4h">4 ժամ</option><option value="1d">1 օր</option></select></div>
       <div style="flex:0 0 auto"><button class="btn" id="go">Վերլուծել</button></div>
     </div>
     <div id="status" class="note" style="margin-top:8px">Սեղմիր «Վերլուծել»։ Վերլուծությունից հետո որոշումը թարմանում է ամեն 3 վայրկյանը մեկ՝ կենդանի order flow-ով։</div>
@@ -161,7 +163,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
     <h2>Backtest + Walk-Forward + Out-of-Sample</h2>
     <div class="row">
       <div><label>Ակտիվ</label><select id="btSym"></select></div>
-      <div><label>Թայմֆրեյմ</label><select id="btTf"><option value="15m">15 րոպե</option><option value="1h" selected>1 ժամ</option><option value="4h">4 ժամ</option></select></div>
+      <div><label>Թայմֆրեյմ</label><select id="btTf"><option value="5m">5 րոպե</option><option value="15m">15 րոպե</option><option value="1h" selected>1 ժամ</option><option value="4h">4 ժամ</option></select></div>
       <div style="flex:0 0 auto"><button class="btn" id="btGo">Գործարկել</button></div>
     </div>
     <p class="note">Մուտքը հաջորդ մոմի բացմամբ + slippage, 50% TP1-ում, հետո Break-Even + Trailing Stop, Time Exit 48 մոմ։ Նույն մոմում SL+TP → վնաս։ Միջնորդավճարը ներառված է։</p>
@@ -249,7 +251,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
   <div class="card">
     <h2>Ճարտարապետություն</h2>
     <p class="note mono">Binance REST + WebSocket → Event Bus → Engine (analyze) → Opportunity Scoring → 🛡 Risk Control (veto) → BUY / SELL / NO TRADE → Execution Plan → Position Manager → Journal → Adaptive Monitoring</p>
-    <details><summary>🤖 Ավտո սիգնալներ</summary><p class="note">Ընտրված թայմֆրեյմներով ստուգում է բոլոր ակտիվները (1/5/15 րոպեն մեկ)։ Յուրաքանչյուր BUY/SELL անցնում է նույն վերլուծությունը և Risk Control-ը, ցույց է տրվում մեկ անգամ, ունի ձայնային ծանուցում և քայլ առ քայլ հրահանգ (քանակ, Stop, TP)։ Ամեն 15վ ստուգվում է՝ դեռ վավեր է, ուշ է, թե Stop/TP-ն արդեն հասել է։ Բաց դիրքերի համար ցույց է տալիս, թե ինչ անել հիմա։</p></details>
+    <details><summary>🤖 Ավտո սիգնալներ</summary><p class="note">Ընտրված թայմֆրեյմներով (5ր–4ժ) ստուգում է բոլոր ակտիվները (1/5/15 րոպեն մեկ)։ Ռեժիմը փոխում է շեմը՝ Զգուշավոր 7.5, Նորմալ 6.5, Ակտիվ 5.5։ «Պատրաստվիր» ցանկը ցույց է տալիս շեմին մոտ կամ արգելված setup-ները։ Յուրաքանչյուր BUY/SELL անցնում է նույն վերլուծությունը և Risk Control-ը, ցույց է տրվում մեկ անգամ, ունի ձայնային ծանուցում և քայլ առ քայլ հրահանգ (քանակ, Stop, TP)։ Ամեն 15վ ստուգվում է՝ դեռ վավեր է, ուշ է, թե Stop/TP-ն արդեն հասել է։ Բաց դիրքերի համար ցույց է տալիս, թե ինչ անել հիմա։</p></details>
     <details><summary>Market Momentum Detection</summary><p class="note">ROC(10) և դրա արագացումը (ROC − ROC 3 մոմ առաջ), MACD histogram, Breakout/Breakdown 20 մոմի գագաթ/հատակ + ծավալ ≥1.5σ, Momentum Reversal (ուժեղ շարժում → acceleration շրջվում է + RSI), Volume Spike (log-ծավալի z-score), Buying/Selling Pressure (Binance-ի taker buy ծավալից delta 20 մոմում)։ Չափազանց երկար իմպուլսը տույժ է ստանում (chasing)։</p></details>
     <details><summary>Real-Time Order Flow</summary><p class="note">aggTrade-ից՝ ագրեսիվ գնորդներ/վաճառողներ (market order-ի կողմը), 60վ imbalance, live CVD, խոշոր պատվերներ (≥20× մեդիան notional), Absorption (մի կողմի ագրեսիվ հոսք > 60%, ծավալը միջինից 1.5× բարձր, բայց գինը չի շարժվում)։ depth20-ից՝ Bid/Ask pressure և Order Book imbalance։</p></details>
     <details><summary>Volatility Analysis</summary><p class="note">ATR 14, ATR 5/50 հարաբերակցություն (>1.3 expansion, <0.75 compression), Bollinger Bands, %B, լայնության percentile, squeeze release, Sudden Price Movement (մոմ > 3 ATR, live՝ 10վ-ում > 1.5 ATR(1m))։ Live էջը ասում է՝ շուկան հարմար է արագ գործարքների համար, թե ոչ։</p></details>
@@ -908,8 +910,8 @@ const ENG = (() => {
 // =====================================================================
 const SPOT = ['https://api.binance.com', 'https://data-api.binance.vision'];
 const FUT = 'https://fapi.binance.com';
-const HTF = { '15m': '1h', '1h': '4h', '4h': '1d', '1d': '1w' };
-const TF_MS = { '1m': 6e4, '15m': 9e5, '1h': 36e5, '4h': 144e5, '1d': 864e5, '1w': 6048e5 };
+const HTF = { '5m': '1h', '15m': '1h', '1h': '4h', '4h': '1d', '1d': '1w' };
+const TF_MS = { '1m': 6e4, '5m': 3e5, '15m': 9e5, '1h': 36e5, '4h': 144e5, '1d': 864e5, '1w': 6048e5 };
 const $ = (id) => document.getElementById(id);
 const fmt = ENG.fmt;
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -1219,7 +1221,7 @@ async function runAnalysis(sym, tf, extras = true) {
   let deriv = null, book = null;
   if (extras) {
     [deriv, book] = await Promise.all([derivData(sym), bookData(sym)]);
-    if (deriv) { const c = P.c, n = c.length, back = { '15m': 96, '1h': 24, '4h': 6, '1d': 1 }[tf] || 24; deriv.priceChange = (c[n - 1] - c[Math.max(0, n - 1 - back)]) / c[Math.max(0, n - 1 - back)]; }
+    if (deriv) { const c = P.c, n = c.length, back = { '5m': 288, '15m': 96, '1h': 24, '4h': 6, '1d': 1 }[tf] || 24; deriv.priceChange = (c[n - 1] - c[Math.max(0, n - 1 - back)]) / c[Math.max(0, n - 1 - back)]; }
   }
   resolveLogs(sym, tf, P);
   return { P, H, deriv, book };
@@ -1489,8 +1491,8 @@ function renderHeader() {
 //  SCANNER
 // =====================================================================
 let lastScan = store.get('lastSignals', {}), autoTimer = null;
-function scanCtx(sym, H, deriv, book) {
-  const ctx = { htf: H, deriv: deriv && deriv.ok ? deriv : null, book, minScore: S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: book ? book.spreadPct : 0.02, slipPct: S.slip / 100 } };
+function scanCtx(sym, H, deriv, book, minScore) {
+  const ctx = { htf: H, deriv: deriv && deriv.ok ? deriv : null, book, minScore: minScore || S.min, allowTrend: S.allowTrend, allowRange: S.allowRange, cost: { takerPct: S.taker, spreadPct: book ? book.spreadPct : 0.02, slipPct: S.slip / 100 } };
   if (LIVE.sym === sym && LIVE.flow && LIVE.trades.length > 20) { ctx.flow = LIVE.flow; ctx.liveAnoms = LIVE.anoms.filter(a => a.sev !== 'info'); }
   return ctx;
 }
@@ -1726,7 +1728,7 @@ $('jAdd').onclick = () => {
 //  🤖 AUTO SIGNALS — scans everything on a timer and says what to do
 // =====================================================================
 const AUTO = { on: store.get('autoOn', false), tfs: store.get('autoTfs', ['15m', '1h']), every: store.get('autoEvery', 5), timer: null, ptimer: null, running: false,
-  active: store.get('autoActive', {}), hist: store.get('autoHist', []), last: null, next: null, vetoes: [], err: null, lock: null };
+  mode: store.get('autoMode', 6.5), watch: [], active: store.get('autoActive', {}), hist: store.get('autoHist', []), last: null, next: null, vetoes: [], err: null, lock: null };
 function autoSave() { store.set('autoActive', AUTO.active); AUTO.hist = AUTO.hist.filter(x => Date.now() - x.created < 36 * 3600e3).slice(0, 60); store.set('autoHist', AUTO.hist); }
 function topReasons(sig) {
   const arr = (sig.dir === 1 ? sig.L : sig.S).filter(x => x[0] > 0).sort((a, b) => b[0] - a[0]).slice(0, 3);
@@ -1735,14 +1737,19 @@ function topReasons(sig) {
 async function autoCycle() {
   if (AUTO.running) return; AUTO.running = true; AUTO.err = null;
   const pairs = []; for (const tf of AUTO.tfs) for (const s of symList()) pairs.push([s, tf]);
-  let i = 0, errs = 0; const fresh = [];
+  let i = 0, errs = 0; const fresh = [], watch = [];
   for (const [sym, tf] of pairs) {
     $('autoStatus').textContent = `🔄 Ստուգում եմ… ${++i}/${pairs.length} · ${sym} ${tf}`;
     try {
       const { P, H, deriv, book } = await runAnalysis(sym, tf, true);
-      const sig = ENG.analyze(P, P.c.length - 1, scanCtx(sym, H, deriv, book));
+      const sig = ENG.analyze(P, P.c.length - 1, scanCtx(sym, H, deriv, book, AUTO.mode));
       const qty = sig.rawDir ? (S.bal * S.risk / 100 * sig.sizeMult) / Math.abs(sig.entry - sig.sl) : 0;
       const vetoes = riskGuard(sig, sym, qty * sig.entry, P.k[P.k.length - 1].ct, tf); sig.final = finalDecision(sig, vetoes);
+      if (sig.ready && sig.final === 'NO TRADE') {
+        const ls = sig.longScore, ss = sig.shortScore, d = ls >= ss ? 1 : -1, top = Math.max(ls, ss);
+        if (sig.rawDir) watch.push({ sym, tf, dir: sig.rawDir, score: top, why: (vetoes[0] || sig.block[0] || '').toString(), blocked: true, next: sig.time + TF_MS[tf] });
+        else if (top >= AUTO.mode * 0.75 && Math.abs(ls - ss) >= 1.5) watch.push({ sym, tf, dir: d, score: top, need: AUTO.mode - top, blocked: false, next: sig.time + TF_MS[tf] });
+      }
       if (sig.final !== 'NO TRADE') {
         const id = `${sym}|${tf}|${sig.time}|${sig.dir}`;
         if (!AUTO.active[id] && !AUTO.hist.some(h => h.id === id)) {
@@ -1753,6 +1760,7 @@ async function autoCycle() {
       }
     } catch (e) { errs++; AUTO.err = e; }
   }
+  AUTO.watch = watch.sort((a, b) => b.score - a.score).slice(0, 8);
   AUTO.vetoes = riskGuard(null, null, 0);
   AUTO.last = Date.now(); AUTO.next = AUTO.last + AUTO.every * 60000; AUTO.running = false;
   autoSave();
@@ -1790,6 +1798,7 @@ $('autoToggle').onclick = () => {
   try { if (window.Notification && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {}
   AUTO.on ? autoStart() : autoStop(); renderAuto();
 };
+$('autoMode').onchange = () => { AUTO.mode = +$('autoMode').value; store.set('autoMode', AUTO.mode); if (AUTO.on) autoCycle(); };
 $('autoEvery').onchange = () => { AUTO.every = +$('autoEvery').value; store.set('autoEvery', AUTO.every); if (AUTO.on) autoStart(); };
 document.querySelectorAll('#autoTfs input').forEach(cb => cb.onchange = () => {
   AUTO.tfs = [...document.querySelectorAll('#autoTfs input')].filter(x => x.checked).map(x => x.value);
@@ -1834,7 +1843,7 @@ function renderAuto(err) {
   $('autoToggle').textContent = AUTO.on ? '⏸ Կանգնեցնել' : '▶️ Միացնել';
   $('autoToggle').className = 'btn' + (AUTO.on ? ' sec' : '');
   document.querySelectorAll('#autoTfs input').forEach(cb => cb.checked = AUTO.tfs.includes(cb.value));
-  $('autoEvery').value = String(AUTO.every);
+  $('autoEvery').value = String(AUTO.every); $('autoMode').value = String(AUTO.mode);
   if (!AUTO.running) $('autoStatus').innerHTML = AUTO.on
     ? `🟢 Աշխատում է · ${symList().length} ակտիվ × ${AUTO.tfs.join(', ')}${AUTO.last ? ' · վերջին ստուգում ' + hm(AUTO.last) : ''}${AUTO.next ? ' · հաջորդը ' + hm(AUTO.next) : ''}`
     : '⚪ Անջատված է։ Սեղմիր «Միացնել»։';
@@ -1854,6 +1863,9 @@ function renderAuto(err) {
   }
   if (!vet.length && !act.length) now += `<div class="card"><div class="sig M">⏳ ՍՊԱՍԻՐ</div><p class="note" style="margin-bottom:0">${AUTO.on ? 'Հիմա լավ հնարավորություն չկա։ Բոտը կշարունակի ստուգել և ձայնով կտեղեկացնի, երբ լինի սիգնալ։' : 'Միացրու ավտո ռեժիմը, որ բոտը սկսի ստուգել։'} Չառևտրելը նույնպես որոշում է։</p></div>`;
   $('autoNow').innerHTML = now;
+  $('autoWatch').innerHTML = !vet.length && AUTO.watch.length ? `<div class="card" style="border:1px solid var(--y)"><h2>🟡 Պատրաստվիր — ձևավորվող սիգնալներ</h2>
+    <p class="note" style="margin-top:0">Սրանք դեռ սիգնալ չեն։ Բոտը ստուգում է միայն փակված մոմերը, ուստի հետևիր հաջորդ մոմի փակմանը։</p>
+    <table>${AUTO.watch.map(w => `<tr><td><b>${w.sym.replace('USDT', '')}</b> <span class="note">${w.tf}</span></td><td class="${w.dir === 1 ? 'L' : 'S'}">${w.dir === 1 ? 'հնարավոր ԳՆԻՐ' : 'հնարավոր ՎԱՃԱՌԻՐ'}</td><td class="note">${w.blocked ? '⛔ ' + esc(w.why) : w.score.toFixed(1) + ' / ' + AUTO.mode + ' (պակասում է ' + w.need.toFixed(1) + ')'}</td><td class="note">մոմը փակվում է ${hm(w.next)}</td></tr>`).join('')}</table></div>` : '';
   $('autoCards').innerHTML = vet.length ? '' : act.map(autoCard).join('');
   $('autoCards').querySelectorAll('[data-ap]').forEach(b => b.onclick = () => autoTake(b.dataset.ap));
   $('autoCards').querySelectorAll('[data-ad]').forEach(b => b.onclick = () => { const a = AUTO.active[b.dataset.ad]; if (!a) return; $('sym').value = a.sym; $('tf').value = a.tf; tab('signal'); $('go').click(); });
