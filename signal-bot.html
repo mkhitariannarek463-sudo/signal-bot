@@ -2372,20 +2372,20 @@ const hmd = (t) => new Date(t).toLocaleString([], { weekday: 'short', hour: '2-d
 
 // ---------- Twelve Data with client-side rate limiting (free plan: 8/min, 800/day) ----------
 function creditsToday() { const d = new Date().toISOString().slice(0, 10); if (STK.credits.day !== d) STK.credits = { day: d, n: 0 }; return STK.credits; }
-async function tdSlot() {
+async function tdSlot(cost = 1) {
   for (;;) {
     const now = Date.now(); STK.calls = STK.calls.filter(t => now - t < 61000);
-    if (STK.calls.length < 7) { STK.calls.push(now); return; }
+    if (STK.calls.length + cost <= 7) { for (let i = 0; i < cost; i++) STK.calls.push(now); return; }
     const w = 61000 - (now - STK.calls[0]); STK.wait = Math.ceil(w / 1000); stkStatus();
     await new Promise(r => setTimeout(r, Math.min(w + 100, 5000)));
   }
 }
-async function td(path) {
+async function td(path, cost = 1) {
   if (!STK.key) throw new Error('Նախ մուտքագրիր Twelve Data API key-ը (անվճար է)');
   const c = creditsToday(); if (c.n >= 790) throw new Error('Twelve Data-ի օրական 800 հարցման սահմանը սպառվեց։ Վաղը կվերականգնվի (UTC 00:00 = Երևան 04:00)');
   for (let attempt = 0; attempt < 2; attempt++) {
-    await tdSlot(); STK.wait = 0;
-    c.n++; store.set('stkCredits', STK.credits);
+    await tdSlot(cost); STK.wait = 0;
+    c.n += cost; store.set('stkCredits', STK.credits);
     const d = await getJSON(`${TD}/${path}&apikey=${encodeURIComponent(STK.key)}`, 20000);
     if (d && d.status === 'error') {
       if (d.code === 429 && attempt === 0) { STK.calls = Array(7).fill(Date.now()); continue; }
@@ -2432,11 +2432,15 @@ async function stkBars(sym, iv, size, force) {
 // ---------- live (current) prices: candles are closed bars, this is the price right now ----------
 async function stkLive(syms) {
   const out = {}; if (!syms.length) return out;
-  try {
-    const d = await td(`price?symbol=${syms.map(encodeURIComponent).join(',')}`);
-    if (syms.length === 1) { if (d && d.price) out[syms[0]] = +d.price; }
-    else for (const k of syms) if (d && d[k] && d[k].price) out[k] = +d[k].price;
-  } catch (e) {}
+  // each symbol costs 1 credit; the free plan allows 8 per minute → batches of ≤5
+  for (let i = 0; i < syms.length; i += 5) {
+    const part = syms.slice(i, i + 5);
+    try {
+      const d = await td(`price?symbol=${part.map(encodeURIComponent).join(',')}`, part.length);
+      if (part.length === 1) { if (d && d.price) out[part[0]] = +d.price; }
+      else for (const k of part) if (d && d[k] && d[k].price) out[k] = +d[k].price;
+    } catch (e) {}
+  }
   return out;
 }
 
