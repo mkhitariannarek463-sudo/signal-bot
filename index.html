@@ -2134,6 +2134,7 @@ $('jAdd').onclick = () => {
 // =====================================================================
 //  🤖 AUTO SIGNALS — scans everything on a timer and says what to do
 // =====================================================================
+const STOCKS_MODE = /stocks/i.test(location.pathname) || /stocks/i.test(location.search);
 const AUTO = { on: store.get('autoOn', false), tfs: store.get('autoTfs', ['15m', '1h']), every: store.get('autoEvery', 5), timer: null, ptimer: null, running: false,
   mode: store.get('autoMode', 6.5), watch: [], active: store.get('autoActive', {}), hist: store.get('autoHist', []), last: null, next: null, vetoes: [], err: null, lock: null };
 function autoSave() { store.set('autoActive', AUTO.active); AUTO.hist = AUTO.hist.filter(x => Date.now() - x.created < 36 * 3600e3).slice(0, 60); store.set('autoHist', AUTO.hist); }
@@ -2316,7 +2317,7 @@ function tab(name) {
 }
 document.querySelectorAll('nav button').forEach(b => b.onclick = () => tab(b.dataset.t));
 setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString(); renderHeader(); }, 1000);
-loadSettingsUI(); syncTime(); renderAuto(); if (AUTO.on) autoStart(); setTimeout(() => loadCalendar(false), 1500);
+loadSettingsUI(); syncTime(); renderAuto(); if (AUTO.on && !STOCKS_MODE) autoStart(); setTimeout(() => loadCalendar(false), 1500);
 </script>
 <script>
 // =====================================================================
@@ -2638,6 +2639,7 @@ function stkCard(a) {
     <h3>Ինչ անել IBKR-ում՝ քայլ առ քայլ</h3><ol style="margin:0;padding-left:20px;line-height:1.7">${steps.map(s => `<li>${s}</li>`).join('')}</ol>
     <h3>Ինչու</h3><ul class="rs">${a.reasons.map(r => `<li>✓ ${esc(r)}</li>`).join('')}</ul>
     ${a.riskItems && a.riskItems.length ? `<h3>Ռիսկեր</h3><ul class="rs">${a.riskItems.map(r => `<li>⚠️ ${esc(r)}</li>`).join('')}</ul>` : ''}
+    ${STK.res[a.sym] && STK.res[a.sym].sig ? `${stkExplain(STK.res[a.sym])}<details ${STOCKS_MODE ? 'open' : ''} style="margin-top:8px"><summary style="cursor:pointer;font-weight:600">📖 Ամբողջական վերլուծություն</summary>${stkDetailHTML(STK.res[a.sym])}</details>` : ''}
     <div class="row" style="margin-top:8px">${buy ? `<button class="btn" data-sp="${esc(a.id)}">📌 Գնեցի (հետևել)</button>` : ''}<button class="btn sec" data-sd="${esc(a.sym)}">🔍 Մանրամասն</button><button class="btn sec" data-sx="${esc(a.id)}">✕ Բաց թողնել</button></div>
     <div class="note" id="sm-${esc(a.id)}"></div></div>`;
 }
@@ -2678,6 +2680,20 @@ function stkDetailHTML(r) {
     ${s.riskItems && s.riskItems.length ? `<h3>Ռիսկի գործոններ</h3><ul class="rs">${s.riskItems.map(x => `<li>+${x[0]} ${esc(x[1])}</li>`).join('')}</ul>` : ''}
     <p class="note">«Order Flow» կատեգորիան բաժնետոմսերի համար դատարկ է՝ անվճար տվյալները order book և ֆյուչերսների դիրքավորում չեն տալիս։</p>`;
 }
+function stkExplain(r) {
+  const s = r.sig, st = s.stk || {}, out = [];
+  const name = STK_NAMES[r.sym] || r.sym;
+  if (s.dir === 1) out.push(`Բոտը կարծում է, որ <b>${name}</b>-ի գինը մոտակա ${r.tf === '1h' ? 'ժամերին' : 'օրերին'} ավելի հավանական է, որ <b class="L">կբարձրանա</b>, քան կիջնի։`);
+  else if (s.dir === -1) out.push(`Բոտը կարծում է, որ <b>${name}</b>-ի գինը ավելի հավանական է, որ <b class="S">կիջնի</b>, ուստի հիմա գնելու ժամանակը չէ։`);
+  else out.push(`<b>${name}</b>-ում հիմա հստակ առավելություն չկա՝ գնելու և վաճառելու փաստարկները հավասարակշռված են կամ թույլ։`);
+  if (s.htf) out.push(s.htf === 1 ? 'Ավելի մեծ թայմֆրեյմում թրենդը աճող է։' : 'Ավելի մեծ թայմֆրեյմում թրենդը նվազող է։');
+  if (st.mkt === 1) out.push('Ամբողջ շուկան (S&P 500) աճում է, ինչը օգնում է գնումներին։'); else if (st.mkt === -1) out.push('Ամբողջ շուկան (S&P 500) ընկնում է՝ գնումները ռիսկային են։');
+  if (st.rs20 != null) out.push(st.rs20 > 0 ? `Վերջին 20 մոմում ${r.sym}-ը շուկայից ուժեղ է եղել (+${(st.rs20 * 100).toFixed(1)}%)։` : `Վերջին 20 մոմում ${r.sym}-ը շուկայից թույլ է եղել (${(st.rs20 * 100).toFixed(1)}%)։`);
+  if (s.rsi) out.push(s.rsi > 70 ? `RSI-ն ${s.rsi.toFixed(0)} է՝ գինը «գերտաքացած» է։` : s.rsi < 30 ? `RSI-ն ${s.rsi.toFixed(0)} է՝ գինը շատ է ընկել, հնարավոր է վերադարձ։` : `RSI-ն ${s.rsi.toFixed(0)} է՝ նորմալ գոտում։`);
+  if (s.rawDir) out.push(`Եթե մտնես, Stop Loss-ը ${sf(s.sl)} է, իսկ նպատակը՝ ${sf(s.tp2)} (ռիսկ/շահույթ 1:${s.rr.toFixed(1)})։ Ռիսկի գնահատական՝ ${s.risk}/100${s.risk >= 50 ? ' — բարձր է' : s.risk >= 25 ? ' — միջին' : ' — ցածր'}։`);
+  if (s.block && s.block.length) out.push(`Բայց բոտը արգելում է մուտքը՝ ${esc(s.block[0])}։`);
+  return `<div class="warn info" style="line-height:1.6">🗣 ${out.join(' ')}</div>`;
+}
 function stkDetail(sym) {
   const r = STK.res[sym]; if (!r || !r.sig) return;
   $('stkDetail').innerHTML = `<div class="card"><h2>🔍 ${stkName(sym)} · ${TFN[r.tf] || r.tf}</h2>${stkDetailHTML(r)}</div>`;
@@ -2701,6 +2717,7 @@ function stkOneRender(r, outId = 'stkOneOut', cvId = 'stkChart') {
   $(outId).innerHTML = `<div class="card" style="border:2px solid ${buy ? 'var(--g)' : sell ? 'var(--r)' : 'var(--line)'}">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><div class="note">${stkName(r.sym)} · ${TFN[r.tf] || r.tf}</div>${head}</div>
       <div style="text-align:right"><div class="note">Գին</div><b style="font-size:20px">${sf(r.price)}</b>${r.prevClose ? `<div class="${r.price >= r.prevClose ? 'L' : 'S'}">${r.price >= r.prevClose ? '+' : ''}${((r.price / r.prevClose - 1) * 100).toFixed(2)}%</div>` : ''}</div></div>
+    ${stkExplain(r)}
     ${plan}
     <canvas id="${cvId}" style="margin-top:10px"></canvas><div class="note" style="margin-top:4px">Կանաչ՝ EMA20 · Կապույտ՝ EMA50 · Նարնջագույն՝ EMA200 · Մոխրագույն՝ Bollinger</div>
     ${stkDetailHTML(r)}
@@ -2910,7 +2927,20 @@ $('stkRisk').onchange = () => { STK.cfg.risk = Math.min(5, Math.max(0.1, +$('stk
 $('stkMaxPos').onchange = () => { STK.cfg.maxPos = Math.min(100, Math.max(5, +$('stkMaxPos').value || 25)); stkSaveCfg(); };
 $('stkTier').onchange = () => { STK.cfg.tiered = $('stkTier').value === '1'; stkSaveCfg(); };
 $('stkLong').onchange = () => { STK.cfg.longOnly = $('stkLong').checked; stkSaveCfg(); };
-window.stkRender = stkRender; window.autoStkPane = autoStkPane;
+window.stkRender = stkRender;
+if (STOCKS_MODE) {
+  document.title = '🏛 Բաժնետոմսերի Բոտ — US Stocks Signals';
+  const h1 = document.querySelector('header h1'); if (h1) h1.textContent = '🏛 Բաժնետոմսերի Բոտ';
+  const tg = document.querySelector('header .tag'); if (tg) tg.style.display = 'none';
+  document.querySelectorAll('nav button[data-t]').forEach(b => { if (!['stk', 'settings'].includes(b.dataset.t)) b.style.display = 'none'; });
+  const sb = document.querySelector('nav button[data-t="stk"]'); if (sb) sb.textContent = '🏛 Սիգնալներ';
+  const back = document.createElement('a'); back.href = './'; back.textContent = '₿ Կրիպտո բոտ →'; back.style.cssText = 'margin-left:auto;color:var(--b);font-size:13px;text-decoration:none;padding:0 8px;white-space:nowrap;align-self:center';
+  const nav = document.querySelector('nav'); if (nav) nav.appendChild(back);
+  tab('stk');
+} else {
+  const nav = document.querySelector('nav');
+  if (nav) { const l = document.createElement('a'); l.href = 'stocks.html'; l.textContent = '🏛 Առանձին էջ →'; l.style.cssText = 'color:var(--b);font-size:13px;text-decoration:none;padding:0 8px;white-space:nowrap;align-self:center'; nav.appendChild(l); }
+} window.autoStkPane = autoStkPane;
 if (STK.auto) stkAutoSet(true); else autoStkPane();
 setInterval(() => { if (!$('t-stk').classList.contains('hide')) { stkMarketCard(); if (!STK.running) stkStatus(); } }, 30000);
 
