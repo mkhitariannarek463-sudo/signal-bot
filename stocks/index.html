@@ -92,7 +92,7 @@ details summary{cursor:pointer;font-weight:600;padding:6px 0}
     <div id="stkKeyBox"></div>
     <div class="row">
       <div style="flex:3 1 260px"><label>Ակտիվներ (ստորակետով)</label><input id="stkSyms"></div>
-      <div><label>Թայմֆրեյմ</label><select id="stkTf"><option value="1h">1 ժամ</option><option value="1day">1 օր</option></select></div>
+      <div><label>Թայմֆրեյմ</label><select id="stkTf"><option value="15min">15 րոպե</option><option value="1h">1 ժամ</option><option value="1day">1 օր</option></select></div>
       <div><label>Ռեժիմ</label><select id="stkMode"><option value="7.5">🛡 Զգուշավոր</option><option value="6.5">⚖️ Նորմալ</option><option value="5.5">⚡ Ակտիվ</option></select></div>
     </div>
     <div class="row" style="margin-top:8px">
@@ -2324,9 +2324,9 @@ loadSettingsUI(); syncTime(); renderAuto(); if (AUTO.on && !STOCKS_MODE) autoSta
 //  🏛 STOCKS — US stocks & ETFs (oil = USO, gold = GLD, market = SPY) via Twelve Data
 // =====================================================================
 const TD = 'https://api.twelvedata.com';
-const STK_IV = { '1h': 36e5, '1day': 864e5, '1week': 6048e5 };
-const STK_HTF = { '1h': '1day', '1day': '1week' };
-const STK_SIZE = { '1h': 700, '1day': 400, '1week': 300 };
+const STK_IV = { '15min': 9e5, '1h': 36e5, '1day': 864e5, '1week': 6048e5 };
+const STK_HTF = { '15min': '1h', '1h': '1day', '1day': '1week' };
+const STK_SIZE = { '15min': 800, '1h': 700, '1day': 400, '1week': 300 };
 const STK_NAMES = { KO: 'Coca-Cola', PEP: 'PepsiCo', V: 'Visa', MA: 'Mastercard', WMT: 'Walmart', DIS: 'Disney', NKE: 'Nike', INTC: 'Intel', BA: 'Boeing', PLTR: 'Palantir', SPY: 'S&P 500 (ամբողջ շուկա)', QQQ: 'Nasdaq 100', USO: 'Նավթ (WTI ETF)', GLD: 'Ոսկի (ETF)', SLV: 'Արծաթ (ETF)', UNG: 'Գազ (ETF)', AAPL: 'Apple', MSFT: 'Microsoft', NVDA: 'NVIDIA',
   AMZN: 'Amazon', GOOGL: 'Google', META: 'Meta', TSLA: 'Tesla', AMD: 'AMD', NFLX: 'Netflix', XOM: 'ExxonMobil (նավթ)', CVX: 'Chevron (նավթ)', JPM: 'JPMorgan', 'BRK.B': 'Berkshire' };
 const STK_DEF = { syms: 'AAPL,MSFT,NVDA,AMZN,GOOGL,META,TSLA,QQQ,USO,GLD', tf: '1day', mode: 6.5, bal: 1000, risk: 1, maxPos: 25, longOnly: true, tiered: true };
@@ -2339,7 +2339,7 @@ const STK = {
 const stkSyms = () => STK.cfg.syms.split(',').map(s => s.trim().toUpperCase()).filter(Boolean).slice(0, 15);
 const stkName = (s) => STK_NAMES[s] ? `${s} <span class="note">${STK_NAMES[s]}</span>` : s;
 const sf = (x) => x == null || !isFinite(x) ? '—' : x >= 1 ? x.toFixed(2) : x.toFixed(4);   // US stocks tick = $0.01
-const TFN = { '1h': '1 ժամ', '1day': '1 օր' };
+const TFN = { '15min': '15 րոպե', '1h': '1 ժամ', '1day': '1 օր' };
 const usd = (x) => '$' + (Math.abs(x) >= 100 ? x.toFixed(0) : x.toFixed(2));
 const stkSaveCfg = () => store.set('stkCfg', STK.cfg);
 function stkSaveData() {
@@ -2401,10 +2401,10 @@ function tdParse(values, iv) {
   const k = values.map(x => {
     const day = x.datetime.length <= 10, t = Date.parse(day ? x.datetime + 'T00:00:00Z' : x.datetime.replace(' ', 'T') + 'Z');
     let ct;
-    if (iv === '1h') { const ny = ENG.nyTime(t); ct = Math.min(t + 36e5, t + (16 - ny.h) * 3600e3) - 1; }
+    if (iv === '1h' || iv === '15min') { const ny = ENG.nyTime(t); ct = Math.min(t + STK_IV[iv], t + (16 - ny.h) * 3600e3) - 1; }
     else if (iv === '1day') ct = nyToMs(x.datetime.slice(0, 10), 16) - 1;
     else ct = nyToMs(new Date(t + 4 * 864e5).toISOString().slice(0, 10), 16) - 1;
-    const tt = iv === '1h' ? t : ct - (iv === '1day' ? 6.5 * 3600e3 : 4 * 864e5);
+    const tt = iv === '1h' || iv === '15min' ? t : ct - (iv === '1day' ? 6.5 * 3600e3 : 4 * 864e5);
     return { t: tt, ct, o: +x.open, h: +x.high, l: +x.low, c: +x.close, v: +(x.volume || 0) };
   }).filter(x => isFinite(x.c) && x.c > 0).sort((a, b) => a.t - b.t);
   // only completed bars (the engine never acts on an unfinished candle)
@@ -2413,10 +2413,10 @@ function tdParse(values, iv) {
 function stkFresh(e, iv) {
   if (!e) return false;
   const now = Date.now(), m = marketState(now);
-  if (iv !== '1h') return now - e.at < (m.open ? 30 * 60e3 : 6 * 3600e3) && !(m.lastClose && e.at < m.lastClose + 60e3 && now > m.lastClose + 60e3);
+  if (iv !== '1h' && iv !== '15min') return now - e.at < (m.open ? 30 * 60e3 : 6 * 3600e3) && !(m.lastClose && e.at < m.lastClose + 60e3 && now > m.lastClose + 60e3);
   if (!m.open) return e.at > (m.lastClose || 0) + 60e3;
-  // hourly bars close at NY xx:30 → refresh once per new bar
-  const ny = m.ny, mins = Math.round(ny.h * 60), sinceBar = ((mins - 570) % 60 + 60) % 60;
+  // intraday bars are anchored at 09:30 NY → refresh once per new bar
+  const per = iv === '15min' ? 15 : 60, ny = m.ny, mins = Math.round(ny.h * 60), sinceBar = ((mins - 570) % per + per) % per;
   return now - e.at < sinceBar * 60e3 - 60e3;
 }
 async function stkBars(sym, iv, size, force) {
@@ -2520,14 +2520,14 @@ async function stkScan(force) {
     const kb = await stkBars('SPY', tf, STK_SIZE[tf], force), kbh = await stkBars('SPY', STK_HTF[tf], STK_SIZE[STK_HTF[tf]], force);
     const B = ENG.precompute(kb), BH = ENG.precompute(kbh);
     STK.mkt = stkMarketView(B, BH);
-    if (tf === '1h') try { await stkBars('SPY', '1day', 400); } catch (e) {}
+    if (tf !== '1day') try { await stkBars('SPY', '1day', 400); } catch (e) {}
     STK.prog = 'ընթացիկ գներ'; stkStatus();
-    const LIVE = await stkLive(syms);
+    const LIVE = tf === '15min' ? {} : await stkLive(syms);
     let i = 0;
     for (const sym of syms) {
       STK.prog = `${++i}/${syms.length} · ${sym}`; stkStatus();
       try {
-        if (tf === '1h' && sym !== 'SPY') await stkBars(sym, '1day', 400);   // daily data → correlations, day change (cached)
+        if (tf !== '1day' && sym !== 'SPY') await stkBars(sym, '1day', 400);   // daily data → correlations, day change (cached)
         const r = sym === 'SPY' ? await stkAnalyze('SPY', tf, null, null, LIVE.SPY) : await stkAnalyze(sym, tf, B, BH, LIVE[sym]);
         STK.res[sym] = r; const s = r.sig;
         if (s.dir === 1 || (s.dir === -1 && !STK.cfg.longOnly)) {
@@ -2591,7 +2591,7 @@ function stkManage() {
 function stkAutoTick() {
   if (!STK.auto || STK.running) return;
   const m = marketState(), now = Date.now();
-  const due = !STK.last || (m.open ? !stkFresh({ at: STK.last }, '1h') : (m.lastClose && STK.last < m.lastClose + 60e3 && now > m.lastClose + 90e3));
+  const due = !STK.last || (m.open ? !stkFresh({ at: STK.last }, STK.cfg.tf === '15min' ? '15min' : '1h') : (m.lastClose && STK.last < m.lastClose + 60e3 && now > m.lastClose + 90e3));
   if (due) stkScan();
   else stkStatus();
 }
@@ -2816,7 +2816,7 @@ function stkWire(el) {
     const a = STK.active[b.dataset.sp]; if (!a) return; const z = a.size || {};
     const v = stkGuard(a.sym, z.notional || 0); if (v.length) { msg(a.id, `<span class="S">⛔ ${esc(v[0])}</span>`); return; }
     STK.pos.push({ id: Date.now(), sym: a.sym, tf: a.tf, dir: a.dir, entry: a.price && Math.abs(a.price - a.entry) < 0.3 * a.atr ? a.price : a.entry, sl0: a.sl, sl: a.sl, tp1: a.tp1, tp2: a.tp2,
-      shares: z.shares, openTime: Date.now(), partial: false, maxBars: a.tf === '1h' ? 35 : 20, status: 'open' });
+      shares: z.shares, openTime: Date.now(), partial: false, maxBars: a.tf === '1day' ? 20 : 35, status: 'open' });
     a.status = 'taken'; const h = STK.hist.find(x => x.id === a.id); if (h) h.status = 'taken'; delete STK.active[a.id];
     store.set('stkActive', STK.active); store.set('stkHist', STK.hist); stkManage(); stkRender();
   });
@@ -2857,14 +2857,14 @@ function stkBtCost() { const v = Math.max(1, STK.cfg.bal * STK.cfg.maxPos / 100)
 $('stkBtGo').onclick = async () => {
   const sym = $('stkBtSym').value.trim().toUpperCase(); if (!sym) return; $('stkBtGo').disabled = true;
   try {
-    const tf = STK.cfg.tf, htf = STK_HTF[tf], n = tf === '1h' ? 5000 : 2500, nh = tf === '1h' ? 1500 : 600;
+    const tf = STK.cfg.tf, htf = STK_HTF[tf], n = tf === '1day' ? 2500 : 5000, nh = tf === '1day' ? 600 : tf === '15min' ? 2000 : 1500;
     $('stkBtOut').innerHTML = `<p class="note">Բեռնում եմ պատմությունը (${tf === '1h' ? '~3 տարի ժամային' : '~10 տարի օրական'})…</p>`;
     const k = await stkBars(sym, tf, n, true), kh = await stkBars(sym, htf, nh, true);
     const bk = sym === 'SPY' ? null : await stkBars('SPY', tf, n, true), bkh = sym === 'SPY' ? null : await stkBars('SPY', htf, nh, true);
     $('stkBtOut').innerHTML = `<p class="note">Հաշվում եմ ${k.length} մոմի վրա (backtest + walk-forward + out-of-sample)…</p>`;
     const c = stkBtCost(), ctx = { ...stkCtx(sym, tf, null, null, null, STK.cfg.mode), htf: null, bench: null, benchH: null };
     ctx.cost = { takerPct: c.fee * 100, spreadPct: 0.02, slipPct: 0.02 };
-    const { wf, ror, from, to } = await runJob('swf', { k, kh, bk, bkh, ctx, opt: { fee: c.fee, slip: c.slip, longOnly: STK.cfg.longOnly, riskPct: STK.cfg.risk / 100, maxHold: tf === '1h' ? 35 : 20 } });
+    const { wf, ror, from, to } = await runJob('swf', { k, kh, bk, bkh, ctx, opt: { fee: c.fee, slip: c.slip, longOnly: STK.cfg.longOnly, riskPct: STK.cfg.risk / 100, maxHold: tf === '1day' ? 20 : 35 } });
     const st = wf.full.stats, f2 = (x) => x === Infinity ? '∞' : (x || 0).toFixed(2);
     const row = (n, s) => `<tr><td>${n}</td><td>${s.n}</td><td>${s.n ? pc(s.win, 0) : '—'}</td><td>${f2(s.pf)}</td><td class="${s.exp > 0 ? 'L' : 'S'}">${s.exp.toFixed(2)}R</td></tr>`;
     const verdict = st.n < 30 ? `<div class="warn">⚠️ Միայն ${st.n} գործարք՝ քիչ է եզրակացության համար։</div>` : st.exp > 0.1 && wf.oosUser.exp > 0 ? '<div class="warn ok">✅ Դրական EV, և չտեսած (OOS) հատվածում էլ է դրական։ Հաջորդ քայլը՝ Paper Trading։</div>'
@@ -2890,7 +2890,7 @@ function stkLearnActive() {
 }
 $('stkLnGo').onclick = async () => {
   const syms = stkSyms().filter(s => s !== 'SPY').slice(0, 6); if (!syms.length) return; $('stkLnGo').disabled = true;
-  const tf = STK.cfg.tf, htf = STK_HTF[tf], n = tf === '1h' ? 5000 : 2500, nh = tf === '1h' ? 1500 : 600;
+  const tf = STK.cfg.tf, htf = STK_HTF[tf], n = tf === '1day' ? 2500 : 5000, nh = tf === '1day' ? 600 : tf === '15min' ? 2000 : 1500;
   try {
     const sets = [];
     for (const s of syms) { $('stkLnOut').innerHTML = `<p class="note">Բեռնում եմ ${s}-ի պատմությունը (${sets.length + 1}/${syms.length})… API սահմանաչափի պատճառով կարող է տևել 1–3 րոպե։</p>`; sets.push({ k: await stkBars(s, tf, n, true), kh: await stkBars(s, htf, nh, true) }); }
@@ -2898,7 +2898,7 @@ $('stkLnGo').onclick = async () => {
     $('stkLnOut').innerHTML = `<p class="note">🧠 Վերլուծում եմ ${sets.reduce((a, s) => a + s.k.length, 0).toLocaleString()} մոմ…</p>`;
     const c = stkBtCost(), ctx = { ...stkCtx('X', tf, null, null, null, STK.cfg.mode), wmul: null, blocks: null, cost: { takerPct: c.fee * 100, spreadPct: 0.02, slipPct: 0.02 } };
     delete ctx.bench; delete ctx.benchH;
-    const r = await runJob('slearn', { sets, bk, bkh, ctx, opt: { fee: c.fee, slip: c.slip, longOnly: STK.cfg.longOnly, maxHold: tf === '1h' ? 35 : 20 } });
+    const r = await runJob('slearn', { sets, bk, bkh, ctx, opt: { fee: c.fee, slip: c.slip, longOnly: STK.cfg.longOnly, maxHold: tf === '1day' ? 20 : 35 } });
     const good = r.factors.filter(f => f.m > 1.05).slice(0, 6), bad = r.factors.filter(f => f.m < 0.95).sort((a, b) => a.lift - b.lift).slice(0, 6);
     const frow = (f) => { const p = prettyKey(f.k); return `<tr><td>${esc(p.txt)}</td><td>${f.n}</td><td class="${f.ev > 0 ? 'L' : 'S'}">${f.ev.toFixed(2)}R</td><td><b>×${f.m}</b></td></tr>`; };
     const row = (n, s) => `<tr><td>${n}</td><td>${s.n}</td><td>${s.n ? pc(s.win, 0) : '—'}</td><td class="${s.exp > 0 ? 'L' : 'S'}">${s.exp.toFixed(2)}R</td><td>${s.maxDD.toFixed(1)}R</td></tr>`;
@@ -2923,7 +2923,7 @@ function stkFillSignalSelect() {
   if (cur) sel.value = cur;
 }
 async function stkSignalGo() {
-  const sym = $('sym').value.slice(4), ctf = $('tf').value, tf = ctf === '4h' || ctf === '1d' ? '1day' : '1h';
+  const sym = $('sym').value.slice(4), ctf = $('tf').value, tf = ctf === '4h' || ctf === '1d' ? '1day' : ctf === '1h' ? '1h' : '15min';
   CUR = null; $('out').classList.add('hide'); $('go').disabled = true;
   if (!STK.key) { $('stkSigOut').innerHTML = `<div class="card"><div class="warn info">Բաժնետոմսերի համար պետք է անվճար Twelve Data key։</div><button class="btn" onclick="tab('stk')">Ավելացնել key-ը →</button></div>`; $('go').disabled = false; return; }
   $('status').textContent = `Բեռնում եմ ${sym}-ի տվյալները Twelve Data-ից…`; $('stkSigOut').innerHTML = '';
@@ -2934,7 +2934,7 @@ async function stkSignalGo() {
     if (stkSyms().includes(sym)) STK.res[sym] = r;
     stkOneRender(r, 'stkSigOut', 'stkSigChart');
     const m = marketState();
-    $('status').innerHTML = `Թարմացված՝ ${new Date().toLocaleTimeString()} · ${TFN[tf]}${ctf !== '1h' && ctf !== '1d' ? ` (բաժնետոմսերի համար ${ctf}-ի փոխարեն՝ ${TFN[tf]})` : ''} · ${m.open ? '🟢 բորսան բաց է' : '🌙 բորսան փակ է, կբացվի ' + hmd(m.next)} · API ${creditsToday().n}/800`;
+    $('status').innerHTML = `Թարմացված՝ ${new Date().toLocaleTimeString()} · ${TFN[tf]}${ctf === '5m' || ctf === '4h' ? ` (բաժնետոմսերի համար ${ctf}-ի փոխարեն՝ ${TFN[tf]})` : ''} · ${m.open ? '🟢 բորսան բաց է' : '🌙 բորսան փակ է, կբացվի ' + hmd(m.next)} · API ${creditsToday().n}/800`;
   } catch (e) { $('status').innerHTML = `<div class="warn bad">${esc(e.message)}</div>`; }
   $('go').disabled = false;
 }
