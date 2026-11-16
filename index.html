@@ -2429,6 +2429,17 @@ async function stkBars(sym, iv, size, force) {
   return k;
 }
 
+// ---------- live (current) prices: candles are closed bars, this is the price right now ----------
+async function stkLive(syms) {
+  const out = {}; if (!syms.length) return out;
+  try {
+    const d = await td(`price?symbol=${syms.map(encodeURIComponent).join(',')}`);
+    if (syms.length === 1) { if (d && d.price) out[syms[0]] = +d.price; }
+    else for (const k of syms) if (d && d[k] && d[k].price) out[k] = +d[k].price;
+  } catch (e) {}
+  return out;
+}
+
 // ---------- Sizing with IBKR Pro Fixed commissions ----------
 // IBKR Pro: Fixed = $0.005/share, min $1; Tiered = $0.0035/share, min $0.35 (+ small exchange/regulatory fees); both capped at 1% of value
 function ibkrComm(shares, price) {
@@ -2484,7 +2495,7 @@ function stkCtx(sym, tf, H, B, BH, minScore) {
     allowTrend: S.allowTrend, allowRange: S.allowRange, wmul: L ? L.wmul : null, blocks: L ? L.blocks : null,
     cost: { takerPct: 0.05, spreadPct: 0.02, slipPct: 0.02 } };
 }
-async function stkAnalyze(sym, tf, B, BH) {
+async function stkAnalyze(sym, tf, B, BH, live) {
   const k = await stkBars(sym, tf, STK_SIZE[tf]), kh = await stkBars(sym, STK_HTF[tf], STK_SIZE[STK_HTF[tf]]);
   if (k.length < 230) throw new Error(`${sym}: քիչ պատմություն (${k.length} մոմ)`);
   const P = ENG.precompute(k), H = ENG.precompute(kh), t = P.c.length - 1;
@@ -2494,7 +2505,9 @@ async function stkAnalyze(sym, tf, B, BH) {
   if (sig.rawDir) { const z = stkSize(sig); if (z.notional > 0) ctx.cost.takerPct = z.comm / z.notional * 100; sig = ENG.analyze(P, t, ctx); }
   const D = (STK.data[sym + '|1day|400'] || {}).k || (tf === '1day' ? k : null);
   const prevClose = D && D.length > 1 ? (marketState().open ? D[D.length - 1].c : D[D.length - 2].c) : null;
-  return { sym, tf, P, H, sig, price: P.c[t], prevClose, size: sig.rawDir ? stkSize(sig) : null, at: Date.now() };
+  const lp = live && isFinite(live) ? live : P.c[t];
+  const pc = D && D.length > 1 ? (marketState().open || D[D.length - 1].ct < Date.now() - 864e5 ? D[D.length - 1].c : D[D.length - 2].c) : prevClose;
+  return { sym, tf, P, H, sig, price: lp, closePrice: P.c[t], prevClose: live ? pc : prevClose, live: !!live, size: sig.rawDir ? stkSize(sig) : null, at: Date.now() };
 }
 async function stkScan(force) {
   if (STK.running) return; STK.running = true; STK.err = null; stkStatus(); autoStkPane();
@@ -2504,12 +2517,14 @@ async function stkScan(force) {
     const B = ENG.precompute(kb), BH = ENG.precompute(kbh);
     STK.mkt = stkMarketView(B, BH);
     if (tf === '1h') try { await stkBars('SPY', '1day', 400); } catch (e) {}
+    STK.prog = 'ընթացիկ գներ'; stkStatus();
+    const LIVE = await stkLive(syms);
     let i = 0;
     for (const sym of syms) {
       STK.prog = `${++i}/${syms.length} · ${sym}`; stkStatus();
       try {
         if (tf === '1h' && sym !== 'SPY') await stkBars(sym, '1day', 400);   // daily data → correlations, day change (cached)
-        const r = sym === 'SPY' ? await stkAnalyze('SPY', tf, null, null) : await stkAnalyze(sym, tf, B, BH);
+        const r = sym === 'SPY' ? await stkAnalyze('SPY', tf, null, null, LIVE.SPY) : await stkAnalyze(sym, tf, B, BH, LIVE[sym]);
         STK.res[sym] = r; const s = r.sig;
         if (s.dir === 1 || (s.dir === -1 && !STK.cfg.longOnly)) {
           const id = `${sym}|${tf}|${s.time}|${s.dir}`;
@@ -2614,10 +2629,18 @@ function stkMarketCard() {
   }
   $('stkMarket').innerHTML = `<h2>🇺🇸 ԱՄՆ բորսա՝ ${st}</h2><p class="note" style="margin:0">Աշխատում է երկուշաբթի–ուրբաթ, Նյու Յորքի 09:30–16:00 (Երևանի ժամով ձմռանը 18:30–01:00)։ Տոն օրերին փակ է։</p>${mk}`;
 }
+function stkEff(a) {
+  // if the live price is between the stop and the signal entry, enter at the live price (cheaper, same stop/targets)
+  const buy = a.dir === 1, p = a.price;
+  const better = p && (buy ? p < a.entry && p > a.sl + 0.25 * Math.abs(a.entry - a.sl) : p > a.entry && p < a.sl - 0.25 * Math.abs(a.entry - a.sl));
+  const e = better ? Math.round(p * 100) / 100 : a.entry;
+  return { e, better, size: better ? stkSize({ entry: e, sl: a.sl, sizeMult: (a.size && a.size.risk && a.size.shares) ? 1 : 1 }) : a.size };
+}
 function stkCard(a) {
+  const ef = stkEff(a), sigEntry = a.entry; a = { ...a, entry: ef.e, size: ef.size || a.size, rr: ef.better ? Math.abs(a.tp2 - ef.e) / Math.abs(ef.e - a.sl) : a.rr };
   const buy = a.dir === 1, z = a.size || { shares: 0, notional: 0, risk: 0, comm: 0 }, m = marketState();
   const R = Math.abs(a.entry - a.sl), win = z.shares * (0.5 * Math.abs(a.tp1 - a.entry) + 0.5 * Math.abs(a.tp2 - a.entry)) - 2 * z.comm;
-  const move = a.price ? (a.price - a.entry) / a.entry * 100 : 0;
+  const move = a.price ? (a.price - sigEntry) / sigEntry * 100 : 0;
   const steps = buy ? [
     `IBKR-ում բաց <b>${a.sym}</b> → <b>Buy</b> → Order type՝ <b>LMT (Limit)</b>, գին՝ <b>${sf(a.entry)}</b>, քանակ՝ <b>${z.shares}</b> (≈ ${usd(z.notional)})${z.shares < 1 ? ' · fractional' : ''}`,
     `Միևնույն պատվերին կցիր <b>Stop Loss</b>՝ <b class="S">${sf(a.sl)}</b> (Attach → Bracket)։ Եթե հասնի՝ −${usd(z.risk)}`,
@@ -2631,7 +2654,8 @@ function stkCard(a) {
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
       <div class="sig ${buy ? 'L' : 'S'}">${buy ? '🟢 ԳՆԻՐ' : '🔴 ՎԱՃԱՌԻՐ'} ${a.sym}</div>
       <div style="text-align:right"><span class="tag">${TFN[a.tf] || a.tf}</span><span class="tag">Ուժ ${a.strength}</span><span class="tag">R:R 1:${a.rr.toFixed(1)}</span><span class="tag">Ռիսկ ${a.risk}/100</span></div></div>
-    <div class="note">${STK_NAMES[a.sym] ? STK_NAMES[a.sym] + ' · ' : ''}Ստացվել է ${hm(a.created)} · հիմա ${sf(a.price)} (${move >= 0 ? '+' : ''}${move.toFixed(2)}% մուտքից)</div>
+    <div class="note">${STK_NAMES[a.sym] ? STK_NAMES[a.sym] + ' · ' : ''}Ստացվել է ${hm(a.created)} · <b>հիմա ${sf(a.price)}</b> (${move >= 0 ? '+' : ''}${move.toFixed(2)}% սիգնալի գնից՝ ${sf(sigEntry)})</div>
+    ${ef.better ? `<div class="warn ok">💡 Գինը հիմա սիգնալի գնից ցածր է, ուստի մուտքը թարմացված է ընթացիկ գնով (${sf(ef.e)})։ Stop-ը և նպատակները նույնն են, R:R-ը՝ ավելի լավ։</div>` : ''}
     ${!m.open ? `<div class="warn info">🌙 Բորսան փակ է։ Պատվերը կարող ես դնել հիմա, կաշխատի բացմանը (${hmd(m.next)})։ Limit պատվերը քեզ պաշտպանում է, եթե գինը բացվի gap-ով վերև․ մի փոխիր այն Market-ի։</div>` : ''}
     ${a.late ? `<div class="warn">⏳ Գինն արդեն հեռացել է մուտքից՝ <b>ուշ է</b>։ Մտիր միայն Limit-ով ~${sf(a.entry)}, մի վազիր գնի հետևից։</div>` : ''}
     ${z.capped ? `<div class="warn info">ℹ️ Քանակը սահմանափակվել է «Max մեկ դիրքում» ${STK.cfg.maxPos}%-ով, ուստի իրական ռիսկը ${usd(z.risk)} է։</div>` : ''}
@@ -2710,13 +2734,15 @@ function stkOneRender(r, outId = 'stkOneOut', cvId = 'stkChart') {
     : s.rawDir ? `<div class="sig W">⛔ ՍԻԳՆԱԼ ԿԱ, ԲԱՅՑ ԱՐԳԵԼՎԱԾ</div>` : '<div class="sig M">⏳ ՍՊԱՍԻՐ</div>';
   let plan = '';
   if (s.rawDir && z) {
+    const ef = stkEff({ dir: s.dir, entry: s.entry, sl: s.sl, price: r.price, size: z });
+    if (ef.better) { s.entry = ef.e; z.shares = ef.size.shares; z.notional = ef.size.notional; z.risk = ef.size.risk; z.comm = ef.size.comm; s.rr = Math.abs(s.tp2 - s.entry) / Math.abs(s.entry - s.sl); }
     plan = `<div class="grid" style="margin-top:10px">${kv('Limit մուտք', sf(s.entry))}${kv('Stop Loss', sf(s.sl), 'S')}${kv('TP1 (կեսը)', sf(s.tp1), 'L')}${kv('TP2', sf(s.tp2), 'L')}${kv('R:R', '1:' + s.rr.toFixed(1))}
       ${kv('Քանակ', z.shares + ' հատ')}${kv('Գումար', usd(z.notional))}${kv('Ռիսկ', '−' + usd(z.risk), 'S')}${kv('Միջնորդավճար', usd(2 * z.comm))}</div>`;
     if (buy) plan += `<h3>Ինչ անել IBKR-ում</h3><ol style="margin:0;padding-left:20px;line-height:1.7"><li><b>Buy</b> → <b>LMT</b> ${sf(s.entry)} · ${z.shares} հատ</li><li>Attach → <b>Bracket</b>՝ Stop ${sf(s.sl)}, Take Profit ${sf(s.tp2)}</li><li>TP1 ${sf(s.tp1)}-ում վաճառիր կեսը, Stop-ը տեղափոխիր ${sf(s.entry)}</li></ol>`;
   }
   $(outId).innerHTML = `<div class="card" style="border:2px solid ${buy ? 'var(--g)' : sell ? 'var(--r)' : 'var(--line)'}">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><div class="note">${stkName(r.sym)} · ${TFN[r.tf] || r.tf}</div>${head}</div>
-      <div style="text-align:right"><div class="note">Գին</div><b style="font-size:20px">${sf(r.price)}</b>${r.prevClose ? `<div class="${r.price >= r.prevClose ? 'L' : 'S'}">${r.price >= r.prevClose ? '+' : ''}${((r.price / r.prevClose - 1) * 100).toFixed(2)}%</div>` : ''}</div></div>
+      <div style="text-align:right"><div class="note">${r.live ? 'Գինը հիմա' : 'Վերջին փակում'}</div><b style="font-size:20px">${sf(r.price)}</b>${r.prevClose ? `<div class="${r.price >= r.prevClose ? 'L' : 'S'}">${r.price >= r.prevClose ? '+' : ''}${((r.price / r.prevClose - 1) * 100).toFixed(2)}%</div>` : ''}</div></div>
     ${stkExplain(r)}
     ${plan}
     <canvas id="${cvId}" style="margin-top:10px"></canvas><div class="note" style="margin-top:4px">Կանաչ՝ EMA20 · Կապույտ՝ EMA50 · Նարնջագույն՝ EMA200 · Մոխրագույն՝ Bollinger</div>
@@ -2733,7 +2759,8 @@ async function stkOne(sym) {
   $('stkOneOut').innerHTML = `<div class="card note">🔄 Վերլուծում եմ ${sym}…</div>`;
   try {
     const tf = STK.cfg.tf, { B, BH } = await stkBench(tf);
-    const r = sym === 'SPY' ? await stkAnalyze('SPY', tf, null, null) : await stkAnalyze(sym, tf, B, BH);
+    const lv = (await stkLive([sym]))[sym];
+    const r = sym === 'SPY' ? await stkAnalyze('SPY', tf, null, null, lv) : await stkAnalyze(sym, tf, B, BH, lv);
     if (stkSyms().includes(sym)) STK.res[sym] = r;
     STK.one = r; stkOneRender(r); stkMarketCard();
   } catch (e) { $('stkOneOut').innerHTML = `<div class="card"><div class="warn bad">${esc(e.message)}</div><p class="note">Ստուգիր տիկերը (օր.՝ Apple-ը AAPL է, Coca-Cola-ն՝ KO)։ Աջակցվում են ԱՄՆ բորսայի բաժնետոմսերն ու ETF-ները։</p></div>`; }
@@ -2898,7 +2925,8 @@ async function stkSignalGo() {
   $('status').textContent = `Բեռնում եմ ${sym}-ի տվյալները Twelve Data-ից…`; $('stkSigOut').innerHTML = '';
   try {
     const { B, BH } = await stkBench(tf);
-    const r = sym === 'SPY' ? await stkAnalyze('SPY', tf, null, null) : await stkAnalyze(sym, tf, B, BH);
+    const lv = (await stkLive([sym]))[sym];
+    const r = sym === 'SPY' ? await stkAnalyze('SPY', tf, null, null, lv) : await stkAnalyze(sym, tf, B, BH, lv);
     if (stkSyms().includes(sym)) STK.res[sym] = r;
     stkOneRender(r, 'stkSigOut', 'stkSigChart');
     const m = marketState();
